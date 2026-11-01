@@ -4,9 +4,10 @@ signal training_requested
 signal quit_requested
 
 const JournalTheme = preload("res://ui/themes/field_journal_theme.gd")
-const MenuButtonScene = preload("res://ui/components/menu_button.tscn")
+const MenuActions = preload("res://ui/components/menu_actions.gd")
+const MenuModal = preload("res://ui/components/menu_modal.gd")
 var training_button: Button
-var details: AcceptDialog
+var details
 
 func _ready() -> void:
 	theme = JournalTheme.create()
@@ -39,7 +40,7 @@ func _ready() -> void:
 	subtitle.add_theme_font_size_override("font_size", 23)
 	subtitle.add_theme_color_override("font_color", JournalTheme.INK)
 	canvas.add_child(subtitle)
-	var menu := VBoxContainer.new()
+	var menu := MenuActions.new()
 	menu.position = Vector2(112, 222)
 	menu.size = Vector2(376, 0)
 	canvas.add_child(menu)
@@ -61,12 +62,10 @@ func _ready() -> void:
 	note.add_theme_constant_override("shadow_offset_x", 1)
 	note.add_theme_constant_override("shadow_offset_y", 1)
 	canvas.add_child(note)
-	details = AcceptDialog.new()
-	details.title = "Field notes"
-	details.min_size = Vector2i(540, 310)
+	details = MenuModal.new()
 	add_child(details)
-	details.confirmed.connect(func(): training_button.grab_focus())
-	details.canceled.connect(func(): training_button.grab_focus())
+	details.action_selected.connect(func(_id): details.dismiss())
+	details.canceled.connect(details.dismiss)
 	resized.connect(_fit_composition)
 	_fit_composition()
 	training_button.grab_focus()
@@ -77,15 +76,10 @@ func _fit_composition() -> void:
 	$Composition.position = (size - Vector2(1280, 720) * factor) * 0.5
 
 func _button(caption: String, parent: Node) -> Button:
-	var button := MenuButtonScene.instantiate() as Button
-	button.text = caption
-	parent.add_child(button)
-	return button
+	return parent.add_action(StringName(caption), caption)
 
 func show_message(caption: String, message: String) -> void:
-	details.title = caption
-	details.dialog_text = message
-	details.popup_centered()
+	details.present(caption, message, [{"id": &"close", "caption": "Back"}])
 
 func show_controls() -> void:
 	show_message("Training controls", "WASD move · Mouse look · Shift run · Space jump\nCtrl crouch · Q / E lean · V vault · F interact\nLeft mouse fire · Right mouse aim · R reload\nHold T refill spare magazine · J clear jam\nB clean · G dirty weapon · I inspect · P reset position\n\nEscape opens navigation when launched through startup.\nTraining is session-only; leaving discards its progress.")

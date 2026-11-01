@@ -3,6 +3,8 @@ extends RefCounted
 const PAPER := Color("dfc49b")
 const INK := Color("29251d")
 const BURGUNDY := Color("64282b")
+const SCRIM := Color("15130fef")
+static var _shared_theme: Theme
 
 static func panel(color: Color, border: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
@@ -16,6 +18,8 @@ static func panel(color: Color, border: Color) -> StyleBoxFlat:
 	return style
 
 static func create() -> Theme:
+	if _shared_theme != null:
+		return _shared_theme
 	var theme := Theme.new()
 	var font := SystemFont.new()
 	font.font_names = PackedStringArray(["Georgia", "DejaVu Serif", "serif"])
@@ -35,4 +39,5 @@ static func create() -> Theme:
 	theme.set_color("font_color", "RichTextLabel", PAPER)
 	theme.set_stylebox("panel", "PanelContainer", panel(Color("29251df5"), Color("9c8058")))
 	theme.set_constant("separation", "VBoxContainer", 5)
+	_shared_theme = theme
 	return theme

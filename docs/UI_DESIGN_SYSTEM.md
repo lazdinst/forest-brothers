@@ -18,6 +18,15 @@ are bundled. Artwork is letterboxed with the composition to keep labels aligned.
   normal/hover/pressed/disabled/focus states and panel styling.
 - `ui/components/menu_button.tscn`: reusable minimum-48-unit button; keyboard
   navigation uses Godot's built-in UI actions, without InputMap edits.
+- `ui/components/menu_actions.gd`: the shared action-list builder. Views supply
+  stable action IDs, captions, enabled states and optional hints; this component
+  creates the buttons, keeps Tab/arrow navigation inside the enabled actions, and
+  emits `action_selected(id)`.
+- `ui/components/menu_panel.gd`: shared themed frame for custom content.
+- `ui/components/menu_modal.gd`: shared full-screen scrim, panel, heading, scrollable
+  message, action list, focus restoration and Escape cancellation. Pause, leave
+  confirmation, Controls and Records all reuse this component. `present()` replaces
+  its content; it never creates another modal over the current one.
 - `ui/main_menu/main_menu.tscn`: standalone menu view with route request signals.
 - `startup/startup.tscn`: functional entry point that connects those signals and
   owns local navigation. No autoload is required.
@@ -45,13 +54,42 @@ selects the testbed; empty/unknown routes select the menu. No environment file i
 written. F5 now opens the menu; direct training launch remains available. Open
 `startup/startup.tscn` in Godot and press F6 to try the launcher in the editor.
 
-Escape from routed training opens a UI-owned navigation layer. Resume restores the
+Escape from routed training opens a UI-owned navigation layer after any existing
+camp panel/planning context has handled Escape. It never opens pause over those
+contexts. Resume restores the
 same session and its previous mouse/process modes. Return to main menu asks before
 discarding this session, then frees the training instance. A fresh launch resets
 training through its existing scene lifecycle. This wrapper disables only its owned
 local training subtree; it never pauses SceneTree. This is a local prototype
 navigation policy, not a multiplayer pause, casualty, disconnect or mission rule.
 Directly launching the training scene retains its existing Escape behavior.
+
+## Reusing menu components
+
+New action lists should instantiate `menu_actions.gd` and call
+`add_action(id, caption, enabled, hint)`. New messages or confirmations should
+instantiate `menu_modal.gd`, connect `action_selected`/`canceled`, then call:
+
+```gdscript
+modal.present("Leave training?", "Discard this training session?", [
+    {"id": &"cancel", "caption": "Keep training"},
+    {"id": &"confirm_leave", "caption": "Return to main menu"},
+])
+```
+
+Use one modal instance per navigation owner; change its content for confirmation
+and cancel back to the prior view. Call `dismiss()` when done. Do not create native
+AcceptDialog/ConfirmationDialog windows or duplicate button/layout construction in
+each view. The theme factory returns one shared Theme resource for every component.
+
+`ui/training_ui_bridge.gd` is a narrow compatibility adapter for the existing camp
+UI. It inserts the shared panel frame, applies the same theme/button sizing to
+existing and dynamically added buttons, and reports active camp/planning contexts
+to startup navigation. It preserves their callbacks and does not change camp,
+character, combat or environment source files. It currently binds the existing
+`SystemsAnnex` presentation fields; if that view is replaced, update this adapter
+or have its owner adopt the shared components directly. This adapter is installed
+by routed training; direct standalone training still uses its original UI.
 
 ## Approved integration
 
@@ -90,6 +128,14 @@ including its environment and polygon character additions. Default startup and t
 `--start=training` override also launched successfully with bounded headless runs.
 These integration runs do not establish graphics quality or multiplayer support.
 
+Shared-component follow-up: the focused startup check also covers the single
+modal instance, in-place confirmation/cancel, shared theme identity, dynamically
+created camp button styling, a real click on the restyled camp action without
+firing, and Escape precedence for both camp panels and planning. The existing
+`camp_annex_smoke.gd` regression passed. Compatibility-rendered Controls, pause,
+leave confirmation and camp-panel frames were inspected. Certificate/shader-cache
+write warnings occurred in the restricted environment; checks passed.
+
 ## Validation record and changed files
 
 Validation performed on Godot 4.7.2: the focused check passed headlessly with default
@@ -119,11 +165,19 @@ tests/menu_startup_smoke.gd.uid
 ui/assets/field_journal_background_v1.png
 ui/assets/field_journal_background_v1.png.import
 ui/components/menu_button.tscn
+ui/components/menu_actions.gd
+ui/components/menu_actions.gd.uid
+ui/components/menu_modal.gd
+ui/components/menu_modal.gd.uid
+ui/components/menu_panel.gd
+ui/components/menu_panel.gd.uid
 ui/main_menu/main_menu.gd
 ui/main_menu/main_menu.gd.uid
 ui/main_menu/main_menu.tscn
 ui/themes/field_journal_theme.gd
 ui/themes/field_journal_theme.gd.uid
+ui/training_ui_bridge.gd
+ui/training_ui_bridge.gd.uid
 ```
 
 ## Artwork source and prompt
