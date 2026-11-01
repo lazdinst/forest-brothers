@@ -3,6 +3,10 @@ extends CanvasLayer
 
 const WeaponState = preload("res://scripts/weapons/prototype_weapon_state.gd")
 const HANDS = preload("res://assets/weapons/test_rifle/first_person_v1.png")
+const AIMED_HANDS = preload("res://assets/weapons/test_rifle/iron_sights_v1.png")
+# Measured front-post tip in the original unmodified image, normalized to its canvas.
+const SIGHT_ANCHOR := Vector2(0.5, 0.418)
+var aim_fraction: float = 0.0
 var state = WeaponState.new()
 var rng := RandomNumberGenerator.new()
 var hits: int = 0
@@ -106,15 +110,26 @@ func _process(delta: float) -> void:
 		dip += 130.0
 	if _player.is_sprinting:
 		dip += 55.0
-	var aim: float = 1.0 if _player.is_aiming else 0.0
-	_hands.size = Vector2(570, 570) * scale_factor
-	_hands.position = Vector2(viewport_size.x * 0.5 - 230.0 * scale_factor, viewport_size.y - 480.0 * scale_factor)
-	_hands.position += (bob + Vector2(-aim * 55.0 + _player.camera.position.x * 35.0, dip + _kick * 22.0 - aim * 30.0)) * scale_factor
-	_hands.pivot_offset = _hands.size * 0.5
-	_hands.rotation = _player.camera.rotation.z + sin(_phase * 0.5) * minf(speed, 1.0) * 0.006
+	aim_fraction = move_toward(aim_fraction, 1.0 if _player.is_aiming else 0.0, delta * 6.0)
+	var aimed_view := aim_fraction >= 0.5
+	_hands.texture = AIMED_HANDS if aimed_view else HANDS
+	_hands.size = Vector2.ONE * lerpf(570.0, 700.0, aim_fraction) * scale_factor
+	var hip_position := Vector2(viewport_size.x * 0.5 - 230.0 * scale_factor, viewport_size.y - 480.0 * scale_factor)
+	var aimed_position := viewport_size * 0.5 - _hands.size * SIGHT_ANCHOR
+	_hands.position = hip_position.lerp(aimed_position, aim_fraction)
+	# Keep settled sights on the camera ray, including while walking/leaning.
+	# A short lowering/raising motion masks the switch between painted views.
+	var transition_dip := sin(aim_fraction * PI) * 85.0
+	_hands.position += (bob * (1.0 - aim_fraction) + Vector2(_player.camera.position.x * 35.0 * (1.0 - aim_fraction), dip + transition_dip + _kick * 22.0)) * scale_factor
+	_hands.pivot_offset = _hands.size * (SIGHT_ANCHOR if aimed_view else Vector2(0.5, 0.5))
+	_hands.rotation = _player.camera.rotation.z + sin(_phase * 0.5) * minf(speed, 1.0) * 0.006 * (1.0 - aim_fraction)
 	_flash.size = Vector2(15, 20) * scale_factor
-	_flash.position = _hands.position + _hands.size * Vector2(0.43, 0.22)
+	_flash.position = sight_screen_position() - _flash.size * 0.5 if aimed_view else _hands.position + _hands.size * Vector2(0.43, 0.22)
 	_flash.visible = _flash_time > 0.0
+
+
+func sight_screen_position() -> Vector2:
+	return _hands.get_global_transform() * (_hands.size * SIGHT_ANCHOR)
 
 
 func status_text() -> String:

@@ -20,7 +20,7 @@ The test yard now has three areas: the obstacle course on the left, a walking ci
 | V | Vault a marked low barrier or climb the low platform when close and grounded |
 | F | Open/close the aimed door or collect an aimed supply |
 | Left mouse | Fire one shot |
-| Hold right mouse | Prototype aim: narrower FOV and slower movement |
+| Hold right mouse | Aim down iron sights; slower movement |
 | R | Swap the loaded and spare magazines, retaining their contents |
 | Hold T | Transfer loose cartridges into the spare magazine, one at a time |
 | J | Clear a jam |
@@ -44,11 +44,11 @@ The test yard now has three areas: the obstacle course on the left, a walking ci
 
 These are local training fixtures, not campaign equipment. Quantities, timings, controls, weapon selection, and movement speeds are reversible prototype choices. Counts and ammunition reset on restart. The weapon rules live separately from the input/presentation controller; they have no multiplayer authority or communal-inventory integration yet.
 
-The first-person character has generated hands/rifle artwork with procedural bob, recoil, lean, and action lowering. Reloading, inspection, and cleaning use timed lowering rather than correct hand/magazine animation. Aiming is a temporary zoom, not calibrated iron sights. Shots are immediate camera rays with placeholder tracers, flash, and synthesized sound; no ballistics, damage, enemies, friendly fire, or medicine exists yet. Full-body player animation is not implemented.
+The first-person character has generated hands/rifle artwork with procedural bob, recoil, lean, and action lowering. Reloading, inspection, and cleaning use timed lowering rather than correct hand/magazine animation. Holding right mouse raises a dedicated rear-of-rifle view with the front-post tip aligned to the camera shot ray. The crosshair hides; world FOV stays at 60 degrees. Reloading, packing, cleaning, and vaulting interrupt aiming. The illustrated sights remain prototype artwork, not a verified technical reconstruction. Shots are immediate camera rays with placeholder tracers, flash, and synthesized sound; no ballistics, damage, enemies, friendly fire, or medicine exists yet. Full-body player animation is not implemented.
 
 The civilian uses candidate four-frame walking atlases, not a finished animation set. Identity, stride, foot alignment, mirrored asymmetric details, and transitions need owner review and cleanup. Original generation outputs and prompts are preserved in `assets/TRAINING_ART_PROMPTS.md`.
 
-**Deferred close-up sprite issue:** source TODO in `scripts/characters/directional_idle.gd`. The civilian stays upright and turns only horizontally toward viewer position. A temporary player-only clearance stops ordinary approach about 1.2 m from the center. Looking alone never changes sprite scale or camera FOV; holding aim intentionally changes FOV. Near-field proportions, elevated views, and final hitboxes still need a proper solution. Collision bit values: world/body 1, player 2, clearance 4; interaction and weapon rays ignore clearance.
+**Deferred close-up sprite issue:** source TODO in `scripts/characters/directional_idle.gd`. The civilian stays upright and turns only horizontally toward viewer position. A temporary player-only clearance stops ordinary approach about 1.2 m from the center. Looking alone never changes sprite scale or camera FOV; aiming also preserves world FOV. Near-field proportions, elevated views, and final hitboxes still need a proper solution. Collision bit values: world/body 1, player 2, clearance 4; interaction and weapon rays ignore clearance.
 
 No missions, saving, construction, jobs, combat AI, or multiplayer are implemented. The yard geometry, test sound, and new artwork remain placeholders. Three supply blocks deposit directly into a session ledger, not the future mission-return inventory.
 
@@ -72,6 +72,7 @@ From the repository, replace `<godot>` with the installed executable:
 <godot> --headless --path . --script res://tests/civilian_projection_smoke.gd
 <godot> --headless --path . --script res://tests/weapon_state_smoke.gd
 <godot> --headless --fixed-fps 60 --path . --script res://tests/training_smoke.gd
+<godot> --headless --fixed-fps 60 --path . --script res://tests/ads_smoke.gd
 <godot> --path .
 ```
 

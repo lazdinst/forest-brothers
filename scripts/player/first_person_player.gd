@@ -75,7 +75,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	var active := controls_active()
 	_update_stance(active)
-	is_aiming = active and Input.is_action_pressed("aim") and not is_vaulting
+	is_aiming = active and Input.is_action_pressed("aim") and not is_vaulting and weapon.state.busy == &""
 	if is_vaulting:
 		_advance_vault(delta)
 	else:
@@ -125,7 +125,8 @@ func _update_camera(delta: float, active: bool) -> void:
 	var fraction: float = safe[0] if not safe.is_empty() else 0.0
 	camera.position.x = _lean * lean_distance * fraction
 	camera.rotation.z = -_lean * fraction * deg_to_rad(8.0)
-	camera.fov = move_toward(camera.fov, 48.0 if is_aiming else 60.0, delta * 70.0)
+	# Iron-sight alignment is in weapon presentation; aiming does not zoom the world.
+	camera.fov = 60.0
 
 
 func _capsule_clear(feet: Vector3, height: float) -> bool:

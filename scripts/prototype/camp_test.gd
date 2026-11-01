@@ -22,6 +22,7 @@ func _process(_delta: float) -> void:
 	status_label.text = "Left: obstacle course   Far left: walking civilian   Right: firing lane"
 	$HUD/MovementState.text = player.movement_state + (" - " + player.traversal_message if player.traversal_message != "" else "")
 	$HUD/WeaponStatus.text = player.weapon.status_text()
+	$HUD/Crosshair.visible = not player.is_aiming and player.weapon.aim_fraction < 0.05
 
 
 func _update_stock() -> void:
