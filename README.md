@@ -11,6 +11,7 @@ The project is in **concept/preproduction**. There is no playable build yet.
 - [Game concept](docs/GAME_CONCEPT.md): vision, player experience, scope, and open questions.
 - [Missions and medicine](docs/MISSIONS_AND_MEDICINE.md): four-player co-op, individual death, revival, and period-grounded injury treatment.
 - [Camp and progression](docs/CAMP_AND_PROGRESSION.md): hands-on building, food, water, storage, maintenance, and concurrent camp activity.
+- [Art direction](docs/ART_DIRECTION.md): gritty painted sprites, agent-assisted production, and an early visual feasibility test.
 - [Technical direction](docs/TECHNICAL_DIRECTION.md): proposed Godot foundation and early co-op planning.
 - [Roadmap](docs/ROADMAP.md): small, verifiable milestones.
 - [Decision log](docs/DECISIONS.md): confirmed direction versus working assumptions.

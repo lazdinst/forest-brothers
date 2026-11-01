@@ -27,6 +27,9 @@ Preserve these user requirements:
 - Solo incapacitation and total group incapacitation resolve as mission death. Revival preserves injuries and temporarily reduced capability; exact durations remain open.
 - Camp is an interactive place: organize equipment, build structures, dig trenches, cook, collect water, store food, repair weapons, and gather/organize ammunition. Returned players can work there while friends continue a mission. See `docs/CAMP_AND_PROGRESSION.md`.
 - Construction uses a mixture of freely placed pieces and predefined facility sites/upgrades. Exact piece catalogs, snapping, terrain changes, and upgrade costs are unresolved; do not replace the mixed approach with an exclusively freeform or exclusively fixed system.
+- All equipment and supplies are communal, including recovered gear. Carried inventory represents location/custody, not private ownership. Make available quantities easy to inspect; communal ownership does not imply instant remote access.
+- Start with a rough tent camp and progressively upgrade buildings. A headquarters tent/bunker contains the mission-planning table; a build-planning table opens a city-builder view for construction plans within the mixed building system.
+- Art direction is gritty illustrated sprites: painted characters with a low-resolution finish. Agent-generated sprites need a reference-led, visually checked pipeline; read `docs/ART_DIRECTION.md`. Civilian building/hauling/tree-harvesting is a proposal, not an implemented or fully approved workforce simulation.
 - Keep the repository private.
 
 Four-player maximum co-op and individual mission death are confirmed. Do not treat proposed medical item effects, numerical balance, or a proposed engine as approved requirements. Check the decision log and `docs/MISSIONS_AND_MEDICINE.md` for their status.

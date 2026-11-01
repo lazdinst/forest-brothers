@@ -50,16 +50,26 @@ See [camp and progression](CAMP_AND_PROGRESSION.md) for confirmed scope and prop
 - Persist built structures, storage contents, water/food stocks, weapon condition, and approved camp changes with stable identities when implemented.
 - Camp work must remain authoritative while mission actors are active. Validate shared-resource reservations and completion so two players cannot consume or receive the same materials twice.
 - Keep the death lockout independent from player location or equipment: preparing at camp must not enable same-mission deployment.
-- Preserve carried inventory on the mission body when returning a dead player to camp; never duplicate that inventory onto the returned character. Ownership on recovery is unresolved.
+- Preserve carried inventory on the mission body when returning a dead player to camp; never duplicate that inventory onto the returned character. Recovered equipment is communal; retrieval/deposit and physical access rules remain unresolved.
 - Track post-revival penalties explicitly. Timer units, offline progression, treatment acceleration, and which camp actions injuries affect must be decided before implementing those behaviors.
 - Support both freely placed pieces and predefined facility sites/upgrades in the construction design. Placement validation and persistence must distinguish placed-piece identity from facility-site identity when implemented. Snapping, supported terrain changes, persistence size, and resource permissions still require deliberate scope choices. Trench digging does not itself require arbitrary terrain deformation.
 - Camp and mission time need a coherent shared rule; do not implement a global sleep/time skip that advances or disrupts an active mission without an approved design.
+
+## Communal inventory and construction plans
+
+- All stock is group-owned. Track item location/custody separately from ownership, including camp stores, carried inventories, reservations, and recoverable mission bodies. A stock summary must not itself grant remote access.
+- Derive visible totals from the authoritative item/resource state; do not maintain an unrelated editable UI total. Distinguish available, reserved, and physically unavailable quantities under an agreed accounting rule.
+- The headquarters mission table and build-planning table are in-world entry points. A player's planning camera/UI must not change everyone else's camera or globally pause an active mission.
+- Keep plans separate from completed structures. Plan identity, placement, resource reservation/consumption, cancellation, upgrade state, and completion must be consistent across clients and saved when implemented. Exact reservation and job rules are unresolved.
+- Building upgrades must preserve or explicitly migrate container contents and station state; do not replace a building and silently lose or duplicate its stock.
+- Civilian labor is a proposal. Do not implement autonomous harvesting, worker pathfinding, or a broad job simulation before its role and prototype scope are approved.
+- Test the same buildings from first-person and the planning camera. A sprite that looks correct from the player camera may fail in a city-builder view; rendering choices remain open.
 
 ## Content and persistence
 
 - Store reusable definitions for items, weapons, and missions separately from mutable instances when those systems are introduced.
 - Give saves a format version from the first persistent prototype. Avoid serializing arbitrary scene trees as the campaign format.
-- Save camp resources, mission results, and relevant player state explicitly. Define ownership before supporting multiple campaign participants.
+- Save camp resources, mission results, and relevant player state explicitly. Ownership is communal; define physical access, reservation, and spending rules before supporting concurrent resource use.
 - Add migration handling when an actual save format changes; do not build a speculative migration framework now.
 - Keep saves, credentials, caches, and exports outside tracked source.
 

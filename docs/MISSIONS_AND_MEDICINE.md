@@ -9,7 +9,7 @@ Status: confirmed mission rules with proposed medical mechanics. This is game de
 - Surviving friends can continue; one death does not fail or end the mission for everyone.
 - Incapacitation includes a limited bleed-out window during which teammates can revive the player.
 - There should be multiple meaningful medical resources, including treatment for light/heavy bleeding, broken limbs, and morphine, fitting the historical period.
-- Starting rule: carried equipment stays on the body after death for teammate recovery; camp-stored supplies remain safe. Recovery ownership and body persistence are undecided.
+- Starting rule: carried equipment stays on the body after death for teammate recovery; camp-stored supplies remain safe. Recovered gear is communal; body persistence and physical retrieval rules remain undecided.
 - Dead players cannot rejoin that same mission. They can organize equipment, build, dig trenches, cook, collect water, repair weapons, and perform other confirmed camp tasks while friends continue.
 - Solo incapacitation or all remaining mission players becoming incapacitated resolves as mission death and return to camp. No AI or self-revival exception is approved.
 - Revival preserves injuries and reduced capability for a duration. Timings, penalty strength, and treatment interactions remain undecided.
@@ -67,13 +67,13 @@ No specific tourniquet design, antibiotic access, or field blood-replacement sys
 ## Co-op behavior and verification
 
 - A downed player remains part of the active mission during the rescue window.
-- A teammate's treatment consumes validated resources and produces a shared result. Exact treatment steps and resource ownership remain open.
+- A teammate's treatment consumes validated resources and produces a shared result. Resources are communal; exact treatment steps and which physically accessible inventory supplies them remain open.
 - Dying returns only the affected player to camp. Survivors keep their current state and objectives.
 - If the host's character dies, the network session continues. Host process disconnection is a separate technical problem.
 - Two or more simultaneous casualties must resolve per player. Do not use one global dead/downed flag.
 - Test treatment interrupted by movement, damage, disconnect, target death, and resource loss. Decide which events actually cancel it before implementing that behavior.
 - Test four participants, including one at camp while others remain on mission, and two rescuers attempting to treat the same casualty.
-- Preserve carried equipment on a recoverable body under the starting rule; keep camp storage safe. Resolve solo/all-incapacitated players as mission deaths. Group rewards, body lifetime, recovered-item ownership, and recovery timing still need explicit rules. Do not invent transfers or rewards.
+- Preserve carried equipment on a recoverable body under the starting rule; keep camp storage safe. Resolve solo/all-incapacitated players as mission deaths. Group rewards, body lifetime, physical retrieval/deposit, and recovery timing still need explicit rules; recovered equipment is communal. Do not invent transfers or rewards.
 
 ## Open design questions
 
@@ -81,7 +81,7 @@ No specific tourniquet design, antibiotic access, or field blood-replacement sys
 2. Which injuries cause incapacitation, and can any damage bypass the rescue window?
 3. What conditions and supplies are required to revive, and how long do preserved injuries and reduced capability last?
 4. How are simultaneous casualties resolved consistently, given that solo/all-incapacitated outcomes are confirmed as mission death?
-5. Who owns recovered gear, how long do bodies remain, and what happens to uncollected gear when the mission ends?
+5. How is communal recovered gear physically returned, how long do bodies remain, and what happens to uncollected gear when the mission ends?
 6. How should reconnecting and saved mission results preserve the confirmed same-mission death lockout?
 7. How do injury penalties affect the confirmed camp activities? Is optional spectating also desirable?
 8. What recovery, cost, or delay applies at camp, and how is return after death explained?

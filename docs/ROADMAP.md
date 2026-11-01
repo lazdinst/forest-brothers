@@ -8,6 +8,12 @@ Review the concept, select the engine/version, and settle the intended multiplay
 
 Done when: the decision log records those choices and the next playable milestone has a clear boundary.
 
+## 0A — Prove the art workflow
+
+Before broad asset production, make a small reference-led art test in the confirmed gritty painted, low-resolution style. Establish one character, a limited directional/animation sample, a weapon view, a few props, and a rough tent-camp scene. See `ART_DIRECTION.md`.
+
+Done when: the owner approves the visual direction, transparent sprites align and animate consistently, the character is readable against the environment, and camp assets remain readable from both first-person and a prototype planning camera. Record generation references/settings and processing steps. Exact resolution/direction counts must be selected through the test, not assumed final. This is a feasibility gate, not an art pack for the entire game.
+
 ## 1 — A room you can inhabit
 
 Create the minimal engine project. Add first-person movement, mouse look, collision, a door, and a single pickup in a tiny test area. Use placeholders.
@@ -37,6 +43,12 @@ Done when: the mission can be completed or failed in solo and co-op, supplies ha
 Prove one minimal camp activity while another player remains on mission: for example, collect water and cook a simple meal, or use a storage station and repair a weapon. Add a small placeable functional structure and a bounded trench interaction in a later increment of this milestone; do not begin with a full terrain system.
 
 Done when: a returned player can complete the chosen camp task without interrupting survivors; costs/results are shared consistently; injuries have the agreed effect; mission lockout still holds. A separate construction increment must demonstrate both one freely placed piece and one predefined facility site/upgrade, validated placement, persistent structure state, and the chosen trench representation before broad building content is added. This milestone covers a proof of camp work, not the entire promised camp feature set.
+
+## 3B — Planning tables and one building upgrade
+
+Prototype the headquarters mission table and a build-planning table that changes only the interacting player's camera. Place one plan, display communal stock/cost/shortage clearly, and complete one upgrade from the rough tent-camp starting state. Use approved placeholder construction completion rules before attempting a civilian workforce.
+
+Done when: both interfaces work with players simultaneously at camp and on mission; stock is not double-spent; plans are visibly distinct from completed structures; upgrading preserves stored contents; both free placement and facility upgrade rules remain supported. Civilian construction/hauling/harvesting needs its own scope decision before implementation.
 
 ## 4 — A campaign that remembers
 

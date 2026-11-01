@@ -6,6 +6,7 @@ Read the root `AGENTS.md` first.
 - `DECISIONS.md` distinguishes user-confirmed direction, proposals, and unresolved questions. Update it when the owner settles a meaningful choice.
 - `TECHNICAL_DIRECTION.md` describes implementation guidance and its current status.
 - `MISSIONS_AND_MEDICINE.md` and `CAMP_AND_PROGRESSION.md` hold the detailed system rules and open questions.
+- `ART_DIRECTION.md` records the chosen style, asset workflow, and visual validation requirements.
 - `ROADMAP.md` tracks milestones with observable completion criteria.
 - Keep these documents consistent; link to the source of a decision instead of duplicating it everywhere.
 - State whether a feature is confirmed, proposed, deferred, or unresolved. An agent's suggestion does not make it approved.

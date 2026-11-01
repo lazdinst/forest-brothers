@@ -23,7 +23,7 @@ Tarkov is a reference for immersion, tension, and consequences. This game is not
 
 ## Core loop — proposed
 
-1. At camp, learn about a need, prepare equipment, and choose a mission alone or with a group of up to four players.
+1. At the headquarters mission table, learn about a need, prepare communal equipment, and choose a mission alone or with a group of up to four players.
 2. Travel through a compact area of woodland and rural settlements.
 3. Explore, gather resources, help locals, and decide whether to engage or avoid threats.
 4. Return with what you recovered, living with the cost of the journey. If incapacitated, teammates have a limited opportunity to revive you; if you die, you return to camp while they continue.
@@ -47,11 +47,11 @@ Begin with a compact playable location and a few interacting systems. Scale by a
 Support solo play and co-op with a maximum of four players. A player returning to camp after death must not interrupt teammates still on a mission. A host-owned campaign is the proposed initial format; competitive PvP is not approved.
 
 ### Camp is a place to play
-Hands-on camp life is confirmed product scope, with Valheim as the owner's reference for building and productive activities. Wells/water infrastructure, food storage, cooking facilities, equipment organization, trenches, and weapon repair support preparation and give returned players useful work. Construction combines freely placed pieces with predefined facility sites/upgrades. Specific structures and progression rules are detailed in [camp and progression](CAMP_AND_PROGRESSION.md). Larger construction systems follow a minimal proof, rather than blocking the first playable mission.
+Hands-on camp life is confirmed product scope, with Valheim as the owner's reference for building and productive activities. Wells/water infrastructure, food storage, cooking facilities, equipment organization, trenches, and weapon repair support preparation and give returned players useful work. Start with rough tents and gradually upgrade buildings. All supplies are communal and quantities must be easy to inspect. The headquarters mission table organizes outings; the build-planning table opens a city-builder view to place plans. Construction combines freely placed pieces with predefined facility sites/upgrades. Civilian construction, hauling, and tree harvesting are an owner-suggested possibility, not a settled workforce system. Specific structures and progression rules are detailed in [camp and progression](CAMP_AND_PROGRESSION.md). Larger construction systems follow a minimal proof, rather than blocking the first playable mission.
 
 ## Visual and audio direction
 
-Intended direction: low-resolution first-person environments with sprite-based characters and objects. A practical proposed approach is simple 3D geometry with billboard sprites. Validate this in a prototype before committing to a large asset pipeline.
+Confirmed style: gritty illustrated sprites, with painted characters and a low-resolution finish. The owner expects sprites to be produced agentically; consistency, animation, and usability must be demonstrated early. See [art direction](ART_DIRECTION.md). A practical proposed approach is simple 3D geometry with billboard sprites. Validate this in a prototype before committing to a large asset pipeline.
 
 Favor coherent silhouettes, clear interactions, atmospheric sound, and restrained detail. Retro graphics must still let players identify threats, read objects, and navigate. Full-body directional sprites, weapon presentation, and exact resolution remain undecided.
 
@@ -66,7 +66,7 @@ Sources to begin research:
 - [Partisan / guerrilla bunker](https://militaryheritagetourism.info/en/military/topics/view/99?lang=en)
 - [Museum of the Occupation of Latvia](https://okupacijasmuzejs.lv/en)
 
-Proposed approach: fictional characters and locations within a researched historical setting. Exact year, region, realism level, and treatment of historical events need owner input. A concealed bunker with a few shelters remains a proposed starting hideout; the owner has confirmed developing camp through functional structures and hands-on work. How large or visible the forest settlement becomes remains open.
+Proposed approach: fictional characters and locations within a researched historical setting. Exact year, region, realism level, and treatment of historical events need owner input. The confirmed starting camp is rough tents, with gradual upgrades to functional buildings. Headquarters may be a tent or bunker as the camp develops. How large or visible the forest settlement becomes remains open.
 
 ## First playable slice — proposed
 
@@ -91,7 +91,7 @@ Large open worlds, competitive PvP, AI squad command, complex construction, vehi
 1. Is any competitive multiplayer ever desired? Co-op is confirmed at a maximum of four; PvP remains outside the prototype.
 2. Is the protagonist a fictional Latvian partisan, or a different role?
 3. Which region and period should anchor the setting?
-4. How long do injuries and capability penalties persist, what recovery happens at camp, and who owns equipment recovered from a teammate's body?
+4. How long do injuries and capability penalties persist, what recovery happens at camp, and how is communal equipment physically recovered from a teammate's body?
 5. How are mission outings and concurrent camp activity represented across maps? Dead players cannot rejoin the same mission; reconnect rules must preserve that lockout.
 6. How do building placement, trenches, camp permissions, shared resources, and time progression work? Hands-on camp work is confirmed.
 7. What are the desired balance of combat, stealth, exploration, and civilian assistance?
