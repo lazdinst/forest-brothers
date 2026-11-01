@@ -1,6 +1,6 @@
 extends StaticBody3D
 ## Presentation-only selection relative to this viewport's active camera.
-## The character faces local +Z. A foot-anchored visual faces the camera plane; the body stays upright.
+## The character faces local +Z. Its visual turns toward viewer position in yaw only.
 
 @export var front_texture: Texture2D
 @export var side_texture: Texture2D
@@ -16,10 +16,13 @@ func _process(_delta: float) -> void:
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
 		return
-	# Align the entire visual around its feet, not the centered sprite. Keeping
-	# all pixels in the camera plane prevents head/feet perspective taper when
-	# looking down at close range. This runs even when the view sector is stable.
-	visual_pivot.global_basis = camera.global_basis.orthonormalized().scaled(global_basis.get_scale())
+	# Keep the artwork physically upright. Camera pitch/roll must not change
+	# its transform or make it appear to zoom. Only walking around it turns it.
+	var to_viewer := camera.global_position - global_position
+	to_viewer.y = 0.0
+	if to_viewer.length_squared() < 0.0001:
+		return
+	visual_pivot.global_basis = Basis.looking_at(-to_viewer, Vector3.UP).scaled(global_basis.get_scale())
 	var local_viewer := global_basis.inverse() * (camera.global_position - global_position)
 	if Vector2(local_viewer.x, local_viewer.z).length_squared() < 0.0001:
 		return

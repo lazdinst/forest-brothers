@@ -150,6 +150,16 @@ Reproduced severe head-to-feet taper when viewing the fixed-Y billboard close up
 
 The default camera FOV is reduced from 80 to 60 vertical degrees to soften wide-angle stretching. This does not switch the world camera to orthographic or lock a final FOV. A projection regression checks close/medium/far tilted views from several directions, equal projected scale across the sprite, a fixed foot anchor, and an upright body. Elevated planning-camera presentation still needs its own visual test because this remains flat artwork.
 
+## Remove pitch-dependent sprite zoom — 2026-11-01
+
+Status: corrective implementation after the preceding projection change failed owner playtesting.
+
+The full-pitch camera-plane visual introduced apparent zooming when looking up/down. It is removed. The visual now stays upright and turns in yaw based on camera position only; changing camera orientation in place leaves the sprite transform and scale unchanged. FOV remains fixed at 60 vertical degrees.
+
+Rather than trying to cancel perspective with a moving visual, a player-only clearance cylinder stops ordinary walking about 1.2 m from the civilian center. The 0.28 m body collider remains separate and interaction rays ignore clearance. This is a tunable prototype stand-off, not a final combat hitbox or NPC navigation rule. Ordinary perspective foreshortening remains; extreme close-up access is limited.
+
+The previous equal-projected-width test missed the reported behavior. Its replacement exercises walking to the civilian, pitching up/down in place, constant sprite transform/FOV, an upright visual/body, and bounded taper at the reachable distance. This entry supersedes the previous camera-plane alignment implementation.
+
 ## Recording future decisions
 
 For each consequential decision, add the date, status, choice, reason, relevant user direction, and any decision it supersedes. Update the concept, roadmap, or technical direction when needed. Do not mark an agent proposal as owner-approved without evidence.

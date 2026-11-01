@@ -23,7 +23,7 @@ You should see a small blockout yard and storehouse with a supplies door, plus t
 | Click | Capture the mouse again |
 | F8 in the editor | Stop the running project |
 
-Movement values, input bindings, camera height/FOV, and interaction distance are prototype choices, not final balance. The camera now uses a 60-degree vertical FOV (about 92 degrees horizontally at 16:9), reduced from 80 to soften wide-angle stretching. The character visual follows the camera plane around its foot anchor so looking down close to it does not enlarge the head relative to the feet. Edit movement exports on the Player scene and bindings in Project Settings > Input Map.
+Movement values, input bindings, camera height/FOV, and interaction distance are prototype choices, not final balance. The camera now uses a 60-degree vertical FOV (about 92 degrees horizontally at 16:9), reduced from 80 to soften wide-angle stretching. The character stays upright and only turns horizontally as you walk around him. Looking up/down does not move or rescale the sprite. A player-only standing-clearance volume prevents walking into the extreme close-up range; normal perspective remains. Collision layers: world/body = 1, player = 2, player clearance = 3 (bit value 4). Interaction rays ignore clearance and hit the actual world/body. Edit movement exports on the Player scene and bindings in Project Settings > Input Map.
 
 ## What exists
 
