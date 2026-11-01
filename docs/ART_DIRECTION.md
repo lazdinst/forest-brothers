@@ -1,6 +1,6 @@
 # Art direction and production
 
-Status: owner-selected style and production need. The owner approved the first painted front-view starting civilian appearance on 2026-11-01. A static billboard and body collider are now placed in the movement test for scale/readability review; directional views, animation, and final sprite resolution remain pending. See [the asset and generation prompts](../assets/characters/starting_civilian/README.md). This is a visual candidate, not a completed sprite animation pipeline.
+Status: owner-selected style and production need. The owner approved the first painted front-view starting civilian appearance on 2026-11-01. A four-direction idle experiment with a body collider is now in the movement test: approved front plus new side/back candidates and a mirrored opposite profile. Side/back approval, animation, final direction count, and final sprite resolution remain pending. See [the asset and generation prompts](../assets/characters/starting_civilian/README.md). This is a visual candidate, not a completed sprite animation pipeline.
 
 ## Confirmed direction
 

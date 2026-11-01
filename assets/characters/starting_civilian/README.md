@@ -1,6 +1,6 @@
 # Starting civilian — generation prompts
 
-Status: appearance approved by the owner on 2026-11-01. Fictional starting camp resident, no finalized name or biography. The approved front image is the reference for future variants. Static in-engine scale testing is available; directional views and animation are not complete.
+Status: appearance approved by the owner on 2026-11-01. Fictional starting camp resident, no finalized name or biography. The approved front image is the reference for variants. An experimental four-direction idle test now uses generated side/back candidates and a mirrored opposite profile. Side/back appearance still needs owner review; animation is not complete.
 
 Mode: built-in image generation. No CLI/API fallback used.
 
@@ -28,4 +28,4 @@ Edit the supplied character image into a game-ready illustrated SPRITE CANDIDATE
 
 ## Next validation
 
-Appearance is approved. `scenes/characters/starting_civilian.tscn` places the image on an upright Y-axis billboard at approximately 1.7 m tall with a simple body collider. The movement test includes one instance near the spawn. This front-only test always faces the camera; it does not prove directional views, animation, a final reduced texture resolution, or NPC labor behavior. Evaluate scale/readability in first person before generating further frames. The original PNG remains unchanged.
+Appearance is approved. `scenes/characters/starting_civilian.tscn` places the image on an upright Y-axis billboard at approximately 1.7 m tall with a simple body collider. The movement test includes one instance near the spawn. The sprite plane faces the camera while front/side/back artwork is selected from the viewer angle relative to the actor. The opposite profile is mirrored, so asymmetric patches are mirrored too. A small angular hysteresis prevents boundary flicker. This does not establish final direction count, walking animation, reduced texture resolution, or NPC labor behavior. See [direction generation prompts](DIRECTION_PROMPTS.md). Evaluate scale/readability in first person before generating further frames. The original PNG remains unchanged.

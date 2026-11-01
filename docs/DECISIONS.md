@@ -134,6 +134,14 @@ The owner approved `assets/characters/starting_civilian/starting_civilian_front_
 
 A static front-only Y-axis billboard and body collider are placed in the movement scene for first-person scale review. This does not approve a final sprite resolution or establish animation/directional consistency. The original generated PNG is preserved unchanged.
 
+## Civilian directional idle experiment — 2026-11-01
+
+Status: implemented feasibility experiment, not approval of a final art specification.
+
+Generated one side view and one back view using the owner-approved front as the identity/style reference. The test scene now selects front, side, back, or mirrored side from the active viewport camera's angle relative to the actor's local +Z facing. This is presentation-only, with no global player dependency and no character turning or labor AI.
+
+Four directions and profile mirroring are temporary test choices. Mirroring also reverses asymmetric patches; the new views need owner review and may need additional consistency cleanup. Animation, final sprite resolution, final direction count, and multiplayer verification remain pending. Source PNGs are preserved unchanged; prompts are recorded beside them.
+
 ## Recording future decisions
 
 For each consequential decision, add the date, status, choice, reason, relevant user direction, and any decision it supersedes. Update the concept, roadmap, or technical direction when needed. Do not mark an agent proposal as owner-approved without evidence.
