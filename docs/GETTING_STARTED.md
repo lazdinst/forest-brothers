@@ -8,7 +8,7 @@ Engine: **Godot 4.7.2 standard**, GDScript, Compatibility renderer. No add-ons, 
 2. Select `project.godot` in the repository root and open the project.
 3. Press **F6** to run the currently open test scene, or **F5** to run the project.
 
-You should see a small blockout yard and storehouse with a supplies door. Walk up to it, aim at it, and press E. Collect the three colored supply blocks on the table; the communal counts should increase once each.
+You should see a small blockout yard and storehouse with a supplies door, plus the approved older civilian sprite to the right of the starting position. He is a static front-only billboard with body collision for art-scale testing; he has no dialogue or job behavior yet. Walk up to it, aim at it, and press E. Collect the three colored supply blocks on the table; the communal counts should increase once each.
 
 ## Controls
 

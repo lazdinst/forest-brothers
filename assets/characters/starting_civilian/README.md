@@ -1,6 +1,6 @@
 # Starting civilian — generation prompts
 
-Status: first visual candidate; owner approval pending. Fictional starting camp resident, no finalized name or biography. Not a complete animated/directional sprite set.
+Status: appearance approved by the owner on 2026-11-01. Fictional starting camp resident, no finalized name or biography. The approved front image is the reference for future variants. Static in-engine scale testing is available; directional views and animation are not complete.
 
 Mode: built-in image generation. No CLI/API fallback used.
 
@@ -28,4 +28,4 @@ Edit the supplied character image into a game-ready illustrated SPRITE CANDIDATE
 
 ## Next validation
 
-Approve or revise the appearance, then test a small sprite size and consistent alignment in Godot before generating directional views or animation. No game integration, NPC labor behavior, collision, or character animation is included by this image alone.
+Appearance is approved. `scenes/characters/starting_civilian.tscn` places the image on an upright Y-axis billboard at approximately 1.7 m tall with a simple body collider. The movement test includes one instance near the spawn. This front-only test always faces the camera; it does not prove directional views, animation, a final reduced texture resolution, or NPC labor behavior. Evaluate scale/readability in first person before generating further frames. The original PNG remains unchanged.

@@ -126,6 +126,14 @@ The owner chose Godot and downloaded the standard Windows build. Its executable 
 
 Verification: Godot import completed; the headless scene integration check passed floor landing, movement, door interaction/traversal, one-shot pickups, and wall collision. A Compatibility-rendered frame on the GTX 1080 was visually inspected. Owner playtesting, final art, multiplayer, missions, saving, and broader gameplay remain pending. The sample pickups deposit directly into a reset-on-run ledger solely to test interactions; final carrying/mission-return rules are unchanged.
 
+## Starting civilian appearance — 2026-11-01
+
+Status: owner-approved visual reference.
+
+The owner approved `assets/characters/starting_civilian/starting_civilian_front_v1.png`: the fictional older civilian in a worn cap, brown patched jacket, grey sweater, dark trousers, and boots. Preserve his identity/outfit when producing directional or animated variants. Name and biography remain open.
+
+A static front-only Y-axis billboard and body collider are placed in the movement scene for first-person scale review. This does not approve a final sprite resolution or establish animation/directional consistency. The original generated PNG is preserved unchanged.
+
 ## Recording future decisions
 
 For each consequential decision, add the date, status, choice, reason, relevant user direction, and any decision it supersedes. Update the concept, roadmap, or technical direction when needed. Do not mark an agent proposal as owner-approved without evidence.

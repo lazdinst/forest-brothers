@@ -1,9 +1,11 @@
-[gd_scene load_steps=26 format=3]
+[gd_scene load_steps=27 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player/first_person_player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/prototype/camp_test.gd" id="2_world"]
 [ext_resource type="Script" path="res://scripts/interactions/door.gd" id="3_door"]
 [ext_resource type="Script" path="res://scripts/interactions/supply_pickup.gd" id="4_pickup"]
+
+[ext_resource type="PackedScene" path="res://scenes/characters/starting_civilian.tscn" id="5_civilian"]
 
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
@@ -77,6 +79,9 @@ shadow_enabled = true
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
 position = Vector3(0, 0.1, 4.3)
+
+[node name="StartingCivilian" parent="." instance=ExtResource("5_civilian")]
+position = Vector3(2.0, 0, 0.3)
 
 [node name="Floor" type="StaticBody3D" parent="."]
 position = Vector3(0, -0.2, -2)
