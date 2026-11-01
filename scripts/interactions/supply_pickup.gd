@@ -10,7 +10,7 @@ var claimed: bool = false
 
 
 func get_prompt() -> String:
-	return "" if claimed else "E  Collect %s" % display_name
+	return "" if claimed else "F  Collect %s" % display_name
 
 
 func interact(_actor: Node) -> void:

@@ -8,7 +8,7 @@ var moving: bool = false
 func get_prompt() -> String:
 	if moving:
 		return ""
-	return "E  Close door" if is_open else "E  Open door"
+	return "F  Close door" if is_open else "F  Open door"
 
 
 func interact(_actor: Node) -> void:

@@ -117,3 +117,12 @@ Keep the root `AGENTS.md` authoritative. Add a nested instruction file only when
 The movement/interaction prototype and a headless integration check exist. `GETTING_STARTED.md` records engine version, import/run/check commands, manual playtest steps, and limitations. No export configuration, final artwork, or multiplayer implementation exists yet.
 
 Use focused tests for important rules such as inventory ownership, duplicate pickup prevention, mission completion, and save restoration. Use running game instances to verify networking and visual playtests for first-person movement, sprite readability, and UI. Record what was actually tested and any limitations.
+
+
+## Local training implementation
+
+The player controller now handles stance, a swept head probe for leaning, and bounded vault/mantle motion with landing-clearance checks. Traversal moves the physical body through short swept segments; it must not teleport through blockers. Course fixtures are authored named dimensions in `scripts/prototype/training_course.gd`.
+
+Weapon state (cartridges, magazine contents, timed actions, dirt/jams) is separate from the CanvasLayer presentation/input adapter and ray-hit targets. The adapter is explicitly local, not future network authority. Hits use world-layer collision and ignore sprite clearance volumes. First-person art uses procedural UI motion; no full-body player model or final ironsight alignment exists. The patrolling civilian is a presentation test, not a job/AI framework.
+
+Regression checks cover round conservation/interruption, scene traversal, roof/lean collision limits, invalid landings, target rays, and walking-frame advancement. Existing pickup/direction/projection checks remain required. See `GETTING_STARTED.md` for commands and limits. A source TODO preserves the deferred close-up sprite problem.

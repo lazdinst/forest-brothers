@@ -44,12 +44,12 @@ func _run() -> void:
 		await _frames(3)
 		_check(world.stock.count(StringName(entry[0])) == 1, "%s pickup must be awarded exactly once" % entry[0])
 	player.camera.rotation.x = 0.0
-	player.position = Vector3(5.3, 0.01, 1.0)
+	player.position = Vector3(19.3, 0.01, 1.0)
 	player.velocity = Vector3.ZERO
 	Input.action_press("move_right")
 	await _frames(35)
 	Input.action_release("move_right")
-	_check(player.position.x < 5.6, "Solid wall must block movement")
+	_check(player.position.x < 19.6, "Solid wall must block movement")
 	if failures.is_empty():
 		print("PASS: floor, movement, door interaction/traversal, three one-shot pickups, wall collision")
 	else:

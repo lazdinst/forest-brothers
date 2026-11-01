@@ -19,7 +19,9 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	var mouse_free := Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and DisplayServer.get_name() != "headless"
 	prompt_label.text = "Click to look around" if mouse_free else player.get_interaction_prompt()
-	status_label.text = "Supplies collected. More camp life comes next." if stock.count(&"food") + stock.count(&"water") + stock.count(&"medicine") == 3 else "Open the storehouse. Bring its supplies into the communal stock."
+	status_label.text = "Left: obstacle course   Far left: walking civilian   Right: firing lane"
+	$HUD/MovementState.text = player.movement_state + (" - " + player.traversal_message if player.traversal_message != "" else "")
+	$HUD/WeaponStatus.text = player.weapon.status_text()
 
 
 func _update_stock() -> void:

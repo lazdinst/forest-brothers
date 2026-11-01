@@ -40,7 +40,60 @@ jump={
 }
 interact={
 "deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":70)]
+}
+
+crouch={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":4194326)]
+}
+lean_left={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":81)]
+}
+lean_right={
+"deadzone": 0.2,
 "events": [Object(InputEventKey,"physical_keycode":69)]
+}
+vault={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":86)]
+}
+reload={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":82)]
+}
+pack_magazine={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":84)]
+}
+clear_jam={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":74)]
+}
+clean_weapon={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":66)]
+}
+dirty_weapon={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":71)]
+}
+inspect_weapon={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":73)]
+}
+reset_position={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":80)]
+}
+fire={
+"deadzone": 0.2,
+"events": [Object(InputEventMouseButton,"button_index":1)]
+}
+aim={
+"deadzone": 0.2,
+"events": [Object(InputEventMouseButton,"button_index":2)]
 }
 
 [rendering]

@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3]
+[gd_scene load_steps=28 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player/first_person_player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/prototype/camp_test.gd" id="2_world"]
@@ -6,6 +6,8 @@
 [ext_resource type="Script" path="res://scripts/interactions/supply_pickup.gd" id="4_pickup"]
 
 [ext_resource type="PackedScene" path="res://scenes/characters/starting_civilian.tscn" id="5_civilian"]
+
+[ext_resource type="Script" path="res://scripts/prototype/training_course.gd" id="6_course"]
 
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
@@ -33,19 +35,19 @@ albedo_color = Color(0.68, 0.65, 0.51, 1)
 
 [sub_resource type="BoxMesh" id="FloorMesh"]
 material = SubResource("GroundMaterial")
-size = Vector3(12, 0.4, 16)
+size = Vector3(40, 0.4, 40)
 [sub_resource type="BoxShape3D" id="FloorShape"]
-size = Vector3(12, 0.4, 16)
+size = Vector3(40, 0.4, 40)
 [sub_resource type="BoxMesh" id="SideMesh"]
 material = SubResource("WallMaterial")
-size = Vector3(0.3, 3.4, 16)
+size = Vector3(0.3, 3.4, 40)
 [sub_resource type="BoxShape3D" id="SideShape"]
-size = Vector3(0.3, 3.4, 16)
+size = Vector3(0.3, 3.4, 40)
 [sub_resource type="BoxMesh" id="EndMesh"]
 material = SubResource("WallMaterial")
-size = Vector3(12, 3.4, 0.3)
+size = Vector3(40, 3.4, 0.3)
 [sub_resource type="BoxShape3D" id="EndShape"]
-size = Vector3(12, 3.4, 0.3)
+size = Vector3(40, 3.4, 0.3)
 [sub_resource type="BoxMesh" id="PartitionMesh"]
 material = SubResource("WallMaterial")
 size = Vector3(5.2, 3.4, 0.25)
@@ -84,32 +86,32 @@ position = Vector3(0, 0.1, 4.3)
 position = Vector3(2.0, 0, 0.3)
 
 [node name="Floor" type="StaticBody3D" parent="."]
-position = Vector3(0, -0.2, -2)
+position = Vector3(0, -0.2, -4)
 [node name="Mesh" type="MeshInstance3D" parent="Floor"]
 mesh = SubResource("FloorMesh")
 [node name="Shape" type="CollisionShape3D" parent="Floor"]
 shape = SubResource("FloorShape")
 
 [node name="LeftWall" type="StaticBody3D" parent="."]
-position = Vector3(-6, 1.7, -2)
+position = Vector3(-20, 1.7, -4)
 [node name="Mesh" type="MeshInstance3D" parent="LeftWall"]
 mesh = SubResource("SideMesh")
 [node name="Shape" type="CollisionShape3D" parent="LeftWall"]
 shape = SubResource("SideShape")
 [node name="RightWall" type="StaticBody3D" parent="."]
-position = Vector3(6, 1.7, -2)
+position = Vector3(20, 1.7, -4)
 [node name="Mesh" type="MeshInstance3D" parent="RightWall"]
 mesh = SubResource("SideMesh")
 [node name="Shape" type="CollisionShape3D" parent="RightWall"]
 shape = SubResource("SideShape")
 [node name="BackWall" type="StaticBody3D" parent="."]
-position = Vector3(0, 1.7, -10)
+position = Vector3(0, 1.7, -24)
 [node name="Mesh" type="MeshInstance3D" parent="BackWall"]
 mesh = SubResource("EndMesh")
 [node name="Shape" type="CollisionShape3D" parent="BackWall"]
 shape = SubResource("EndShape")
 [node name="FrontWall" type="StaticBody3D" parent="."]
-position = Vector3(0, 1.7, 6)
+position = Vector3(0, 1.7, 16)
 [node name="Mesh" type="MeshInstance3D" parent="FrontWall"]
 mesh = SubResource("EndMesh")
 [node name="Shape" type="CollisionShape3D" parent="FrontWall"]
@@ -182,7 +184,11 @@ shape = SubResource("PickupShape")
 material_override = SubResource("MedicineMaterial")
 mesh = SubResource("PickupMesh")
 
+[node name="Course" type="Node3D" parent="."]
+script = ExtResource("6_course")
+
 [node name="HUD" type="CanvasLayer" parent="."]
+layer = 3
 [node name="Title" type="Label" parent="HUD"]
 offset_left = 28.0
 offset_top = 22.0
@@ -193,7 +199,7 @@ text = "FOREST BROTHERS"
 offset_left = 29.0
 offset_top = 55.0
 theme_override_font_sizes/font_size = 16
-text = "FIRST STEPS  /  movement & interaction test"
+text = "FIELD TEST  /  traversal, animation & firing lane"
 [node name="Stock" type="Label" parent="HUD"]
 anchors_preset = 1
 anchor_left = 1.0
@@ -230,12 +236,26 @@ theme_override_font_sizes/font_size = 22
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 28.0
-offset_top = -85.0
+offset_top = -108.0
 theme_override_font_sizes/font_size = 18
 [node name="Controls" type="Label" parent="HUD"]
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 28.0
-offset_top = -48.0
+offset_top = -72.0
 theme_override_font_sizes/font_size = 16
-text = "WASD  Move    Mouse  Look    Shift  Run    Space  Jump    E  Interact    Esc  Release mouse"
+text = "WASD Move   Shift Run   Ctrl Crouch   Space Jump   V Vault/climb   Q/E Lean   F Interact   P Return to start\nLMB Fire   RMB Aim   R Swap magazine   Hold T Pack spare   J Clear jam   B Clean   G Dirty (test)   I Inspect"
+
+[node name="MovementState" type="Label" parent="HUD"]
+offset_left = 28.0
+offset_top = 95.0
+theme_override_font_sizes/font_size = 18
+
+[node name="WeaponStatus" type="Label" parent="HUD"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -650.0
+offset_right = -28.0
+offset_top = 95.0
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 2

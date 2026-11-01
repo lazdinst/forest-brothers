@@ -1,57 +1,78 @@
-# Open and play the first prototype
+# Open and play the prototype
 
-Engine: **Godot 4.7.2 standard**, GDScript, Compatibility renderer. No add-ons, paid assets, .NET SDK, or export templates are needed to run it in the editor.
+Engine: **Godot 4.7.2 standard**, GDScript, Compatibility renderer. No add-ons, paid assets, .NET SDK, or export templates are needed to run in the editor.
 
-## Open the project
+## Open and play
 
-1. Launch Godot. In the Project Manager, choose **Import**.
-2. Select `project.godot` in the repository root and open the project.
-3. Press **F6** to run the currently open test scene, or **F5** to run the project.
+Import the repository's `project.godot` in Godot, then press **F5**. Stop an already-running version with **F8** before restarting.
 
-You should see a small blockout yard and storehouse with a supplies door, plus the approved older civilian sprite to the right of the starting position. Walk around him to test front, side, and back idle views. The other side currently mirrors the profile, including its asymmetric patches. He has body collision but no walking animation, dialogue, or job behavior yet. Walk up to it, aim at it, and press E. Collect the three colored supply blocks on the table; the communal counts should increase once each.
+The test yard now has three areas: the obstacle course on the left, a walking civilian at the far left, and a firing lane on the right. The original door, three pickups, communal stock display, and standing civilian remain. **Interaction moved from E to F** to make room for leaning.
 
 ## Controls
 
 | Input | Action |
 |---|---|
-| W A S D | Move |
-| Mouse | Look |
-| Shift | Run |
+| WASD / Mouse | Move / look |
+| Shift | Run forward |
 | Space | Jump |
-| E | Open/close the aimed door or collect an aimed supply |
-| Escape | Release the mouse and stop movement input |
-| Click | Capture the mouse again |
-| F8 in the editor | Stop the running project |
+| Hold Ctrl | Crouch; stay crouched if the ceiling blocks standing |
+| Q / E | Hold to lean left / right; head collision limits the lean |
+| V | Vault a marked low barrier or climb the low platform when close and grounded |
+| F | Open/close the aimed door or collect an aimed supply |
+| Left mouse | Fire one shot |
+| Hold right mouse | Prototype aim: narrower FOV and slower movement |
+| R | Swap the loaded and spare magazines, retaining their contents |
+| Hold T | Transfer loose cartridges into the spare magazine, one at a time |
+| J | Clear a jam |
+| B | Clean the rifle (free test action) |
+| G | Deliberately dirty the rifle for jam testing |
+| I | Timed inspection placeholder; quantities currently stay visible in the HUD |
+| P | Return to the starting position if stuck; does not refill ammunition |
+| Escape / Click | Release mouse and stop movement input / capture again |
+| F8 in editor | Stop the running project |
 
-Movement values, input bindings, camera height/FOV, and interaction distance are prototype choices, not final balance. The camera now uses a 60-degree vertical FOV (about 92 degrees horizontally at 16:9), reduced from 80 to soften wide-angle stretching. The character stays upright and only turns horizontally as you walk around him. Looking up/down does not move or rescale the sprite. A player-only standing-clearance volume prevents walking into the extreme close-up range; normal perspective remains. Collision layers: world/body = 1, player = 2, player clearance = 3 (bit value 4). Interaction rays ignore clearance and hit the actual world/body. Edit movement exports on the Player scene and bindings in Project Settings > Input Map.
+## Suggested playtest
 
-## What exists
+1. Turn left. Jump the short hurdle, use V at the next barrier, then climb onto the platform. The tall barrier should refuse climbing. Move close enough for the chest-height probe to find a marked obstacle; V is not free climbing.
+2. Crouch through the low passage. Release Ctrl inside; you should stand only after leaving its roof.
+3. At the corner walls, hold Q/E. The view should move sideways and tilt, stopping before the camera enters the wall.
+4. Find the patrolling older civilian at the far left. Walk around him to inspect front, mirrored side, and back walking frames. The original civilian remains idle.
+5. At the right-hand firing lane, shoot the three targets. Hits flash orange and the HUD counts hits/shots. Start with a ten-round magazine, empty spare, and thirty loose rounds. Hold T to fill the spare, then R to swap. Try G, fire until a jam occurs, clear with J, and clean with B. Jam occurrence is random; G increases risk but does not force a jam.
+6. Check the old door and three supplies with F; each communal count should increase once.
 
-- A reusable local first-person character, collision, gravity, mouse look, and a short interaction ray.
-- An animated door with collision and three one-shot pickups.
-- A scene-owned communal stock ledger and readable counts.
-- A headless integration check exercising movement, collisions, door traversal, and duplicate-pickup prevention.
+## Current limits and known TODO
 
-The geometry and colors are placeholders for testing. No final art, sound, multiplayer, inventory/carrying system, missions, construction, medicine, or saving is implemented. Collecting these three items deposits directly into the test ledger; it is not the final mission-to-camp logistics rule. Counts reset when the project restarts.
+These are local training fixtures, not campaign equipment. Quantities, timings, controls, weapon selection, and movement speeds are reversible prototype choices. Counts and ammunition reset on restart. The weapon rules live separately from the input/presentation controller; they have no multiplayer authority or communal-inventory integration yet.
 
-## Files to explore
+The first-person character has generated hands/rifle artwork with procedural bob, recoil, lean, and action lowering. Reloading, inspection, and cleaning use timed lowering rather than correct hand/magazine animation. Aiming is a temporary zoom, not calibrated iron sights. Shots are immediate camera rays with placeholder tracers, flash, and synthesized sound; no ballistics, damage, enemies, friendly fire, or medicine exists yet. Full-body player animation is not implemented.
 
-- `scenes/prototype/camp_test.tscn`: the editable test environment and HUD.
-- `scenes/player/first_person_player.tscn`: player collider, camera, and interaction ray.
-- `scripts/player/first_person_player.gd`: local movement/input and interaction targeting.
-- `scripts/interactions/`: door and pickup behavior.
-- `scripts/state/camp_stock.gd`: session-owned sample supply counts.
+The civilian uses candidate four-frame walking atlases, not a finished animation set. Identity, stride, foot alignment, mirrored asymmetric details, and transitions need owner review and cleanup. Original generation outputs and prompts are preserved in `assets/TRAINING_ART_PROMPTS.md`.
+
+**Deferred close-up sprite issue:** source TODO in `scripts/characters/directional_idle.gd`. The civilian stays upright and turns only horizontally toward viewer position. A temporary player-only clearance stops ordinary approach about 1.2 m from the center. Looking alone never changes sprite scale or camera FOV; holding aim intentionally changes FOV. Near-field proportions, elevated views, and final hitboxes still need a proper solution. Collision bit values: world/body 1, player 2, clearance 4; interaction and weapon rays ignore clearance.
+
+No missions, saving, construction, jobs, combat AI, or multiplayer are implemented. The yard geometry, test sound, and new artwork remain placeholders. Three supply blocks deposit directly into a session ledger, not the future mission-return inventory.
+
+## Main files
+
+- `scenes/prototype/camp_test.tscn`: yard and HUD.
+- `scripts/prototype/training_course.gd`: named course fixtures and target positions.
+- `scripts/player/first_person_player.gd`: input, stance, collision-limited lean, swept traversal.
+- `scripts/characters/directional_idle.gd`: facing, candidate walk frames, demo patrol, close-up TODO.
+- `scripts/weapons/prototype_weapon_state.gd`: physical magazine/round and maintenance rules.
+- `scripts/weapons/prototype_weapon.gd`: local input adapter, ray hits, art and sound presentation.
 
 ## Command-line checks
 
-Run these from the repository, substituting your actual Godot executable path for `<godot>`:
+From the repository, replace `<godot>` with the installed executable:
 
 ```text
 <godot> --headless --path . --import
 <godot> --headless --path . --script res://tests/prototype_smoke.gd
 <godot> --headless --path . --script res://tests/civilian_views_smoke.gd
 <godot> --headless --path . --script res://tests/civilian_projection_smoke.gd
+<godot> --headless --path . --script res://tests/weapon_state_smoke.gd
+<godot> --headless --fixed-fps 60 --path . --script res://tests/training_smoke.gd
 <godot> --path .
 ```
 
-The integration check runs the real scene, then exits with a nonzero code if a check fails. Headless checks do not verify graphics or game feel; use the editor for visual/play testing. Generated `.godot/` caches stay ignored. Commit `.gd.uid` files generated alongside scripts so Godot can preserve resource identities.
+Checks exit nonzero on assertion failures. They exercise real scene collisions, traversal, aimed target hits, walking frame changes, and ammunition conservation. Headless checks do not establish game feel, animation quality, or multiplayer support. GPU-rendered course/range/walking frames were inspected on the GTX 1080; owner playtesting remains required for this increment. Keep generated `.godot/` caches ignored and commit script `.gd.uid` files.

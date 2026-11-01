@@ -4,7 +4,7 @@
 
 Venture into nearby settlements and woodland, recover supplies, help local people, and bring what you can back to those depending on you. Play alone or in co-op with up to four players. Teammates can treat and revive you during a limited incapacitation window; mission death sends you back to camp while survivors continue. Combat is dangerous; food, medicine, and relationships matter alongside ammunition.
 
-The project now has a **small local movement/interaction prototype** in Godot 4.7.2 standard (Compatibility renderer). Import `project.godot` and press **F5**. Walk with WASD, look with the mouse, open the door with E, and collect the three supplies. See [Getting Started](docs/GETTING_STARTED.md) for controls, checks, and current limitations.
+The project now has a **local movement, animation, and firing-range prototype** in Godot 4.7.2 standard (Compatibility renderer). Import `project.godot` and press **F5**. Walk with WASD, look with the mouse, interact with F, and explore the obstacle course and firing lane. Ctrl crouches, Q/E lean, V vaults/climbs, and the mouse fires/aims. See [Getting Started](docs/GETTING_STARTED.md) for controls, checks, and current limitations.
 
 ## Project context
 

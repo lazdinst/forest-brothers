@@ -1,6 +1,6 @@
 # Development roadmap
 
-This is a proposed order for a first-time developer and early multiplayer validation. The minimal engine scaffold and milestone 1 mechanics now exist; milestone 1 awaits owner playtesting. The art feasibility gate and all multiplayer/campaign milestones remain pending.
+This is a proposed order for a first-time developer and early multiplayer validation. The owner has playtested milestone 1 movement, the door, and all three supplies. At the owner's request, the current increment is a local animation/movement/weapon training area before the multiplayer milestone. The art feasibility gate and all multiplayer/campaign milestones remain pending.
 
 ## 0 — Agree on the first experiment
 
@@ -16,11 +16,19 @@ Done when: the owner approves the visual direction, transparent sprites align an
 
 ## 1 — A room you can inhabit
 
-Status: implemented as a placeholder yard/storehouse scene; automated scene checks and a rendered-frame inspection passed. Owner movement/interaction playtesting remains pending. The engine scaffold supports the still-pending art feasibility work; it does not settle the final visual style.
+Status: implemented as a placeholder yard/storehouse scene; automated scene checks and a rendered-frame inspection passed. Owner movement/interaction playtesting passed (door and all three supplies). The engine scaffold supports the still-pending art feasibility work; it does not settle the final visual style.
 
 Create the minimal engine project. Add first-person movement, mouse look, collision, a door, and a single pickup in a tiny test area. Use placeholders.
 
 Done when: the owner can launch it, move reliably, open the door, collect the item, and follow documented run instructions. It works offline.
+
+## 1A — Movement, animation, and weapon training area
+
+Status: implemented locally; automated traversal/ammunition/hit checks and GPU-rendered views inspected. Owner playtesting and animation cleanup remain pending. This increment is the owner's current priority; multiplayer remains the next foundational milestone before campaign expansion.
+
+Includes crouching, collision-limited leaning, low-obstacle vaulting/climbing, a hurdle/tunnel/corner course, a patrolling civilian with candidate four-frame directional walk sheets, first-person hands/rifle motion, and three targets. The test rifle separates loose rounds and two magazines, timed manual refilling/reloading, maintenance-dependent jams, clearing, and cleaning. See `GETTING_STARTED.md` for controls and limitations.
+
+Done when: the owner can navigate the course, judge the walking and first-person feedback, hit targets, refill/swap magazines without creating ammunition, and understand jams. Candidate art is not final approval. Near-field character perspective is explicitly deferred with a source TODO; this increment does not prove full-body player animation, combat damage, medicine, or co-op.
 
 ## 2 — Two players, one shared world
 

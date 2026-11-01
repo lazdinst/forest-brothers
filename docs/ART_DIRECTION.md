@@ -42,3 +42,10 @@ The production guide is not authorization to purchase assets or use unlicensed r
 - Upgrade-stage visual language, plan previews, and construction progress.
 
 Keep game text, resource counts, and interface labels as editable UI rather than embedding them into generated images. Communal quantities and construction requirements must remain easy to read.
+
+
+## Current animation training candidates
+
+The local yard includes a separate walking demo using four-frame 2×2 front, profile, and back atlases generated against the approved older civilian. Profile artwork mirrors for the opposite side. The original idle civilian and source artwork remain. Atlas cells are selected in Godot without destructive image processing. Check stride, baseline, identity, and transitions before accepting these as production animation; a physics check that frames change cannot establish visual quality.
+
+A generated transparent first-person wood/steel rifle and hands image now tests framing, bob, recoil, lean, and timed action lowering. It is not a complete reload/aim animation set or approved final weapon choice. Original PNGs and exact prompts are preserved in `assets/TRAINING_ART_PROMPTS.md`. Candidate art was inspected in GPU-rendered course, range, and walking views; motion quality still requires owner playtesting. Camp/planning-view art remains pending.

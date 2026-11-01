@@ -1,6 +1,6 @@
 # Combat design
 
-Status: approved behavior from the owner's combat discussion on 2026-11-01. Detailed interaction design, numerical tuning, and weapon selection remain open. No gameplay is implemented.
+Status: approved behavior from the owner's combat discussion on 2026-11-01. Detailed interaction design, numerical tuning, and weapon selection remain open. A local training rifle now tests cartridges, retained magazines, manual loading, dirt/jams, and targets. AI, damage, friendly fire, medicine, and multiplayer are not implemented. See `GETTING_STARTED.md`; test timings and the sample rifle do not settle final balance or the weapon roster.
 
 ## Perception and searching — confirmed
 

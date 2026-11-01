@@ -163,3 +163,12 @@ The previous equal-projected-width test missed the reported behavior. Its replac
 ## Recording future decisions
 
 For each consequential decision, add the date, status, choice, reason, relevant user direction, and any decision it supersedes. Update the concept, roadmap, or technical direction when needed. Do not mark an agent proposal as owner-approved without evidence.
+
+
+## Local training increment — 2026-11-01
+
+Owner-directed scope: defer the accepted close-up sprite workaround with a code TODO, then prioritize viewed-character animation, first-person feedback, more movement controls, obstacle tests, and weapon tests. This is a local learning/playtest increment before resuming early multiplayer validation.
+
+Implemented prototype choices: Ctrl crouch, Q/E lean, F interaction, V low vault/mantle; candidate front/side/back four-frame civilian walk cycles with a demo patrol; generated first-person rifle/hands plus procedural movement/recoil/action lowering. The local range uses two ten-round magazines, thirty spare cartridges, manual cartridge transfers, retained partial magazines, timed reload/clear/clean, dirt-dependent random jams, and ray-hit targets. These numbers and controls are not approved final tuning. The SVT-40-inspired art is not an approved historical loadout; provenance/research and generation prompts are in `assets/TRAINING_ART_PROMPTS.md`.
+
+Deferred: sprite near-field presentation/clearance, calibrated iron sights, actual hand/magazine reload animations, full-body player animation, full inventory authority, damage/medicine, AI, networking, and saving. The new generated art is a candidate for owner review. Tests establish local mechanics, not production animation or co-op readiness.
