@@ -31,10 +31,14 @@ func _run() -> void:
 		root.size = size
 		await _frames(3)
 		_check(player.weapon.sight_screen_position().distance_to(root.get_visible_rect().size * 0.5) < 0.1, "Front sight must align with camera center at %s" % size)
-	Input.action_press("lean_right")
-	await _frames(30)
-	_check(player.weapon.sight_screen_position().distance_to(root.get_visible_rect().size * 0.5) < 0.1, "Leaning must rotate around the sight instead of displacing it")
-	Input.action_release("lean_right")
+	for action in ["lean_left", "lean_right"]:
+		Input.action_press(action)
+		await _frames(30)
+		var sprite_up: Vector2 = player.weapon._hands.get_global_transform().basis_xform(Vector2.UP)
+		_check(sprite_up.x * player.camera.position.x > 0.01, "ADS sprite top must lean toward the same side as the camera for %s" % action)
+		_check(player.weapon.sight_screen_position().distance_to(root.get_visible_rect().size * 0.5) < 0.1, "Leaning must rotate around the sight instead of displacing it")
+		Input.action_release(action)
+		await _frames(20)
 	await _frames(30)
 	player.camera.look_at(world.get_node("Course/Target2").global_position)
 	player.weapon.rng.seed = 12345
@@ -49,6 +53,13 @@ func _run() -> void:
 	Input.action_release("aim")
 	await _frames(20)
 	_check(player.weapon.aim_fraction == 0.0 and world.get_node("HUD/Crosshair").visible, "Release RMB returns to hip view and crosshair")
+	for action in ["lean_left", "lean_right"]:
+		Input.action_press(action)
+		await _frames(30)
+		var sprite_up: Vector2 = player.weapon._hands.get_global_transform().basis_xform(Vector2.UP)
+		_check(sprite_up.x * player.camera.position.x > 0.01, "Hip sprite top must lean toward the same side as the camera for %s" % action)
+		Input.action_release(action)
+		await _frames(20)
 	for failure in failures:
 		push_error(failure)
 	if failures.is_empty():

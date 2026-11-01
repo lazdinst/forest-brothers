@@ -174,7 +174,8 @@ func _process(delta: float) -> void:
 	var transition_dip := sin(aim_fraction * PI) * 85.0
 	_hands.position += (bob * (1.0 - aim_fraction) + Vector2(_player.camera.position.x * 35.0 * (1.0 - aim_fraction), dip + transition_dip + _kick * 22.0)) * scale_factor
 	_hands.pivot_offset = _hands.size * (SIGHT_ANCHOR if aimed_view else Vector2(0.5, 0.5))
-	_hands.rotation = _player.camera.rotation.z + sin(_phase * 0.5) * minf(speed, 1.0) * 0.006 * (1.0 - aim_fraction)
+	# 3D roll is counterclockwise; CanvasItem rotation is clockwise (Y points down).
+	_hands.rotation = -_player.camera.rotation.z + sin(_phase * 0.5) * minf(speed, 1.0) * 0.006 * (1.0 - aim_fraction)
 	_flash.size = Vector2.ONE * (120.0 if aimed_view else 150.0) * scale_factor
 	_flash.position = muzzle_screen_position() - _flash.size * 0.5
 	_flash.pivot_offset = _flash.size * 0.5
