@@ -34,14 +34,26 @@ Steam invitations, lobbies, and networking transport integration are later work.
 Confirmed rules and proposed treatment design are in [missions and medicine](MISSIONS_AND_MEDICINE.md).
 
 - Keep session membership, per-player mission participation, character condition, and group mission status separate. One character dying does not end the mission or disconnect that player.
-- Design for players at camp and in an active mission at the same time. Whether camp is an interactive map or a preparation interface remains open. Do not use a global scene transition that pulls survivors back to camp.
+- Support an interactive camp and an active mission concurrently within the same session. Camp-side players can build, cook, collect water, organize equipment, and repair weapons while survivors continue. Do not use a global scene transition that pulls survivors back to camp. Whether these are separate loaded maps or another layout is not chosen.
 - The host remains authoritative even when their own character is incapacitated, dead, or at camp. Actual host disconnection remains a separate session-lifetime limitation.
 - Represent wounds separately from consciousness/mobility. Revived does not imply all bleeding, fractures, pain, or blood loss are cleared.
 - Authoritative logic owns bleed-out deadlines, treatment completion, resource consumption, death, and mission results. Clients display those outcomes; they do not independently decide death from a local timer.
 - Treatment actions must validate the target, active mission, item availability, range, and current condition. Interruption, duplicated requests, and concurrent treatment must not duplicate items, revive a dead character, or apply a completed treatment twice.
 - Resolve the race between death and treatment completion explicitly, and test it. Disconnecting must not silently reset wounds or revive timers.
-- A player's death resolves only that player's participation. Group failure, rewards, mission re-entry, and total-incapacitation rules remain explicit design questions.
+- A player's death resolves only their participation and locks them out of that mission ID. Solo/all-incapacitated cases resolve as mission death. Keep reconnect identity and mission outcomes authoritative; group rewards and crash recovery remain unresolved.
 - Validate host-character death with survivors continuing, not only a non-host dying. Test the intended four-player capacity; early two-player tests are insufficient to claim full co-op support.
+
+## Concurrent camp activity
+
+See [camp and progression](CAMP_AND_PROGRESSION.md) for confirmed scope and proposals.
+
+- Persist built structures, storage contents, water/food stocks, weapon condition, and approved camp changes with stable identities when implemented.
+- Camp work must remain authoritative while mission actors are active. Validate shared-resource reservations and completion so two players cannot consume or receive the same materials twice.
+- Keep the death lockout independent from player location or equipment: preparing at camp must not enable same-mission deployment.
+- Preserve carried inventory on the mission body when returning a dead player to camp; never duplicate that inventory onto the returned character. Ownership on recovery is unresolved.
+- Track post-revival penalties explicitly. Timer units, offline progression, treatment acceleration, and which camp actions injuries affect must be decided before implementing those behaviors.
+- Construction placement, supported terrain changes, persistence size, and resource permissions require deliberate scope choices. Trench digging does not itself require arbitrary terrain deformation.
+- Camp and mission time need a coherent shared rule; do not implement a global sleep/time skip that advances or disrupts an active mission without an approved design.
 
 ## Content and persistence
 

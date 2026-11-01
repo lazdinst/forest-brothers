@@ -9,6 +9,10 @@ Status: confirmed mission rules with proposed medical mechanics. This is game de
 - Surviving friends can continue; one death does not fail or end the mission for everyone.
 - Incapacitation includes a limited bleed-out window during which teammates can revive the player.
 - There should be multiple meaningful medical resources, including treatment for light/heavy bleeding, broken limbs, and morphine, fitting the historical period.
+- Starting rule: carried equipment stays on the body after death for teammate recovery; camp-stored supplies remain safe. Recovery ownership and body persistence are undecided.
+- Dead players cannot rejoin that same mission. They can organize equipment, build, dig trenches, cook, collect water, repair weapons, and perform other confirmed camp tasks while friends continue.
+- Solo incapacitation or all remaining mission players becoming incapacitated resolves as mission death and return to camp. No AI or self-revival exception is approved.
+- Revival preserves injuries and reduced capability for a duration. Timings, penalty strength, and treatment interactions remain undecided.
 
 These are mission-level death rules, not a confirmed permanent character-death system. Returning to camp is a gameplay rule; its narrative explanation is unresolved.
 
@@ -16,7 +20,7 @@ These are mission-level death rules, not a confirmed permanent character-death s
 
 `At camp -> On mission -> Incapacitated -> Revived on mission OR Dead for this mission -> At camp`
 
-A successful return also leads from mission to camp. Revived characters may still be injured and may be incapacitated again. Death is final for that participation; a late medical action cannot reverse it. Whether a player can begin a new participation in the same mission is unresolved.
+A successful return also leads from mission to camp. Revived characters retain injuries and temporarily reduced capability and may be incapacitated again. Death is final for that mission; a late medical action cannot reverse it, and the player cannot re-enter until a later outing. Track mission identity so reconnecting cannot bypass this rule.
 
 Separate the player's condition from the group's mission status. Mission completion can still be achieved by survivors after another player has returned to camp. Do not automatically launch a new group mission or reset the current one when an individual returns.
 
@@ -29,7 +33,7 @@ Make medical choices understandable: identify the problem, use an appropriate re
 Distinguish three outcomes:
 1. **Stabilization:** control an immediate deterioration, such as bleeding.
 2. **Revival:** regain the ability to participate, once the game's rescue conditions are met.
-3. **Recovery:** restore longer-term condition, potentially requiring camp care.
+3. **Recovery:** restore capability over a duration while injuries persist after revival. Camp care, treatment acceleration, and timer behavior remain proposals to settle.
 
 These need not be three separate interaction buttons. The important rule is that standing up does not silently cure every injury. Exact prerequisites and whether some conditions can be combined into one treatment action are open.
 
@@ -69,17 +73,17 @@ No specific tourniquet design, antibiotic access, or field blood-replacement sys
 - Two or more simultaneous casualties must resolve per player. Do not use one global dead/downed flag.
 - Test treatment interrupted by movement, damage, disconnect, target death, and resource loss. Decide which events actually cancel it before implementing that behavior.
 - Test four participants, including one at camp while others remain on mission, and two rescuers attempting to treat the same casualty.
-- Group rewards, carried loot, abandoned equipment, and all-player incapacitation/death need explicit rules. Do not award or delete resources speculatively.
+- Preserve carried equipment on a recoverable body under the starting rule; keep camp storage safe. Resolve solo/all-incapacitated players as mission deaths. Group rewards, body lifetime, recovered-item ownership, and recovery timing still need explicit rules. Do not invent transfers or rewards.
 
 ## Open design questions
 
 1. How long is the rescue window, and can stabilization extend or pause it?
 2. Which injuries cause incapacitation, and can any damage bypass the rescue window?
-3. What conditions and supplies are required to revive, and what injuries remain afterward?
-4. What happens in solo play or when all remaining players are incapacitated?
-5. What equipment is lost on death, and can teammates recover it?
-6. Can a player return to the same active mission after dying, or must they wait for the next outing?
-7. What can a returned player do at camp while friends continue? Is spectating optional?
+3. What conditions and supplies are required to revive, and how long do preserved injuries and reduced capability last?
+4. How are simultaneous casualties resolved consistently, given that solo/all-incapacitated outcomes are confirmed as mission death?
+5. Who owns recovered gear, how long do bodies remain, and what happens to uncollected gear when the mission ends?
+6. How should reconnecting and saved mission results preserve the confirmed same-mission death lockout?
+7. How do injury penalties affect the confirmed camp activities? Is optional spectating also desirable?
 8. What recovery, cost, or delay applies at camp, and how is return after death explained?
 9. How do mission completion and rewards affect players who died earlier?
 10. Which exact historical year and sources establish the medical item list and packaging?

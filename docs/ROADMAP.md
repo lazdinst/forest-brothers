@@ -24,7 +24,7 @@ Done when: two running instances observe the same world; simultaneous pickup att
 
 Before adding a broad medical inventory, create a minimal playable state flow for injury, incapacitation, teammate treatment during a finite window, mission death, and return to camp. The full medical range is the product direction; this milestone proves the underlying behavior with placeholders.
 
-Done when: a teammate can revive a downed player before expiry; expiry sends only that player to camp; survivors continue; host-character death also leaves survivors playing. Both camp-side and mission-side players stay connected. Interrupted/concurrent treatments and expiry at treatment completion have a defined, consistent result without duplicate item use. Solo incapacitation and all-player casualty rules must be agreed before those cases are considered complete.
+Done when: a teammate can revive a downed player before expiry; expiry sends only that player to camp; survivors continue; host-character death also leaves survivors playing. Both camp-side and mission-side players stay connected. Interrupted/concurrent treatments and expiry at treatment completion have a defined, consistent result without duplicate item use. Solo/all-incapacitated cases resolve as mission death. Verify that dead players cannot rejoin the same mission, their carried equipment remains recoverable on the body, and camp-stored supplies remain safe. Revival must preserve injuries and temporary capability penalties; agree on placeholder balance values before implementation.
 
 ## 3 — One meaningful outing
 
@@ -32,9 +32,15 @@ Build the compact forest/camp/farmhouse slice, a simple objective, one threat, a
 
 Done when: the mission can be completed or failed in solo and co-op, supplies have a visible purpose, individual death leaves surviving teammates able to finish, and a playtester can understand the objective without coaching. Exercise all four player slots before expanding content.
 
+## 3A — Useful work at camp
+
+Prove one minimal camp activity while another player remains on mission: for example, collect water and cook a simple meal, or use a storage station and repair a weapon. Add a small placeable functional structure and a bounded trench interaction in a later increment of this milestone; do not begin with a full terrain system.
+
+Done when: a returned player can complete the chosen camp task without interrupting survivors; costs/results are shared consistently; injuries have the agreed effect; mission lockout still holds. A separate construction increment must demonstrate validated placement, persistent structure state, and the chosen trench representation before broad building content is added. This milestone covers a proof of camp work, not the entire promised camp feature set.
+
 ## 4 — A campaign that remembers
 
-Implement the agreed save ownership and failure rules. Persist the relevant camp state, inventory, and mission result.
+Implement the agreed save ownership and failure rules. Persist the relevant camp state, inventory, and mission result, including built structures, station/storage state, recoverable gear rules, and per-player mission death lockouts where an active mission can be resumed.
 
 Done when: completing a mission, quitting, and loading restores the expected state; invalid or incompatible saves fail clearly without silently destroying progress.
 
@@ -46,6 +52,6 @@ Done when: the owner can assess whether the slice delivers tension, immersion, a
 
 ## 6 — Expand from evidence
 
-Choose additional locations, tasks, resources, residents, and systems based on playtest findings. Revisit scope before adding AI squadmates, building, vehicles, or a large world.
+Choose additional locations, tasks, resources, residents, and systems based on playtest findings. Expand the confirmed camp building, trench, food, water, and maintenance systems from the small camp proof. Revisit scope before adding AI squadmates, vehicles, or a large world; these remain unapproved/deferred.
 
 A Steam release plan follows a convincing slice: store materials, licensing review, packaging, onboarding, and release testing. No release date is committed.

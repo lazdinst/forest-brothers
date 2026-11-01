@@ -7,6 +7,7 @@ Before proposing or implementing substantial work, read:
 2. `docs/DECISIONS.md`
 3. `docs/ROADMAP.md`
 4. `docs/TECHNICAL_DIRECTION.md` when changing code or technical design.
+5. `docs/MISSIONS_AND_MEDICINE.md` and `docs/CAMP_AND_PROGRESSION.md` when changing their systems.
 
 The user's current instructions take precedence. This file applies throughout the repository; nested `AGENTS.md` files add guidance for their directories.
 
@@ -22,6 +23,9 @@ Preserve these user requirements:
 - Support solo play and cooperative missions with a maximum of four players.
 - Death ends only that player's mission participation and returns them to camp; surviving teammates continue. Host character death must not end the session.
 - Include a limited incapacitation/bleed-out window for teammate revival, distinct injury treatments, light/heavy bleeding, fractures, and period-appropriate medicines including morphine.
+- On mission death, carried equipment stays on the body for teammates to recover; camp-stored supplies remain safe under this starting rule. Dead players cannot rejoin that mission.
+- Solo incapacitation and total group incapacitation resolve as mission death. Revival preserves injuries and temporarily reduced capability; exact durations remain open.
+- Camp is an interactive place: organize equipment, build structures, dig trenches, cook, collect water, store food, repair weapons, and gather/organize ammunition. Returned players can work there while friends continue a mission. See `docs/CAMP_AND_PROGRESSION.md`.
 - Keep the repository private.
 
 Four-player maximum co-op and individual mission death are confirmed. Do not treat proposed medical item effects, numerical balance, or a proposed engine as approved requirements. Check the decision log and `docs/MISSIONS_AND_MEDICINE.md` for their status.

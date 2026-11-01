@@ -16,7 +16,7 @@ The owner initially considered a mercenary role, then proposed a Forest Brothers
 - Feel vulnerable: encounters are dangerous, resources limited, and preparation matters.
 - Care about returning with food or medicine because people at camp need them.
 - Make meaningful choices about what to carry, whom to help, and when to return.
-- Build familiarity with a small place and its people over repeated outings.
+- Build familiarity with a small place and its people over repeated outings; develop a hands-on camp with structures, trenches, water, food storage, cooking, and weapon maintenance.
 - Share that experience in co-op with a maximum of four players; solo play remains important.
 
 Tarkov is a reference for immersion, tension, and consequences. This game is not an extraction shooter: the proposed campaign revolves around the needs of a continuing resistance camp, local relationships, and lasting world state. Mission outings from camp and individual return to camp after death are confirmed; detailed map transitions remain undecided. Surviving teammates continue their mission.
@@ -27,7 +27,7 @@ Tarkov is a reference for immersion, tension, and consequences. This game is not
 2. Travel through a compact area of woodland and rural settlements.
 3. Explore, gather resources, help locals, and decide whether to engage or avoid threats.
 4. Return with what you recovered, living with the cost of the journey. If incapacitated, teammates have a limited opportunity to revive you; if you die, you return to camp while they continue.
-5. Apply supplies and mission outcomes to the camp; choose what to attempt next.
+5. Use supplies to sustain and develop camp: organize equipment, build, dig trenches, collect water, cook, store food, repair weapons, and gather ammunition. Players who died can work at camp while survivors continue. They cannot rejoin that same mission.
 
 ## Design pillars
 
@@ -35,7 +35,7 @@ Tarkov is a reference for immersion, tension, and consequences. This game is not
 Food, medicine, and ammunition support survival and specific human needs. Avoid making every object valuable only because it can be sold.
 
 ### Danger with understandable consequences
-The owner wants punishing play. Threats and consequences should be legible enough that players can learn. Individual mission death returns the player to camp, not a group-wide restart. Incapacitation allows a limited teammate revival window. Distinct medical resources address light/heavy bleeding, fractures, and pain with period-appropriate presentation. Exact balance, equipment loss, and recovery rules remain open. See [missions and medicine](MISSIONS_AND_MEDICINE.md).
+The owner wants punishing play. Threats and consequences should be legible enough that players can learn. Individual mission death returns the player to camp, not a group-wide restart. Incapacitation allows a limited teammate revival window. Distinct medical resources address light/heavy bleeding, fractures, and pain with period-appropriate presentation. The starting rule leaves carried equipment on the body for teammate recovery and protects camp-stored supplies. Solo or total-group incapacitation resolves as mission death. Revival preserves injuries and reduced capability for a duration; exact balance and recovery remain open. See [missions and medicine](MISSIONS_AND_MEDICINE.md).
 
 ### Latvia shapes the world
 Landscape, architecture, language, objects, and lived experience should establish place. Research these details rather than relying on a generic Eastern European visual shorthand.
@@ -45,6 +45,9 @@ Begin with a compact playable location and a few interacting systems. Scale by a
 
 ### Cooperation belongs in the foundation
 Support solo play and co-op with a maximum of four players. A player returning to camp after death must not interrupt teammates still on a mission. A host-owned campaign is the proposed initial format; competitive PvP is not approved.
+
+### Camp is a place to play
+Hands-on camp life is confirmed product scope, with Valheim as the owner's reference for building and productive activities. Wells/water infrastructure, food storage, cooking facilities, equipment organization, trenches, and weapon repair support preparation and give returned players useful work. Specific structures and progression rules are detailed in [camp and progression](CAMP_AND_PROGRESSION.md). Larger construction systems follow a minimal proof, rather than blocking the first playable mission.
 
 ## Visual and audio direction
 
@@ -63,7 +66,7 @@ Sources to begin research:
 - [Partisan / guerrilla bunker](https://militaryheritagetourism.info/en/military/topics/view/99?lang=en)
 - [Museum of the Occupation of Latvia](https://okupacijasmuzejs.lv/en)
 
-Proposed approach: fictional characters and locations within a researched historical setting. Exact year, region, realism level, and treatment of historical events need owner input. A concealed bunker with a few shelters is a suggested starting hideout; the owner's broader forest village idea remains available for discussion.
+Proposed approach: fictional characters and locations within a researched historical setting. Exact year, region, realism level, and treatment of historical events need owner input. A concealed bunker with a few shelters remains a proposed starting hideout; the owner has confirmed developing camp through functional structures and hands-on work. How large or visible the forest settlement becomes remains open.
 
 ## First playable slice — proposed
 
@@ -88,7 +91,7 @@ Large open worlds, competitive PvP, AI squad command, complex construction, vehi
 1. Is any competitive multiplayer ever desired? Co-op is confirmed at a maximum of four; PvP remains outside the prototype.
 2. Is the protagonist a fictional Latvian partisan, or a different role?
 3. Which region and period should anchor the setting?
-4. What equipment is lost or recoverable after mission death, and what recovery happens at camp? How do solo incapacitation and total group defeat resolve?
-5. How are confirmed mission outings represented: separate maps, connected areas, or another structure? Can a dead player re-enter the same mission?
-6. How much camp management should be hands-on versus handled through decisions?
+4. How long do injuries and capability penalties persist, what recovery happens at camp, and who owns equipment recovered from a teammate's body?
+5. How are mission outings and concurrent camp activity represented across maps? Dead players cannot rejoin the same mission; reconnect rules must preserve that lockout.
+6. How do building placement, trenches, camp permissions, shared resources, and time progression work? Hands-on camp work is confirmed.
 7. What are the desired balance of combat, stealth, exploration, and civilian assistance?
