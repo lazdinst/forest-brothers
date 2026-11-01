@@ -44,7 +44,7 @@ The test yard now has three areas: the obstacle course on the left, a walking ci
 
 These are local training fixtures, not campaign equipment. Quantities, timings, controls, weapon selection, and movement speeds are reversible prototype choices. Counts and ammunition reset on restart. The weapon rules live separately from the input/presentation controller; they have no multiplayer authority or communal-inventory integration yet.
 
-The first-person character has generated hands/rifle artwork with procedural bob, recoil, lean, and action lowering. Reloading now uses a weapon-specific timeline with a separately moving painted magazine: withdraw, retain, insert, seat, and return to ready. Inspection and jam clearing have their own procedural pose clips. Hand artwork remains static; correct hand/mechanism poses are unfinished because the reload-sheet generation was rejected. Holding right mouse raises a dedicated rear-of-rifle view with the front-post tip aligned to the camera shot ray. The crosshair hides; world FOV stays at 60 degrees. Reloading, packing, cleaning, and vaulting interrupt aiming. The illustrated sights remain prototype artwork, not a verified technical reconstruction. Shots select an aim point through the sights, then trace from a short physical muzzle projected from the current gun sprite. Near-barrel cover blocks shots even when the camera can see past it. A four-frame muzzle-flash sprite follows the barrel, briefly relighting the existing gun/hands with warm highlights and illuminating nearby geometry. Tracers and synthesized sound are still placeholders; no ballistics, damage, enemies, friendly fire, or medicine exists yet. Full-body player animation is not implemented.
+The first-person character has generated hands/rifle artwork with procedural bob, recoil, lean, and action lowering. Reloading now uses a weapon-specific timeline with a separately moving painted magazine: withdraw, retain, insert, seat, and return to ready. Inspection and jam clearing have their own procedural pose clips. Hand artwork remains static; correct hand/mechanism poses are unfinished because the reload-sheet generation was rejected. Holding right mouse raises a dedicated rear-of-rifle view with the front-post tip aligned to the camera shot ray. The crosshair hides; world FOV stays at 60 degrees. Reloading, packing, cleaning, and vaulting interrupt aiming. The illustrated sights remain prototype artwork, not a verified technical reconstruction. Shots select an aim point through the sights, then trace from a short physical muzzle projected from the current gun sprite. Near-barrel cover blocks shots even when the camera can see past it. A four-frame muzzle-flash sprite follows the barrel, briefly relighting the existing gun/hands with warm highlights and illuminating nearby geometry. Tracers and synthesized sound are still placeholders; no ballistics, damage, enemies, friendly fire, or medicine exists yet. A shared polygon player-body animation proof now exists; the first-person weapon/hands remain sprites.
 
 The civilian uses candidate four-frame walking atlases, not a finished animation set. Identity, stride, foot alignment, mirrored asymmetric details, and transitions need owner review and cleanup. Original generation outputs and prompts are preserved in `assets/TRAINING_ART_PROMPTS.md`.
 
@@ -97,3 +97,15 @@ Additional checks:
 ```
 
 These are local fixtures, not campaign completion. The earlier 'not implemented' limits refer to full campaign/network systems; bounded camp/medical/opponent tests now exist. No saving, co-op, real outings, player wounds, death/revive, cash trading or complete character animation is proven. The environment agent's art remains unchanged and its existing proof/integration checks also pass against this work.
+
+## Polygon character proof
+
+Latest art direction starts moving players/NPCs to rigged 3D GLB meshes. Restart F8 → F5; near **x −6, z 11** in the original training area, walk around the new character display and press F to cycle its eight poses. Camp residents, the medical cot, the first annex enemy and the player body now use the blockout rig. Look down for polygon legs, or use planning view for the complete player body. Original sprites remain as comparisons; first-person gun/hands are still sprites.
+
+Source, rebuilding, import conventions, boundaries and next art work are in [Polygon Character Pipeline](POLYGON_CHARACTER_PIPELINE.md). Additional check:
+
+```text
+<godot> --headless --fixed-fps 60 --path . --script res://tests/polygon_character_smoke.gd
+```
+
+The models are original procedural geometry with simple skin weights and vertex colors, not final character detail or painted textures. The deferred near-field sprite workaround remains relevant only to the retained legacy comparisons.

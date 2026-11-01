@@ -13,6 +13,7 @@ extends CharacterBody3D
 @onready var body_shape: CollisionShape3D = $CollisionShape3D
 @onready var weapon = $Weapon
 
+var body_visual
 var interaction_target: Node = null
 var gravity: float = 20.0
 var is_crouching: bool = false
@@ -32,6 +33,12 @@ func _ready() -> void:
 	_spawn_position = global_position
 	body_shape.shape = body_shape.shape.duplicate()
 	_head_probe.radius = 0.12
+	body_visual = load("res://scripts/characters/polygon_character.gd").new()
+	body_visual.name = "BodyVisual"
+	body_visual.variant = "player"
+	add_child(body_visual)
+	body_visual.rotation.y = PI
+	body_visual.set_first_person(true)
 	if DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -95,6 +102,7 @@ func _physics_process(delta: float) -> void:
 		if active and Input.is_action_just_pressed("vault"):
 			try_vault()
 	_update_camera(delta, active)
+	_update_body_visual()
 	refresh_interaction_target()
 	movement_state = "Vaulting" if is_vaulting else ("Airborne" if not is_on_floor() else ("Crouching" if is_crouching else ("Running" if is_sprinting else ("Walking" if Vector2(velocity.x, velocity.z).length() > 0.1 else "Standing"))))
 
@@ -204,3 +212,11 @@ func try_interact() -> void:
 
 func get_interaction_prompt() -> String:
 	return interaction_target.get_prompt() if is_instance_valid(interaction_target) else ""
+
+func _update_body_visual() -> void:
+	body_visual.lean = -camera.rotation.z
+	if weapon.state.busy != &"":
+		body_visual.sample_action(&"reload" if weapon.state.busy==&"reload" else &"interact",weapon.state.action_progress())
+	else:
+		var moving := Vector2(velocity.x,velocity.z).length() > 0.1
+		body_visual.play(&"crouch" if is_crouching else (&"run" if is_sprinting else (&"walk" if moving else (&"aim" if is_aiming else &"idle"))))

@@ -91,3 +91,7 @@ func _install_systems_annex() -> void:
 	var annex = load("res://scripts/camp/training_annex.gd").new()
 	annex.name = "SystemsAnnex"
 	get_parent().add_child(annex)
+	var showcase = load("res://scripts/characters/polygon_showcase.gd").new()
+	showcase.name = "PolygonShowcase"
+	showcase.position = Vector3(-6,0,11)
+	get_parent().add_child(showcase)

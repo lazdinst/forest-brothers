@@ -6,7 +6,7 @@ Status: initial Godot movement/interaction prototype exists. Networking, campaig
 
 Selected initial toolchain: Godot 4.7.2 standard, GDScript, Compatibility renderer, Windows PC. Steam remains the intended distribution destination. Keep this version explicit; evaluate upgrades deliberately rather than silently following the latest release.
 
-Use simple 3D environments and prototype sprite characters. Validate readability, editor usability, and performance on the owner's machine before increasing visual scope.
+Use 3D environments and migrate character presentation toward rigged polygonal GLB meshes under the latest owner direction. Legacy sprites remain comparison references during rollout; see POLYGON_CHARACTER_PIPELINE.md. Validate readability, editor usability, and performance on the owner's machine before increasing visual scope.
 
 ## Solo and multiplayer
 
@@ -139,8 +139,14 @@ WeaponDefinition resources now own art, capacities, fire intervals, anchors, and
 
 ## Additive camp and opponent laboratories
 
+The main yard's original box floor and four perimeter wall shapes are now disabled in favor of the environment baker's real terrain mesh/collision. Course, partition, door, pickups and range remain; the annex footprint is excluded from forest geometry/placement. `scripts/environment/forest_layout.gd` defines low relief, flat fixture clearances, trail and an excavated trench with a ramp/side branch. `bake_training_forest.gd` bakes shared resources and spatial MultiMesh batches ahead of play; it requires the actual Compatibility renderer because dummy headless rendering loses MultiMesh instance buffers on save. Headless physics checks still work on baked content. Manual environment overrides live outside the generated subtree. This is authored terrain/trench traversal, not runtime deformation, construction authority, persistence or networking.
+
 `training_course.gd` installs `scripts/camp/training_annex.gd` as a sibling after the original world is ready. The annex reuses its player and CampStock instance, with separate collision-bounded space and interactable entry/return tables. It does not replace the environment agent's main scene. Environment crates are optional display references; their source scenes are unchanged. Workshop geometry can be replaced independently of station behavior.
 
 `camp_runtime.gd` owns jobs, resident roles, plans, patient fixtures and manual exercise results. Atomic ledger exchanges prevent partial spends; jobs reserve up front, own workers and commit once, and cancellation refunds once. Request IDs reject duplicates. These are local correctness boundaries, not authenticated RPCs. Overhead planning changes the local camera and input, while work/AI time continues. No camp save or rollback is implemented.
 
 `enemy_actor.gd` takes explicit target references, world LOS rays, approximate noise/alert positions, recognition/reaction timers and finite search. Weapon definition damage flows through `receive_hit`; legacy target `take_hit` remains supported. `shot_fired` publishes muzzle origin for hearing. Blood particles/marks have bounded lifetimes; corpses stop colliding/fighting. A training vitality counter stays separate from campaign casualty state. No navigation mesh, surface acoustics, full-body weapon pose, networking or mission authority is inferred. See CAMP_AND_COMBAT_TESTS.md and three new integration/rule checks.
+
+## Rigged polygon character presentation
+
+A common PolygonCharacter adapter loads original civilian/field GLBs with Skeleton3D, skinned leg/torso/upper meshes and imported animation clips. The source/baker and import presets are versioned. Static/reset tracks are retained and vertex-palette material use is enforced by post-import. Player locomotion drives body state; weapon action progress samples body clips without changing ammunition rules. Local first-person mode renders legs and full-body shadows; planning restores the full model. Camp interaction/recruitment and opponent rules remain separate from visual replacement. One enemy and original yard actors retain sprites as references. Full first-person hand/weapon rigs, head-camera alignment, retargeting/IK, final art and multiplayer-aware visibility are pending. Polygon rig/pose/integration checks complement existing movement/camp/combat regressions.

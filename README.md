@@ -8,6 +8,8 @@ The project now has a **local movement, animation, and firing-range prototype** 
 
 The local training yard also connects to a **camp/workshop/NPC and opponent annex**. Turn behind-left at spawn and use F at its table. [Camp and Combat Tests](docs/CAMP_AND_COMBAT_TESTS.md) covers every station, planning, rescue exercises and enemy controls. These remain local tests rather than a saved/co-op campaign.
 
+The character migration now has a [rigged polygon/GLB proof](docs/POLYGON_CHARACTER_PIPELINE.md). In the original test area, use F at the character display near x −6, z 11 to cycle poses. Camp residents, a comparison enemy and the player body use the new blockout rig; final art and 3D first-person weapon/hands remain pending.
+
 ## Project context
 
 - [Game concept](docs/GAME_CONCEPT.md): vision, player experience, scope, and open questions.

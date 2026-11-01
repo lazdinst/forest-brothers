@@ -17,7 +17,7 @@ Build an immersive, punishing first-person survival game about a small resistanc
 
 Preserve these user requirements:
 - Latvian identity and a Forest Brothers-inspired setting.
-- First-person play with low-resolution/retro visuals and sprite-based characters as the intended visual direction.
+- First-person play with a gritty illustrated visual style. The latest owner direction migrates players and NPCs to rigged polygonal 3D meshes; legacy sprites remain comparison/reference assets during rollout. Read `docs/POLYGON_CHARACTER_PIPELINE.md`.
 - Meaningful resource collection, helping locals, and sustaining the hideout.
 - Single-player can come first; multiplayer is an intended future capability and must influence early design.
 - Support solo play and cooperative missions with a maximum of four players.
@@ -29,7 +29,7 @@ Preserve these user requirements:
 - Construction uses a mixture of freely placed pieces and predefined facility sites/upgrades. Exact piece catalogs, snapping, terrain changes, and upgrade costs are unresolved; do not replace the mixed approach with an exclusively freeform or exclusively fixed system.
 - All equipment and supplies are communal, including recovered gear. Carried inventory represents location/custody, not private ownership. Make available quantities easy to inspect; communal ownership does not imply instant remote access.
 - Start with a rough tent camp and progressively upgrade buildings. A headquarters tent/bunker contains the mission-planning table; a build-planning table opens a city-builder view for construction plans within the mixed building system.
-- Art direction is gritty illustrated sprites: painted characters with a low-resolution finish. Agent-generated sprites need a reference-led, visually checked pipeline; read `docs/ART_DIRECTION.md`. Civilians perform construction/cooking and players can help as foremen; detailed hauling, tree harvesting, and workforce simulation remain unconfirmed.
+- Art direction retains the gritty illustrated finish while character presentation migrates to rigged polygon meshes. New meshes are blockouts, not approved final art. Read `docs/ART_DIRECTION.md` and `docs/POLYGON_CHARACTER_PIPELINE.md`; preserve legacy sprite sources and verify skeletons/animation from first-person, all sides and the planning camera. Civilians perform construction/cooking and players can help as foremen; detailed hauling, tree harvesting, and workforce simulation remain unconfirmed.
 - Initially the camp has the player and one civilian (an old man is the suggested identity). Rescue civilians on missions, direct them toward camp, and show them running off. They remain pending until mission resolution; successful rescue arrivals then join camp. Solo/total-group mission death loses pending recruits. Surviving teammates can secure arrivals even if the rescuer dies; individual death must not cancel the group's recruits.
 - Working year: approximately 1946. Begin with one handcrafted mission map, randomized supplies and selected portions, and a maximum one-hour outing. Timeout is mission death for players still on-map, with carried gear/pending civilian loss.
 - Early safe return can secure carried supplies and rescued civilians without completing the main quest. Main-quest completion unlocks further missions and awards construction materials. Optional scavenging outings provide recovery when resources are low; shortages can kill civilians, but there is no permanent campaign game-over.

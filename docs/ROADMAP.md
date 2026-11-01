@@ -111,3 +111,11 @@ Two local test opponents now receive actual rifle damage, show brief hit/blood f
 Validation: all 13 current local checks pass, including the other agent's isolated environment proof and integrated yard checks. GPU frames of camp, panels, overhead plans, enemies and corpse state inspected on GTX 1080 Compatibility. See [CAMP_AND_COMBAT_TESTS.md](CAMP_AND_COMBAT_TESTS.md) for the entry point, each station's playtest and limits. No final art, stable-performance or co-op acceptance is inferred.
 
 Next foundational priority after owner review remains milestone 2 host/join and two-instance authority, then 2A individual casualties/revival and a real mission loop. Preserve the environment agent's visual-review gate and ownership; do not duplicate its assets or mark the full biome complete from these laboratories.
+
+## 1E — Rigged polygon character migration proof
+
+Latest owner direction replaces the sprite-first character target with rigged 3D players/NPCs. A shared 32-bone GLB proof now supplies civilian/field variants and eight body clips. Camp residents/patient, player body and one enemy use it; an interactive original-yard display cycles poses. Legacy characters remain comparison references. Meshes are original low-poly blockouts with temporary vertex colors, not approved final art. The first-person gun/hands are still sprites.
+
+Done for this local proof: GLB round-trip with skin weights/attachments/animation tracks, actual skeletal pose and transition checks, non-billboard world orientation, body visibility in first-person/planning, and integration with existing gameplay. All 15 combined checks passed; current forest/trench and character locations coexist without replacing the environment agent's assets. See POLYGON_CHARACTER_PIPELINE.md.
+
+Remaining migration work: refine/UV/paint one character, improve weights and foot contact, define retargeting/bone mapping and layered locomotion/aim, calibrate camera/head and first-person weapon/hand rigs, then migrate the remaining references. Validate owner art/game feel and crowd performance before expanding the cast. Networking acceptance remains under milestone 2; these visuals do not prove it.

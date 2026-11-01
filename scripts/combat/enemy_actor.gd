@@ -4,6 +4,8 @@ signal defeated(actor)
 signal spotted(actor, at: Vector3)
 signal fired(actor, target, hit: bool)
 const ART = preload("res://assets/characters/training_guard/idle_front_v1.png")
+@export var use_polygon: bool = false
+var polygon_model
 var health: float = 100.0
 var state: StringName = &"idle"
 var active: bool = false
@@ -43,6 +45,12 @@ func _ready() -> void:
 	sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	sprite.no_depth_test = false
 	visual.add_child(sprite)
+	if use_polygon:
+		visual.position.y = 0.0
+		sprite.hide()
+		polygon_model = load("res://scripts/characters/polygon_character.gd").new()
+		polygon_model.variant = "guard"
+		visual.add_child(polygon_model)
 
 func _physics_process(delta: float) -> void:
 	if state == &"dead":
@@ -51,8 +59,10 @@ func _physics_process(delta: float) -> void:
 	_alert_cooldown = maxf(0, _alert_cooldown - delta)
 	_hit_tint = maxf(0, _hit_tint - delta)
 	sprite.modulate = Color(1,0.5,0.5) if _hit_tint > 0 else Color.WHITE
+	if polygon_model != null:
+		polygon_model.set_hit_flash(_hit_tint > 0)
 	var viewer := get_viewport().get_camera_3d()
-	if viewer != null:
+	if viewer != null and not use_polygon:
 		var facing := viewer.global_position - visual.global_position
 		facing.y = 0
 		if facing.length_squared() > 0.001:
@@ -106,6 +116,8 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= delta * 20
 	move_and_slide()
+	if polygon_model != null:
+		polygon_model.play(&"aim" if state==&"engage" else (&"walk" if Vector2(velocity.x,velocity.z).length()>0.1 else &"idle"))
 
 func can_see(actor: Node3D) -> bool:
 	var eye := global_position + Vector3.UP * 1.55
@@ -169,6 +181,11 @@ func _die() -> void:
 	velocity = Vector3.ZERO
 	set_deferred("collision_layer",0)
 	$Body.set_deferred("disabled",true)
+	if polygon_model != null:
+		polygon_model.set_hit_flash(false)
+		polygon_model.play(&"die")
+		defeated.emit(self)
+		return
 	var tween := create_tween()
 	tween.tween_property(visual,"scale:y",0.7,0.18)
 	tween.parallel().tween_property(visual,"position:y",0.6,0.18)

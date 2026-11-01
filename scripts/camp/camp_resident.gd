@@ -4,6 +4,7 @@ var resident_id: StringName = &"resident_01"
 var rescuable: bool = false
 var departing: bool = false
 var departure_tween: Tween
+var polygon_model
 
 func get_prompt() -> String:
 	return "F  Direct civilian to camp" if rescuable else "F  Civilian assignment"
@@ -29,12 +30,13 @@ func arrive_at(at: Vector3) -> void:
 	rescuable = false
 	departing = false
 	_moving = false
+	rotation.y = 0.0
 	global_position = at
 	collision_layer = 1
 	show()
 	for child in get_children():
 		if child is StaticBody3D:
-			child.collision_layer = 4
+			child.collision_layer = 0 if polygon_model != null else 4
 		if child is Label3D:
 			child.text = "Arrived civilian (test)"
 
@@ -42,3 +44,18 @@ func _physics_process(delta: float) -> void:
 	super(delta)
 	if departing:
 		_moving = true
+		rotation.y = atan2(4.0,-1.0)
+
+func _ready() -> void:
+	super()
+	polygon_model = load("res://scripts/characters/polygon_character.gd").new()
+	polygon_model.name = "PolygonCharacter"
+	add_child(polygon_model)
+	sprite.hide()
+	$PlayerClearance.collision_layer = 0
+
+func _process(delta: float) -> void:
+	super(delta)
+	if polygon_model != null:
+		var working: bool = not rescuable and annex.runtime.residents.has(resident_id) and annex.runtime.residents[resident_id].busy != ""
+		polygon_model.play(&"run" if departing else (&"walk" if _moving else (&"interact" if working else &"idle")))
