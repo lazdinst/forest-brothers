@@ -4,6 +4,12 @@ extends CanvasLayer
 const WeaponState = preload("res://scripts/weapons/prototype_weapon_state.gd")
 const HANDS = preload("res://assets/weapons/test_rifle/first_person_v1.png")
 const AIMED_HANDS = preload("res://assets/weapons/test_rifle/iron_sights_v1.png")
+const MUZZLE_FLASH = preload("res://assets/weapons/test_rifle/muzzle_flash_v1.png")
+const FLASH_SHADER = preload("res://scripts/weapons/weapon_flash.gdshader")
+const HIP_MUZZLE := Vector2(0.42, 0.24)
+const ADS_MUZZLE := Vector2(0.5, 0.43)
+const FLASH_DURATION: float = 0.075
+const MUZZLE_DEPTH: float = 0.85
 # Measured front-post tip in the original unmodified image, normalized to its canvas.
 const SIGHT_ANCHOR := Vector2(0.5, 0.418)
 var aim_fraction: float = 0.0
@@ -17,7 +23,13 @@ var _phase: float = 0.0
 var _flash_time: float = 0.0
 var _player
 var _hands: TextureRect
-var _flash: ColorRect
+var _flash: TextureRect
+var _flash_frames: Array[AtlasTexture] = []
+var _gun_material: ShaderMaterial
+var _world_light: OmniLight3D
+var last_shot_origin := Vector3.ZERO
+var last_shot_end := Vector3.ZERO
+var last_shot_blocked: bool = false
 var _sound: AudioStreamPlayer
 
 
@@ -25,16 +37,37 @@ func _ready() -> void:
 	_player = get_parent()
 	layer = 1
 	rng.randomize()
+	_flash = TextureRect.new()
+	_flash.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_flash.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var additive := CanvasItemMaterial.new()
+	additive.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	_flash.material = additive
+	_flash.visible = false
+	# Draw fire behind the weapon so it cannot erase the barrel/sight silhouette.
+	add_child(_flash)
+	var cell := Vector2(MUZZLE_FLASH.get_width(), MUZZLE_FLASH.get_height()) * 0.5
+	for index in range(4):
+		var frame := AtlasTexture.new()
+		frame.atlas = MUZZLE_FLASH
+		frame.region = Rect2(Vector2(index % 2, index / 2) * cell, cell)
+		_flash_frames.append(frame)
 	_hands = TextureRect.new()
 	_hands.texture = HANDS
 	_hands.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_hands.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_hands.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_gun_material = ShaderMaterial.new()
+	_gun_material.shader = FLASH_SHADER
+	_hands.material = _gun_material
 	add_child(_hands)
-	_flash = ColorRect.new()
-	_flash.color = Color(1.0, 0.8, 0.3)
-	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_flash)
+	_world_light = OmniLight3D.new()
+	_world_light.light_color = Color(1.0, 0.57, 0.22)
+	_world_light.light_energy = 0.0
+	_world_light.omni_range = 4.0
+	_world_light.shadow_enabled = true
+	_player.get_node("Camera3D").add_child(_world_light)
 	_sound = AudioStreamPlayer.new()
 	_sound.volume_db = -18.0
 	_sound.stream = _make_test_shot_sound()
@@ -67,19 +100,38 @@ func _physics_process(delta: float) -> void:
 func _fire() -> void:
 	shots += 1
 	_kick = 1.0
-	_flash_time = 0.06
+	_flash_time = FLASH_DURATION
 	if DisplayServer.get_name() != "headless":
 		_sound.play()
 	var camera: Camera3D = _player.camera
-	var start := camera.global_position
-	var end := start - camera.global_basis.z * 150.0
-	var query := PhysicsRayQueryParameters3D.create(start, end, 1, [_player.get_rid()])
-	var hit: Dictionary = _player.get_world_3d().direct_space_state.intersect_ray(query)
+	var space: PhysicsDirectSpaceState3D = _player.get_world_3d().direct_space_state
+	var eye := camera.global_position
+	var aim_point := eye - camera.global_basis.z * 150.0
+	var aim_hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(eye, aim_point, 1, [_player.get_rid()]))
+	if not aim_hit.is_empty():
+		aim_point = aim_hit.position
+	var start := muzzle_world_position()
+	# A painted gun can overlap a wall; the shot must still stop before that wall.
+	var obstruction := space.intersect_ray(PhysicsRayQueryParameters3D.create(eye, start, 1, [_player.get_rid()]))
+	var hit: Dictionary
+	last_shot_blocked = not obstruction.is_empty()
+	if last_shot_blocked:
+		hit = obstruction
+		start = hit.position + hit.normal * 0.01
+	else:
+		var direction := (aim_point - start).normalized()
+		hit = space.intersect_ray(PhysicsRayQueryParameters3D.create(start, aim_point + direction * 0.02, 1, [_player.get_rid()]))
+	var end := aim_point
 	if not hit.is_empty():
 		end = hit.position
 		if hit.collider.has_method("take_hit"):
 			hit.collider.take_hit()
 			hits += 1
+	last_shot_origin = start
+	last_shot_end = end
+	_world_light.global_position = start
+	if start.distance_to(end) < 0.02:
+		return
 	var tracer := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(0.012, 0.012, start.distance_to(end))
@@ -91,7 +143,7 @@ func _fire() -> void:
 	_player.get_parent().add_child(tracer)
 	tracer.global_position = (start + end) * 0.5
 	tracer.look_at(end)
-	get_tree().create_timer(0.06).timeout.connect(tracer.queue_free)
+	get_tree().create_timer(0.045).timeout.connect(tracer.queue_free)
 
 
 func _process(delta: float) -> void:
@@ -123,13 +175,33 @@ func _process(delta: float) -> void:
 	_hands.position += (bob * (1.0 - aim_fraction) + Vector2(_player.camera.position.x * 35.0 * (1.0 - aim_fraction), dip + transition_dip + _kick * 22.0)) * scale_factor
 	_hands.pivot_offset = _hands.size * (SIGHT_ANCHOR if aimed_view else Vector2(0.5, 0.5))
 	_hands.rotation = _player.camera.rotation.z + sin(_phase * 0.5) * minf(speed, 1.0) * 0.006 * (1.0 - aim_fraction)
-	_flash.size = Vector2(15, 20) * scale_factor
-	_flash.position = sight_screen_position() - _flash.size * 0.5 if aimed_view else _hands.position + _hands.size * Vector2(0.43, 0.22)
+	_flash.size = Vector2.ONE * (120.0 if aimed_view else 150.0) * scale_factor
+	_flash.position = muzzle_screen_position() - _flash.size * 0.5
+	_flash.pivot_offset = _flash.size * 0.5
+	_flash.rotation = _hands.rotation
 	_flash.visible = _flash_time > 0.0
+	var strength := _flash_time / FLASH_DURATION
+	if _flash.visible:
+		_flash.texture = _flash_frames[mini(int((1.0 - strength) * 4.0), 3)]
+	_flash.modulate.a = minf(strength * 2.0, 1.0)
+	_gun_material.set_shader_parameter("muzzle_uv", ADS_MUZZLE if aimed_view else HIP_MUZZLE)
+	_gun_material.set_shader_parameter("flash_strength", strength)
+	_world_light.light_energy = strength * 3.0
 
 
 func sight_screen_position() -> Vector2:
 	return _hands.get_global_transform() * (_hands.size * SIGHT_ANCHOR)
+
+
+func muzzle_screen_position() -> Vector2:
+	var anchor := ADS_MUZZLE if aim_fraction >= 0.5 else HIP_MUZZLE
+	return _hands.get_global_transform() * (_hands.size * anchor)
+
+
+func muzzle_world_position() -> Vector3:
+	# The current weapon is a 2D view sprite: project its muzzle into a short
+	# camera-relative physical barrel. Replace with a 3D socket if art changes.
+	return _player.camera.project_position(muzzle_screen_position(), MUZZLE_DEPTH)
 
 
 func status_text() -> String:

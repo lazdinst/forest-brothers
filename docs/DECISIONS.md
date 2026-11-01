@@ -176,3 +176,7 @@ Deferred: sprite near-field presentation/clearance, calibrated iron sights, actu
 ## Aim down iron sights — 2026-11-01
 
 Owner requested looking down the rifle's actual iron sights. Supersedes the local zoom-only aim placeholder: RMB transitions to a matching generated centered ADS view, front-post tip anchored to the camera shot ray, crosshair hidden, world FOV fixed at 60. Action lowering interrupts aiming; holding RMB resumes afterward. Alignment and target-hit checks cover two window sizes and lean roll. Artwork is still a prototype; prompt and provenance are in assets/IRON_SIGHTS_PROMPT.md. Full hand/reload animation remains deferred.
+
+## Barrel flash and gun illumination — 2026-11-01
+
+Owner requested a visible explosion/flash at the barrel, barrel-origin firing, and illumination on the rifle itself. Implemented a generated four-frame muzzle-flash atlas for hip and ADS, warm shader relighting on the original gun/hand sprites, and a brief nearby-world light. The sights choose the aim point; the actual collision ray/tracer begins at the projected muzzle and respects near cover. Source sprites remain unchanged; a shader keeps illuminated variants aligned. Flash timing, apparent size, light intensity, and virtual barrel depth remain prototype choices. No ballistics or multiplayer gun presentation is proven.

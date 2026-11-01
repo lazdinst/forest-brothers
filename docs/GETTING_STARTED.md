@@ -44,7 +44,7 @@ The test yard now has three areas: the obstacle course on the left, a walking ci
 
 These are local training fixtures, not campaign equipment. Quantities, timings, controls, weapon selection, and movement speeds are reversible prototype choices. Counts and ammunition reset on restart. The weapon rules live separately from the input/presentation controller; they have no multiplayer authority or communal-inventory integration yet.
 
-The first-person character has generated hands/rifle artwork with procedural bob, recoil, lean, and action lowering. Reloading, inspection, and cleaning use timed lowering rather than correct hand/magazine animation. Holding right mouse raises a dedicated rear-of-rifle view with the front-post tip aligned to the camera shot ray. The crosshair hides; world FOV stays at 60 degrees. Reloading, packing, cleaning, and vaulting interrupt aiming. The illustrated sights remain prototype artwork, not a verified technical reconstruction. Shots are immediate camera rays with placeholder tracers, flash, and synthesized sound; no ballistics, damage, enemies, friendly fire, or medicine exists yet. Full-body player animation is not implemented.
+The first-person character has generated hands/rifle artwork with procedural bob, recoil, lean, and action lowering. Reloading, inspection, and cleaning use timed lowering rather than correct hand/magazine animation. Holding right mouse raises a dedicated rear-of-rifle view with the front-post tip aligned to the camera shot ray. The crosshair hides; world FOV stays at 60 degrees. Reloading, packing, cleaning, and vaulting interrupt aiming. The illustrated sights remain prototype artwork, not a verified technical reconstruction. Shots select an aim point through the sights, then trace from a short physical muzzle projected from the current gun sprite. Near-barrel cover blocks shots even when the camera can see past it. A four-frame muzzle-flash sprite follows the barrel, briefly relighting the existing gun/hands with warm highlights and illuminating nearby geometry. Tracers and synthesized sound are still placeholders; no ballistics, damage, enemies, friendly fire, or medicine exists yet. Full-body player animation is not implemented.
 
 The civilian uses candidate four-frame walking atlases, not a finished animation set. Identity, stride, foot alignment, mirrored asymmetric details, and transitions need owner review and cleanup. Original generation outputs and prompts are preserved in `assets/TRAINING_ART_PROMPTS.md`.
 
@@ -73,7 +73,10 @@ From the repository, replace `<godot>` with the installed executable:
 <godot> --headless --path . --script res://tests/weapon_state_smoke.gd
 <godot> --headless --fixed-fps 60 --path . --script res://tests/training_smoke.gd
 <godot> --headless --fixed-fps 60 --path . --script res://tests/ads_smoke.gd
+<godot> --headless --fixed-fps 60 --path . --script res://tests/muzzle_smoke.gd
 <godot> --path .
 ```
 
 Checks exit nonzero on assertion failures. They exercise real scene collisions, traversal, aimed target hits, walking frame changes, and ammunition conservation. Headless checks do not establish game feel, animation quality, or multiplayer support. GPU-rendered course/range/walking frames were inspected on the GTX 1080; owner playtesting remains required for this increment. Keep generated `.godot/` caches ignored and commit script `.gd.uid` files.
+
+Muzzle attachment/depth (0.85 m), 75 ms flash timing, and light intensity are prototype tuning. The weapon is still a 2D foreground sprite; full 3D barrel collision/retraction and network-visible gunfire are future work. Flash art provenance is in assets/MUZZLE_FLASH_PROMPT.md. Test hip/ADS firing near cover and verify light fades after each successful shot; empty/jammed attempts must not flash.
