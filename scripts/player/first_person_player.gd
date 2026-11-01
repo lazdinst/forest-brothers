@@ -1,6 +1,8 @@
 extends CharacterBody3D
 ## Input/movement for the local prototype. Traversal uses swept physical motion.
 
+# Rejected blockout stays opt-in until a replacement passes visual review.
+@export var use_polygon_body: bool = false
 @export var walk_speed: float = 3.3
 @export var sprint_speed: float = 5.2
 @export var crouch_speed: float = 1.5
@@ -33,12 +35,13 @@ func _ready() -> void:
 	_spawn_position = global_position
 	body_shape.shape = body_shape.shape.duplicate()
 	_head_probe.radius = 0.12
-	body_visual = load("res://scripts/characters/polygon_character.gd").new()
-	body_visual.name = "BodyVisual"
-	body_visual.variant = "player"
-	add_child(body_visual)
-	body_visual.rotation.y = PI
-	body_visual.set_first_person(true)
+	if use_polygon_body:
+		body_visual = load("res://scripts/characters/polygon_character.gd").new()
+		body_visual.name = "BodyVisual"
+		body_visual.variant = "player"
+		add_child(body_visual)
+		body_visual.rotation.y = PI
+		body_visual.set_first_person(true)
 	if DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -214,6 +217,8 @@ func get_interaction_prompt() -> String:
 	return interaction_target.get_prompt() if is_instance_valid(interaction_target) else ""
 
 func _update_body_visual() -> void:
+	if body_visual == null:
+		return
 	body_visual.lean = -camera.rotation.z
 	if weapon.state.busy != &"":
 		body_visual.sample_action(&"reload" if weapon.state.busy==&"reload" else &"interact",weapon.state.action_progress())

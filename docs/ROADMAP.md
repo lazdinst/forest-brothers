@@ -119,3 +119,9 @@ Latest owner direction replaces the sprite-first character target with rigged 3D
 Done for this local proof: GLB round-trip with skin weights/attachments/animation tracks, actual skeletal pose and transition checks, non-billboard world orientation, body visibility in first-person/planning, and integration with existing gameplay. All 15 combined checks passed; current forest/trench and character locations coexist without replacing the environment agent's assets. See POLYGON_CHARACTER_PIPELINE.md.
 
 Remaining migration work: refine/UV/paint one character, improve weights and foot contact, define retargeting/bone mapping and layered locomotion/aim, calibrate camera/head and first-person weapon/hand rigs, then migrate the remaining references. Validate owner art/game feel and crowd performance before expanding the cast. Networking acceptance remains under milestone 2; these visuals do not prove it.
+
+## 1F — Better human base and modular clothing (next art proof)
+
+The owner rejected 1E's visual result. Its rig checks remain useful technical evidence, but do not complete character art. Normal-play sprites are restored; rejected models remain opt-in and labeled in the display.
+
+Next: one convincing old civilian, a shared production rig and two outfits made from separate garments. Define body coverage, garment compatibility and a tested animation bone map. Show close/front/side/rear, crouch/aim/reload/death and planning views beside the sprite. Verify swapping clothes without duplicating the whole body, inspect deformation/clipping, measure representative dressed characters, and obtain visual feedback before replacing default sprites or producing a roster. See MODULAR_CHARACTER_BRIEF.md. This proof is pending; modular garment assets/runtime and final art are not implemented.

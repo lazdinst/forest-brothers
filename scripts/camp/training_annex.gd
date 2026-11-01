@@ -5,6 +5,8 @@ const Station = preload("res://scripts/camp/camp_station.gd")
 const Enemy = preload("res://scripts/combat/enemy_actor.gd")
 const Civilian = preload("res://scenes/characters/starting_civilian.tscn")
 const ResidentScript = preload("res://scripts/camp/camp_resident.gd")
+# Rig fixtures only; the owner rejected this blockout as character art.
+@export var use_polygon_characters: bool = false
 var runtime
 var world
 var player
@@ -109,10 +111,19 @@ func _station(id: StringName, kind: StringName, title: String, at: Vector3) -> v
 		_box(station,"Stove",Vector3(0,1,0),Vector3(0.7,0.4,0.5),Color(0.15,0.15,0.13))
 	if kind == &"medical":
 		_box(station,"PatientCot",Vector3(-2,0.4,0),Vector3(1.0,0.15,2),Color(0.4,0.4,0.32))
-		var patient_model = load("res://scripts/characters/polygon_character.gd").new()
-		patient_model.position = Vector3(-2,0.68,0.9)
-		patient_model.rotation.x = -PI/2
-		station.add_child(patient_model)
+		if use_polygon_characters:
+			var patient_model = load("res://scripts/characters/polygon_character.gd").new()
+			patient_model.position = Vector3(-2,0.68,0.9)
+			patient_model.rotation.x = -PI/2
+			station.add_child(patient_model)
+		else:
+			var patient := Sprite3D.new()
+			patient.name = "SpritePatient"
+			patient.texture = load("res://assets/characters/starting_civilian/starting_civilian_front_v1.png")
+			patient.pixel_size = 1.7 / patient.texture.get_height()
+			patient.position = Vector3(-2,0.5,0)
+			patient.rotation.x = -PI/2
+			station.add_child(patient)
 		_label(station,"Test patient",Vector3(-2,1.6,0))
 	if kind == &"depot" or kind == &"food" or kind == &"ammo":
 		# Reuse the environment agent's crate if available; never duplicate its art.
@@ -142,6 +153,7 @@ func _spawn_resident(id: StringName, at: Vector3, rescue: bool) -> void:
 	actor.walk_front = textures[3]
 	actor.walk_side = textures[4]
 	actor.walk_back = textures[5]
+	actor.use_polygon = use_polygon_characters
 	actor.resident_id = id
 	actor.rescuable = rescue
 	actor.annex = self
@@ -168,7 +180,7 @@ func reset_enemies() -> void:
 		enemy.position = Vector3(-4 if index==0 else 5,0,-14-index)
 		enemy.targets.assign([player])
 		enemy.blood_enabled = blood_enabled
-		enemy.use_polygon = index == 0
+		enemy.use_polygon = use_polygon_characters and index == 0
 		add_child(enemy)
 		enemy.defeated.connect(_enemy_defeated)
 		enemy.spotted.connect(_enemy_spotted)
@@ -413,7 +425,8 @@ func start_planning() -> void:
 	planning = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	player.weapon.hide()
-	player.body_visual.set_first_person(false)
+	if player.body_visual != null:
+		player.body_visual.set_first_person(false)
 	world.get_node("HUD").hide()
 	_planner_hint.show()
 	for label in _map_labels:
@@ -424,7 +437,8 @@ func stop_planning() -> void:
 	planning = false
 	player.camera.make_current()
 	player.weapon.show()
-	player.body_visual.set_first_person(true)
+	if player.body_visual != null:
+		player.body_visual.set_first_person(true)
 	world.get_node("HUD").show()
 	_planner_hint.hide()
 	for label in _map_labels:

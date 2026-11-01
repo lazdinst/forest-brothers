@@ -109,3 +109,7 @@ Source, rebuilding, import conventions, boundaries and next art work are in [Pol
 ```
 
 The models are original procedural geometry with simple skin weights and vertex colors, not final character detail or painted textures. The deferred near-field sprite workaround remains relevant only to the retained legacy comparisons.
+
+## Character art correction
+
+The owner rejected the first polygon blockout. Normal camp residents, medical patient and both opponents again use preserved sprites; the optional polygon player body is off. Restart F8 then F5 to see the correction. The display near x -6, z 11 is labeled REJECTED ART / rig test only. The polygon smoke check now verifies normal defaults first, then explicitly enables rig fixtures. See MODULAR_CHARACTER_BRIEF.md for the next human/clothing proof; the previous integration description above is historical, not the normal-play default.

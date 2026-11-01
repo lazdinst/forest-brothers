@@ -6,7 +6,7 @@ Status: initial Godot movement/interaction prototype exists. Networking, campaig
 
 Selected initial toolchain: Godot 4.7.2 standard, GDScript, Compatibility renderer, Windows PC. Steam remains the intended distribution destination. Keep this version explicit; evaluate upgrades deliberately rather than silently following the latest release.
 
-Use 3D environments and migrate character presentation toward rigged polygonal GLB meshes under the latest owner direction. Legacy sprites remain comparison references during rollout; see POLYGON_CHARACTER_PIPELINE.md. Validate readability, editor usability, and performance on the owner's machine before increasing visual scope.
+Use 3D environments and migrate character presentation toward rigged polygonal GLB meshes under the latest owner direction. The rejected procedural blockout stays opt-in; normal-play sprites remain until a believable modular replacement passes review. Separate garments share a production rig and coverage rules; read MODULAR_CHARACTER_BRIEF.md. For the isolated rig fixture, see POLYGON_CHARACTER_PIPELINE.md. Validate readability, editor usability, and performance on the owner's machine before increasing visual scope.
 
 ## Solo and multiplayer
 

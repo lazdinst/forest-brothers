@@ -54,7 +54,7 @@ Enemies recognize visible players over exposure, investigate approximate sound l
 
 ## Visual and audio direction
 
-Latest owner direction: migrate players and NPCs to rigged polygonal 3D meshes while retaining a gritty illustrated finish. The earlier sprite-first approach is superseded for new character work; original sprites remain reference/comparison assets during rollout. A shared GLB/skeleton test now exists, but final model detail, textures and animation quality remain to be established. See [art direction](ART_DIRECTION.md) and [polygon character pipeline](POLYGON_CHARACTER_PIPELINE.md).
+Latest owner direction: migrate players and NPCs to rigged polygonal 3D meshes while retaining a gritty illustrated finish. The earlier sprite-first approach is superseded for new character work; original sprites remain reference/comparison assets during rollout. The first procedural GLB blockout was rejected on appearance and clothing scalability. Normal training play uses the preserved sprites while a believable modular human with separate garments is developed. Read [the modular character brief](MODULAR_CHARACTER_BRIEF.md); the rig test is not an approved visual foundation. See [art direction](ART_DIRECTION.md) and [polygon character pipeline](POLYGON_CHARACTER_PIPELINE.md).
 
 Favor coherent silhouettes, clear interactions, atmospheric sound, and restrained detail. Retro graphics must still let players identify threats, read objects, and navigate. Final mesh complexity, painted textures, skeletal animation quality, first-person weapon/hand presentation, and exact render resolution remain to be settled through playtests.
 

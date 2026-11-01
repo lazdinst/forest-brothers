@@ -49,7 +49,32 @@ func _run() -> void:
 	var world = load("res://scenes/prototype/camp_test.tscn").instantiate()
 	root.add_child(world)
 	await _frames(12)
+	var default_player = world.get_node("Player")
+	var default_annex = world.get_node("SystemsAnnex")
+	_check(default_player.body_visual == null,"Rejected blockout body is absent by default")
+	_check(default_annex.resident_nodes[&"resident_01"].sprite.visible,"Default residents retain painted sprites")
+	_check(default_annex.resident_nodes[&"resident_01"].polygon_model == null,"Default residents do not allocate rejected models")
+	_check(default_annex.resident_nodes[&"resident_01"].get_node("PlayerClearance").collision_layer == 4,"Restored sprite keeps its near-camera clearance")
+	_check(default_annex.stations[&"medical"].get_node_or_null("SpritePatient") != null,"Default medical patient retains sprite presentation")
+	for enemy in default_annex.enemies:
+		_check(enemy.polygon_model == null and enemy.sprite.visible,"Default enemies retain sprites")
+	default_annex.start_planning()
+	default_annex.stop_planning()
+	_check(default_player.camera.current,"Planning restores camera without optional body")
+	# Swap in explicit opt-in fixtures without altering normal scene defaults.
+	default_annex.use_polygon_characters = true
+	default_annex.reset_enemies()
+	var old_resident = default_annex.resident_nodes[&"resident_01"]
+	default_annex.remove_child(old_resident)
+	old_resident.queue_free()
+	default_annex._spawn_resident(&"resident_01",Vector3(0,0,8),false)
 	var player = world.get_node("Player")
+	player.use_polygon_body = true
+	# Re-enter readiness once to construct the optional presentation in this fixture.
+	world.remove_child(player)
+	player.request_ready()
+	world.add_child(player)
+	await _frames(3)
 	_check(player.body_visual != null and player.body_visual.rig.get_bone_count()==32,"Player owns a rigged polygon body")
 	for mesh in player.body_visual._upper_meshes:
 		_check(mesh.cast_shadow==GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY,"Local head/arms do not occlude first-person camera")
@@ -83,7 +108,7 @@ func _run() -> void:
 	for failure in failures:
 		push_error(failure)
 	if failures.is_empty():
-		print("PASS: GLB skeleton/animations, actual bone locomotion/crouch/reset/death, player body/visibility, nonbillboard NPC, enemy death, planning view")
+		print("PASS: sprite defaults, optional-body planning, opt-in GLB skeleton/animations, actual bone locomotion/crouch/reset/death, player body/visibility, nonbillboard NPC, enemy death, planning view")
 	world.queue_free()
 	await process_frame
 	quit(0 if failures.is_empty() else 1)

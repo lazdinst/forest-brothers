@@ -17,7 +17,7 @@ Build an immersive, punishing first-person survival game about a small resistanc
 
 Preserve these user requirements:
 - Latvian identity and a Forest Brothers-inspired setting.
-- First-person play with a gritty illustrated visual style. The latest owner direction migrates players and NPCs to rigged polygonal 3D meshes; legacy sprites remain comparison/reference assets during rollout. Read `docs/POLYGON_CHARACTER_PIPELINE.md`.
+- First-person play with a gritty illustrated visual style. The latest owner direction migrates players and NPCs to rigged polygonal 3D meshes; the first procedural blockout was rejected by the owner and normal play uses the preserved sprites until a better replacement passes visual review. Require separate interchangeable garments on a shared rig. Read `docs/MODULAR_CHARACTER_BRIEF.md` before new character production. Read `docs/POLYGON_CHARACTER_PIPELINE.md`.
 - Meaningful resource collection, helping locals, and sustaining the hideout.
 - Single-player can come first; multiplayer is an intended future capability and must influence early design.
 - Support solo play and cooperative missions with a maximum of four players.

@@ -2,11 +2,15 @@
 
 The owner requested moving players and NPCs from flat sprites toward polygonal 3D characters. Godot and Compatibility rendering remain the engine/toolchain. The gritty illustrated direction remains a visual goal; the new meshes are **geometry/rig blockouts**, not finished characters, painted-texture assets or a verified historical wardrobe.
 
-## What is playable now
+## Current correction: owner rejected the appearance
+
+The owner judged these meshes worse than the sprites and unsuitable for varied clothing. They remain isolated technical fixtures, not the production art foundation. Normal camp residents, patient and enemies use the preserved sprites; the polygon player body is off by default. The showcase is labeled REJECTED ART / rig test only. Explicit presentation flags retain opt-in experiments. Read [MODULAR_CHARACTER_BRIEF.md](MODULAR_CHARACTER_BRIEF.md) before creating replacement assets. The three skinned groups below are visibility groups, **not** modular garments.
+
+## Original integration proof (historical, now opt-in)
 
 Restart **F8 → F5**. Near the southwest part of the original test area, around **x −6, z 11**, there is a polygon character display. Walk around it and use **F** to cycle idle, walk, run, crouch, aim, reload, interaction and death clips. Its mesh stays oriented in the world as the camera moves around it.
 
-Camp residents and the medical cot in the annex now use 3D meshes. The first enemy is polygonal and uses its skeletal death clip; the second remains a sprite comparison. The player has a polygon body driven by movement, stance and action state. Look down to see legs; the head, torso and arms cast shadows but are hidden from the local first-person view to prevent camera clipping. The overhead planning view reveals the full player model, then restores local visibility afterward.
+With the optional polygon fixtures enabled, camp residents and the medical cot can use 3D meshes. The first enemy is polygonal and uses its skeletal death clip; the second remains a sprite comparison. The player has a polygon body driven by movement, stance and action state. Look down to see legs; the head, torso and arms cast shadows but are hidden from the local first-person view to prevent camera clipping. The overhead planning view reveals the full player model, then restores local visibility afterward.
 
 The original yard civilian/walking sprite and source art remain as references. This is a staged migration, not a claim that every character/weapon asset is converted. The first-person gun and hands are still the existing sprite presentation; 3D weapon meshes, calibrated hand contact, weapon-specific skeletal reloads, camera-to-head alignment and first-person IK are separate work. The new `aim` and `reload` clips demonstrate body pose control, not correct operation of a completed 3D firearm.
 
@@ -48,7 +52,7 @@ From the repository, replace `<godot>` with the installed Godot 4.7.2 console ex
 
 Commit source, GLBs, their `.import` settings and `.gd.uid` files; keep `.godot` caches ignored. Regeneration deliberately replaces these versioned generated GLBs; preserve a sibling version before making an art experiment you want to compare.
 
-The rig check verifies imported bone/clip presence, actual foot displacement, crouch height and standing reset, skeletal death, player visibility/locomotion, non-billboard NPC orientation, combat animation selection and overhead visibility restoration. Existing workshop, rescue, damage, movement and weapon checks remain required. GPU-rendered showcase, civilian, opponent, player-leg and crouched-ADS views are inspected; this is not a crowd-performance benchmark or multiplayer validation.
+The updated rig check first verifies sprite defaults and planning without an optional body, then explicitly enables technical fixtures. It verifies imported bone/clip presence, actual foot displacement, crouch height and standing reset, skeletal death, player visibility/locomotion, non-billboard NPC orientation, combat animation selection and overhead visibility restoration. Existing workshop, rescue, damage, movement and weapon checks remain required. GPU-rendered showcase, civilian, opponent, player-leg and crouched-ADS views are inspected; this is not a crowd-performance benchmark or multiplayer validation.
 
 ## Next art/animation work
 

@@ -4,6 +4,7 @@ var resident_id: StringName = &"resident_01"
 var rescuable: bool = false
 var departing: bool = false
 var departure_tween: Tween
+@export var use_polygon: bool = false
 var polygon_model
 
 func get_prompt() -> String:
@@ -48,6 +49,8 @@ func _physics_process(delta: float) -> void:
 
 func _ready() -> void:
 	super()
+	if not use_polygon:
+		return
 	polygon_model = load("res://scripts/characters/polygon_character.gd").new()
 	polygon_model.name = "PolygonCharacter"
 	add_child(polygon_model)

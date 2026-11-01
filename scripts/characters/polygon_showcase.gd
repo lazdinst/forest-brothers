@@ -29,4 +29,4 @@ func interact(_actor) -> void:
 	character.play(STATES[state_index])
 	_update_label()
 func _update_label() -> void:
-	label.text = "Polygon character / F next pose\n"+String(STATES[state_index])
+	label.text = "REJECTED ART / rig test only / F next pose\n"+String(STATES[state_index])
