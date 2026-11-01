@@ -2,16 +2,11 @@ extends CanvasLayer
 ## Presentation/input adapter for the local training rifle. Not network authority.
 
 const WeaponState = preload("res://scripts/weapons/prototype_weapon_state.gd")
-const HANDS = preload("res://assets/weapons/test_rifle/first_person_v1.png")
-const AIMED_HANDS = preload("res://assets/weapons/test_rifle/iron_sights_v1.png")
-const MUZZLE_FLASH = preload("res://assets/weapons/test_rifle/muzzle_flash_v1.png")
+const DEFAULT_DEFINITION = preload("res://weapons/svt_inspired_training.tres")
+const MAGAZINE_SHADER = preload("res://scripts/weapons/weapon_magazine.gdshader")
+@export var definition: Resource = DEFAULT_DEFINITION
 const FLASH_SHADER = preload("res://scripts/weapons/weapon_flash.gdshader")
-const HIP_MUZZLE := Vector2(0.42, 0.24)
-const ADS_MUZZLE := Vector2(0.5, 0.43)
 const FLASH_DURATION: float = 0.075
-const MUZZLE_DEPTH: float = 0.85
-# Measured front-post tip in the original unmodified image, normalized to its canvas.
-const SIGHT_ANCHOR := Vector2(0.5, 0.418)
 var aim_fraction: float = 0.0
 var state = WeaponState.new()
 var rng := RandomNumberGenerator.new()
@@ -23,6 +18,9 @@ var _phase: float = 0.0
 var _flash_time: float = 0.0
 var _player
 var _hands: TextureRect
+var _magazine: TextureRect
+var _magazine_material: ShaderMaterial
+var action_phase: String = ""
 var _flash: TextureRect
 var _flash_frames: Array[AtlasTexture] = []
 var _gun_material: ShaderMaterial
@@ -35,6 +33,7 @@ var _sound: AudioStreamPlayer
 
 func _ready() -> void:
 	_player = get_parent()
+	state = WeaponState.new(definition)
 	layer = 1
 	rng.randomize()
 	_flash = TextureRect.new()
@@ -47,20 +46,35 @@ func _ready() -> void:
 	_flash.visible = false
 	# Draw fire behind the weapon so it cannot erase the barrel/sight silhouette.
 	add_child(_flash)
-	var cell := Vector2(MUZZLE_FLASH.get_width(), MUZZLE_FLASH.get_height()) * 0.5
+	var cell := Vector2(definition.flash_texture.get_width(), definition.flash_texture.get_height()) * 0.5
 	for index in range(4):
 		var frame := AtlasTexture.new()
-		frame.atlas = MUZZLE_FLASH
+		frame.atlas = definition.flash_texture
 		frame.region = Rect2(Vector2(index % 2, index / 2) * cell, cell)
 		_flash_frames.append(frame)
+	_magazine = TextureRect.new()
+	_magazine.texture = definition.hip_texture
+	_magazine.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_magazine.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_magazine.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_magazine_material = ShaderMaterial.new()
+	_magazine_material.shader = MAGAZINE_SHADER
+	_magazine.material = _magazine_material
+	_magazine.visible = false
+	add_child(_magazine)
 	_hands = TextureRect.new()
-	_hands.texture = HANDS
+	_hands.texture = definition.hip_texture
 	_hands.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_hands.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_hands.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_gun_material = ShaderMaterial.new()
 	_gun_material.shader = FLASH_SHADER
 	_hands.material = _gun_material
+	var polygon: PackedVector2Array = definition.magazine_uv.duplicate()
+	polygon.resize(8)
+	for material in [_gun_material, _magazine_material]:
+		material.set_shader_parameter("mag_polygon", polygon)
+		material.set_shader_parameter("mag_count", definition.magazine_uv.size())
 	add_child(_hands)
 	_world_light = OmniLight3D.new()
 	_world_light.light_color = Color(1.0, 0.57, 0.22)
@@ -155,27 +169,39 @@ func _process(delta: float) -> void:
 	var speed: float = Vector2(_player.velocity.x, _player.velocity.z).length()
 	var bob := Vector2(sin(_phase) * 5.0, absf(cos(_phase)) * 7.0) * minf(speed / 3.3, 1.0)
 	var dip := 0.0
-	if state.busy != &"":
-		var progress: float = 1.0 - state.time_left / state.action_duration
-		dip = sin(progress * PI) * (120.0 if state.busy == &"reload" else 45.0)
+	var clip: Resource = definition.get_clip(state.busy)
+	var pose: Dictionary = clip.sample(state.action_progress()) if clip != null else {}
+	action_phase = pose.get("phase", "")
 	if _player.is_vaulting:
 		dip += 130.0
 	if _player.is_sprinting:
 		dip += 55.0
 	aim_fraction = move_toward(aim_fraction, 1.0 if _player.is_aiming else 0.0, delta * 6.0)
 	var aimed_view := aim_fraction >= 0.5
-	_hands.texture = AIMED_HANDS if aimed_view else HANDS
-	_hands.size = Vector2.ONE * lerpf(570.0, 700.0, aim_fraction) * scale_factor
-	var hip_position := Vector2(viewport_size.x * 0.5 - 230.0 * scale_factor, viewport_size.y - 480.0 * scale_factor)
-	var aimed_position := viewport_size * 0.5 - _hands.size * SIGHT_ANCHOR
+	_hands.texture = definition.ads_texture if aimed_view else definition.hip_texture
+	if pose.get("texture") != null:
+		_hands.texture = pose.texture
+	_hands.size = Vector2.ONE * lerpf(definition.hip_size, definition.ads_size, aim_fraction) * scale_factor
+	var hip_position: Vector2 = Vector2(viewport_size.x * 0.5, viewport_size.y) + definition.hip_offset * scale_factor
+	var aimed_position: Vector2 = viewport_size * 0.5 - _hands.size * definition.sight_anchor
 	_hands.position = hip_position.lerp(aimed_position, aim_fraction)
 	# Keep settled sights on the camera ray, including while walking/leaning.
 	# A short lowering/raising motion masks the switch between painted views.
 	var transition_dip := sin(aim_fraction * PI) * 85.0
 	_hands.position += (bob * (1.0 - aim_fraction) + Vector2(_player.camera.position.x * 35.0 * (1.0 - aim_fraction), dip + transition_dip + _kick * 22.0)) * scale_factor
-	_hands.pivot_offset = _hands.size * (SIGHT_ANCHOR if aimed_view else Vector2(0.5, 0.5))
+	_hands.position += pose.get("offset", Vector2.ZERO) * scale_factor
+	_hands.pivot_offset = _hands.size * (definition.sight_anchor if aimed_view else Vector2(0.5, 0.5))
 	# 3D roll is counterclockwise; CanvasItem rotation is clockwise (Y points down).
 	_hands.rotation = -_player.camera.rotation.z + sin(_phase * 0.5) * minf(speed, 1.0) * 0.006 * (1.0 - aim_fraction)
+	_hands.rotation += deg_to_rad(pose.get("roll", 0.0))
+	var separate_magazine: bool = clip != null and clip.animate_magazine and not aimed_view and pose.get("texture") == null
+	_gun_material.set_shader_parameter("hide_magazine", separate_magazine)
+	_magazine.visible = separate_magazine
+	_magazine.size = _hands.size
+	_magazine.position = _hands.position + pose.get("magazine_offset", Vector2.ZERO).rotated(_hands.rotation) * scale_factor
+	_magazine.pivot_offset = _hands.pivot_offset
+	_magazine.rotation = _hands.rotation
+	_magazine.modulate.a = pose.get("magazine_alpha", 1.0)
 	_flash.size = Vector2.ONE * (120.0 if aimed_view else 150.0) * scale_factor
 	_flash.position = muzzle_screen_position() - _flash.size * 0.5
 	_flash.pivot_offset = _flash.size * 0.5
@@ -185,28 +211,28 @@ func _process(delta: float) -> void:
 	if _flash.visible:
 		_flash.texture = _flash_frames[mini(int((1.0 - strength) * 4.0), 3)]
 	_flash.modulate.a = minf(strength * 2.0, 1.0)
-	_gun_material.set_shader_parameter("muzzle_uv", ADS_MUZZLE if aimed_view else HIP_MUZZLE)
+	_gun_material.set_shader_parameter("muzzle_uv", definition.ads_muzzle if aimed_view else definition.hip_muzzle)
 	_gun_material.set_shader_parameter("flash_strength", strength)
 	_world_light.light_energy = strength * 3.0
 
 
 func sight_screen_position() -> Vector2:
-	return _hands.get_global_transform() * (_hands.size * SIGHT_ANCHOR)
+	return _hands.get_global_transform() * (_hands.size * definition.sight_anchor)
 
 
 func muzzle_screen_position() -> Vector2:
-	var anchor := ADS_MUZZLE if aim_fraction >= 0.5 else HIP_MUZZLE
+	var anchor: Vector2 = definition.ads_muzzle if aim_fraction >= 0.5 else definition.hip_muzzle
 	return _hands.get_global_transform() * (_hands.size * anchor)
 
 
 func muzzle_world_position() -> Vector3:
 	# The current weapon is a 2D view sprite: project its muzzle into a short
 	# camera-relative physical barrel. Replace with a 3D socket if art changes.
-	return _player.camera.project_position(muzzle_screen_position(), MUZZLE_DEPTH)
+	return _player.camera.project_position(muzzle_screen_position(), definition.muzzle_depth)
 
 
 func status_text() -> String:
-	return "TEST RIFLE  %d/10   Spare %d/10   Loose %d\nClean %d%%   %s   Hits %d / Shots %d" % [state.magazines[state.loaded_magazine], state.magazines[1 - state.loaded_magazine], state.loose_rounds, roundi(state.cleanliness * 100.0), state.message, hits, shots]
+	return "%s  %d/%d   Spare %d/%d   Loose %d\nClean %d%%   %s   Hits %d / Shots %d" % [definition.display_name, state.magazines[state.loaded_magazine], definition.capacity, state.magazines[1 - state.loaded_magazine], definition.capacity, state.loose_rounds, roundi(state.cleanliness * 100.0), action_phase if action_phase != "" else state.message, hits, shots]
 
 
 func _make_test_shot_sound() -> AudioStreamWAV:

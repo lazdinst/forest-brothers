@@ -1,0 +1,262 @@
+[gd_resource type="Resource" load_steps=35 format=3]
+
+[ext_resource type="Script" path="res://scripts/weapons/weapon_definition.gd" id="1_definition"]
+[ext_resource type="Script" path="res://scripts/weapons/weapon_action_clip.gd" id="2_clip"]
+[ext_resource type="Script" path="res://scripts/weapons/weapon_pose.gd" id="3_pose"]
+[ext_resource type="Texture2D" path="res://assets/weapons/test_rifle/first_person_v1.png" id="4_hip"]
+[ext_resource type="Texture2D" path="res://assets/weapons/test_rifle/iron_sights_v1.png" id="5_ads"]
+[ext_resource type="Texture2D" path="res://assets/weapons/test_rifle/muzzle_flash_v1.png" id="6_flash"]
+
+[sub_resource type="Resource" id="reload_0"]
+script = ExtResource("3_pose")
+time = 0
+phase = &"Ready"
+offset = Vector2(0, 0)
+roll_degrees = 0
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="reload_1"]
+script = ExtResource("3_pose")
+time = 0.14
+phase = &"Withdraw magazine"
+offset = Vector2(-25, 15)
+roll_degrees = -10
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="reload_2"]
+script = ExtResource("3_pose")
+time = 0.34
+phase = &"Remove magazine"
+offset = Vector2(-25, 15)
+roll_degrees = -10
+magazine_offset = Vector2(-70, 90)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="reload_3"]
+script = ExtResource("3_pose")
+time = 0.46
+phase = &"Stow retained magazine"
+offset = Vector2(-25, 15)
+roll_degrees = -10
+magazine_offset = Vector2(-150, 185)
+magazine_alpha = 0
+
+[sub_resource type="Resource" id="reload_4"]
+script = ExtResource("3_pose")
+time = 0.5
+phase = &"Take spare magazine"
+offset = Vector2(-25, 15)
+roll_degrees = -10
+magazine_offset = Vector2(-90, 150)
+magazine_alpha = 0
+
+[sub_resource type="Resource" id="reload_5"]
+script = ExtResource("3_pose")
+time = 0.66
+phase = &"Insert spare"
+offset = Vector2(-25, 15)
+roll_degrees = -10
+magazine_offset = Vector2(-30, 75)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="reload_6"]
+script = ExtResource("3_pose")
+time = 0.78
+phase = &"Magazine seated"
+offset = Vector2(-25, 15)
+roll_degrees = -10
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="reload_7"]
+script = ExtResource("3_pose")
+time = 1
+phase = &"Ready"
+offset = Vector2(0, 0)
+roll_degrees = 0
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="clip_reload"]
+script = ExtResource("2_clip")
+action = &"reload"
+duration = 1.4
+commit_at = 0.78
+animate_magazine = true
+poses = Array[Resource]([SubResource("reload_0"), SubResource("reload_1"), SubResource("reload_2"), SubResource("reload_3"), SubResource("reload_4"), SubResource("reload_5"), SubResource("reload_6"), SubResource("reload_7")])
+
+[sub_resource type="Resource" id="clear_0"]
+script = ExtResource("3_pose")
+time = 0
+phase = &"Ready"
+offset = Vector2(0, 0)
+roll_degrees = 0
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="clear_1"]
+script = ExtResource("3_pose")
+time = 0.25
+phase = &"Check action"
+offset = Vector2(-30, 5)
+roll_degrees = 14
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="clear_2"]
+script = ExtResource("3_pose")
+time = 0.55
+phase = &"Work action"
+offset = Vector2(-45, 15)
+roll_degrees = 22
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="clear_3"]
+script = ExtResource("3_pose")
+time = 0.8
+phase = &"Release action"
+offset = Vector2(-25, 5)
+roll_degrees = -5
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="clear_4"]
+script = ExtResource("3_pose")
+time = 1
+phase = &"Ready"
+offset = Vector2(0, 0)
+roll_degrees = 0
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="clip_clear"]
+script = ExtResource("2_clip")
+action = &"clear"
+duration = 0.9
+commit_at = 1
+animate_magazine = false
+poses = Array[Resource]([SubResource("clear_0"), SubResource("clear_1"), SubResource("clear_2"), SubResource("clear_3"), SubResource("clear_4")])
+
+[sub_resource type="Resource" id="inspect_0"]
+script = ExtResource("3_pose")
+time = 0
+phase = &"Ready"
+offset = Vector2(0, 0)
+roll_degrees = 0
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="inspect_1"]
+script = ExtResource("3_pose")
+time = 0.35
+phase = &"Inspect left"
+offset = Vector2(-55, -8)
+roll_degrees = -17
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="inspect_2"]
+script = ExtResource("3_pose")
+time = 0.7
+phase = &"Inspect right"
+offset = Vector2(-10, 10)
+roll_degrees = 12
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="inspect_3"]
+script = ExtResource("3_pose")
+time = 1
+phase = &"Ready"
+offset = Vector2(0, 0)
+roll_degrees = 0
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="clip_inspect"]
+script = ExtResource("2_clip")
+action = &"inspect"
+duration = 0.8
+commit_at = 1
+animate_magazine = false
+poses = Array[Resource]([SubResource("inspect_0"), SubResource("inspect_1"), SubResource("inspect_2"), SubResource("inspect_3")])
+
+[sub_resource type="Resource" id="pack_0"]
+script = ExtResource("3_pose")
+time = 0
+phase = &"Pack spare"
+offset = Vector2(0, 0)
+roll_degrees = 0
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="pack_1"]
+script = ExtResource("3_pose")
+time = 0.5
+phase = &"Pack spare"
+offset = Vector2(0, 25)
+roll_degrees = 0
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="pack_2"]
+script = ExtResource("3_pose")
+time = 1
+phase = &"Ready"
+offset = Vector2(0, 0)
+roll_degrees = 0
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="clip_pack"]
+script = ExtResource("2_clip")
+action = &"pack"
+duration = 0.32
+commit_at = 1
+animate_magazine = false
+poses = Array[Resource]([SubResource("pack_0"), SubResource("pack_1"), SubResource("pack_2")])
+
+[sub_resource type="Resource" id="clean_0"]
+script = ExtResource("3_pose")
+time = 0
+phase = &"Ready"
+offset = Vector2(0, 0)
+roll_degrees = 0
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="clean_1"]
+script = ExtResource("3_pose")
+time = 0.5
+phase = &"Service weapon"
+offset = Vector2(-30, 45)
+roll_degrees = -10
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="clean_2"]
+script = ExtResource("3_pose")
+time = 1
+phase = &"Ready"
+offset = Vector2(0, 0)
+roll_degrees = 0
+magazine_offset = Vector2(0, 0)
+magazine_alpha = 1
+
+[sub_resource type="Resource" id="clip_clean"]
+script = ExtResource("2_clip")
+action = &"clean"
+duration = 2.2
+commit_at = 1
+animate_magazine = false
+poses = Array[Resource]([SubResource("clean_0"), SubResource("clean_1"), SubResource("clean_2")])
+
+[resource]
+script = ExtResource("1_definition")
+hip_texture = ExtResource("4_hip")
+ads_texture = ExtResource("5_ads")
+flash_texture = ExtResource("6_flash")
+action_clips = Array[Resource]([SubResource("clip_reload"), SubResource("clip_clear"), SubResource("clip_inspect"), SubResource("clip_pack"), SubResource("clip_clean")])

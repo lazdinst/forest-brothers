@@ -11,6 +11,7 @@ The project now has a **local movement, animation, and firing-range prototype** 
 - [Game concept](docs/GAME_CONCEPT.md): vision, player experience, scope, and open questions.
 - [Mission structure](docs/MISSION_STRUCTURE.md): quest progress, early return, randomization, timeouts, reconnection, and crash rollback.
 - [Missions and medicine](docs/MISSIONS_AND_MEDICINE.md): four-player co-op, individual death, revival, and period-grounded injury treatment.
+- [Weapon animation workflow](docs/WEAPON_ANIMATION_WORKFLOW.md): per-weapon action clips, reload timing, art requirements, and current limitations.
 - [Combat design](docs/COMBAT_DESIGN.md): approved perception/searching, manual magazine loading, maintenance-dependent jams, and friendly fire.
 - [Camp and progression](docs/CAMP_AND_PROGRESSION.md): hands-on building, food, water, storage, maintenance, and concurrent camp activity.
 - [Art direction](docs/ART_DIRECTION.md): gritty painted sprites, agent-assisted production, and an early visual feasibility test.

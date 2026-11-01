@@ -55,6 +55,7 @@ Four-player maximum co-op and individual mission death are confirmed. Do not tre
 
 - Separate player input, authoritative game rules, and presentation. Shared world changes must have a clear owner.
 - Do not assume there is exactly one player or use a global player reference as the foundation of shared systems.
+- When changing weapon rules, art, or animations, read `docs/WEAPON_ANIMATION_WORKFLOW.md`. Keep per-weapon assets/timelines in definitions and ammunition effects in rules; do not award ammo from animation callbacks or assume all weapons use detachable magazines.
 - Use stable IDs for persistent entities and content where needed. Keep definitions separate from mutable runtime state.
 - Prefer straightforward reusable components over a speculative universal framework.
 - Validate co-op with two running instances early, before expanding content. Networking support is not proven by clean-looking interfaces alone.
