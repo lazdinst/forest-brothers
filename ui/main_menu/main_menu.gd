@@ -6,6 +6,7 @@ signal quit_requested
 const JournalTheme = preload("res://ui/themes/field_journal_theme.gd")
 const MenuActions = preload("res://ui/components/menu_actions.gd")
 const MenuModal = preload("res://ui/components/menu_modal.gd")
+const MenuPanel = preload("res://ui/components/menu_panel.gd")
 var training_button: Button
 var details
 
@@ -41,9 +42,11 @@ func _ready() -> void:
 	subtitle.add_theme_color_override("font_color", JournalTheme.INK)
 	canvas.add_child(subtitle)
 	var menu := MenuActions.new()
-	menu.position = Vector2(112, 222)
-	menu.size = Vector2(376, 0)
-	canvas.add_child(menu)
+	var paper_menu := MenuPanel.new()
+	paper_menu.position = Vector2(112, 210)
+	paper_menu.size = Vector2(400, 0)
+	canvas.add_child(paper_menu)
+	paper_menu.add_child(menu)
 	for entry in [["Continue", "No campaign save yet."], ["New Game", "Campaign missions are in development."], ["Co-op Game", "Co-op is planned for up to four players; joining is not implemented."]]:
 		var unavailable := _button(entry[0] + "  ·  unavailable", menu)
 		unavailable.disabled = true
@@ -55,7 +58,7 @@ func _ready() -> void:
 	_button("Exit", menu).pressed.connect(func(): quit_requested.emit())
 	var note := Label.new()
 	note.text = "DEVELOPMENT PROTOTYPE  /  TRAINING AVAILABLE"
-	note.position = Vector2(112, 615)
+	note.position = Vector2(112, 625)
 	note.add_theme_font_size_override("font_size", 14)
 	note.add_theme_color_override("font_color", Color("fff0d4"))
 	note.add_theme_color_override("font_shadow_color", Color.BLACK)

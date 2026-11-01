@@ -14,6 +14,15 @@ composition uniformly and centers it in other aspect ratios. Georgia is requeste
 through SystemFont, with installed serif fallbacks; no font files or dependencies
 are bundled. Artwork is letterboxed with the composition to keep labels aligned.
 
+Paper finish: the shared theme uses the transparent `paper_sheet_v1.png` texture
+with nine-slice StyleBoxTexture surfaces, rather than flat fills or straight border
+outlines. The main action list sits on a continuous worn sheet; buttons reuse the
+same paper in strip form with burgundy tints for hover/focus/press. Modal and camp
+frames use the full sheet with dark ink text. The original PNG is retained at full
+resolution; its UI import is limited to 512 px for lightweight reusable rendering.
+The existing startup/component regression passed with this theme, and rendered
+main-menu and confirmation frames were inspected. No protected asset was modified.
+
 - `ui/themes/field_journal_theme.gd`: shared paper/ink/burgundy theme factory,
   normal/hover/pressed/disabled/focus states and panel styling.
 - `ui/components/menu_button.tscn`: reusable minimum-48-unit button; keyboard
@@ -164,6 +173,8 @@ tests/menu_startup_smoke.gd
 tests/menu_startup_smoke.gd.uid
 ui/assets/field_journal_background_v1.png
 ui/assets/field_journal_background_v1.png.import
+ui/assets/paper_sheet_v1.png
+ui/assets/paper_sheet_v1.png.import
 ui/components/menu_button.tscn
 ui/components/menu_actions.gd
 ui/components/menu_actions.gd.uid
@@ -200,3 +211,20 @@ Final prompt:
 > retained low on the cover. The game engine will render accessible live menu text
 > and title separately. No new words or symbols, no watermark. Keep clear map space
 > on left for overlay controls, book on right. Output landscape 16:9.
+
+The paper asset was generated with the built-in imagegen tool, requesting actual
+transparency (verified corner alpha 0), with this prompt:
+
+> Asset type: reusable game UI parchment texture, not a finished menu screenshot.
+> A SINGLE blank rectangular piece of warm aged cream paper, flat front-on scan,
+> roughly 3:2 landscape aspect. It fills nearly the entire canvas, with only 2
+> percent transparent padding on each side. All four edges are gently irregular
+> torn/deckled paper with small nicks and frayed fibers, NOT heavily burned, no
+> rolled corners. Fine pressed paper fibers, subtle creases and uneven pale ochre
+> staining at perimeter; mostly light softly varied center for dark text
+> readability. Gritty painted material realism like a worn 1940s field notebook
+> in warm lamplight. Entire object uniformly lit, no perspective, no cast shadow
+> outside the paper. Perfectly blank: NO writing, NO lettering, NO icons, NO
+> border lines, NO other objects. Real transparent background. Important this
+> will be nine-sliced and stretched for reusable menu panels and paper strips;
+> keep corners flat and avoid distinctive large marks.

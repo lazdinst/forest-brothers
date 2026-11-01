@@ -6,15 +6,18 @@ const BURGUNDY := Color("64282b")
 const SCRIM := Color("15130fef")
 static var _shared_theme: Theme
 
-static func panel(color: Color, border: Color) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = color
-	style.border_color = border
-	style.set_border_width_all(1)
-	style.content_margin_left = 22
-	style.content_margin_right = 22
-	style.content_margin_top = 8
-	style.content_margin_bottom = 8
+static func paper(tint: Color, padding := 12.0) -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = preload("res://ui/assets/paper_sheet_v1.png")
+	style.modulate_color = tint
+	for edge in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+		style.set_texture_margin(edge, 16)
+		style.set_content_margin(edge, padding)
+	if padding < 20:
+		style.set_texture_margin(SIDE_TOP, 4)
+		style.set_texture_margin(SIDE_BOTTOM, 4)
+		style.content_margin_left = 24
+		style.content_margin_right = 24
 	return style
 
 static func create() -> Theme:
@@ -30,14 +33,14 @@ static func create() -> Theme:
 	theme.set_color("font_pressed_color", "Button", Color("fff0d4"))
 	theme.set_color("font_focus_color", "Button", Color("fff0d4"))
 	theme.set_color("font_disabled_color", "Button", Color("776b58"))
-	theme.set_stylebox("normal", "Button", panel(PAPER, Color("9c8058")))
-	theme.set_stylebox("hover", "Button", panel(BURGUNDY, PAPER))
-	theme.set_stylebox("pressed", "Button", panel(Color("421d20"), PAPER))
-	theme.set_stylebox("disabled", "Button", panel(Color("c3ad88"), Color("9c8058")))
-	theme.set_stylebox("focus", "Button", panel(Color("64282b"), Color("fff0d4")))
-	theme.set_color("font_color", "Label", PAPER)
-	theme.set_color("font_color", "RichTextLabel", PAPER)
-	theme.set_stylebox("panel", "PanelContainer", panel(Color("29251df5"), Color("9c8058")))
-	theme.set_constant("separation", "VBoxContainer", 5)
+	theme.set_stylebox("normal", "Button", paper(Color("f3e5cf"), 10))
+	theme.set_stylebox("hover", "Button", paper(Color("793638"), 10))
+	theme.set_stylebox("pressed", "Button", paper(Color("53272a"), 10))
+	theme.set_stylebox("disabled", "Button", paper(Color("d1c1a6"), 10))
+	theme.set_stylebox("focus", "Button", paper(Color("793638"), 10))
+	theme.set_color("font_color", "Label", INK)
+	theme.set_color("font_color", "RichTextLabel", INK)
+	theme.set_stylebox("panel", "PanelContainer", paper(Color.WHITE, 20))
+	theme.set_constant("separation", "VBoxContainer", 0)
 	_shared_theme = theme
 	return theme
