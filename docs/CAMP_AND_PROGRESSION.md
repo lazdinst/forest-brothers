@@ -8,7 +8,7 @@ Camp is a playable place where players can work while friends continue a mission
 
 Confirmed activities and infrastructure:
 - Organize equipment and supplies.
-- Build camp structures and dig trenches.
+- Build camp structures and dig trenches using a mixture of freely placed pieces and predefined facility sites/upgrades.
 - Collect water, including wells as a desired camp structure.
 - Store food and cook meals, with dedicated storage/cooking facilities.
 - Repair weapons and gather/organize ammunition.
@@ -40,10 +40,18 @@ The owner requested town-like facilities. The following table proposes their fun
 | Equipment storage | Organize personal and/or shared gear | Make preparation and recovered equipment manageable; access rules undecided |
 | Weapon workbench | Repair weapons using approved supplies | Give weapon condition a practical recovery path; wear/malfunction details undecided |
 | Ammunition storage | Gather, sort, and distribute ammunition | Prepare mission loads; this does not approve ammunition manufacturing |
-| Shelters / camp buildings | Build functional spaces | Support the hideout's development; freeform versus predefined layouts undecided |
+| Shelters / camp buildings | Build functional spaces | Use the confirmed mixed construction model; exact pieces and facility layouts remain undecided |
 | Trenches / earthworks | Perform digging/construction actions | Develop camp layout; raids, defensive combat benefits, and arbitrary terrain deformation are not approved |
 
 Specific objects, materials, architecture, and tools must fit the selected Latvian setting and year. Valheim is a gameplay reference, not a historical reference or permission to reuse its assets/designs wholesale.
+
+## Mixed construction — confirmed direction
+
+The owner chose a mixture of freely placed pieces and predefined sites/upgrades. Both belong in the intended construction system.
+
+Starting interpretation from the discussion: allow player-arranged shelter pieces and trench sections, while facilities such as wells and workshops use suitable predefined sites or structured upgrades. The mixed model is confirmed; the complete assignment of objects to each category remains open.
+
+Placement bounds, snapping, foundations, terrain interaction, material costs, dismantling refunds, permissions, and upgrade requirements still need design. Freely placed pieces do not imply unrestricted terrain deformation or construction anywhere in the world.
 
 ## Starting scope — proposed
 
@@ -74,7 +82,7 @@ Do not assume mission death fully heals the player, camp entry clears all injuri
 
 ## Questions for the owner
 
-1. Should construction use freely placed pieces, predefined plots/upgrades, or a mixture?
+1. Which objects use freely placed pieces, which use predefined sites/upgrades, and what placement limits apply? The mixture is confirmed.
 2. How large should the forest settlement become while retaining the intended hideout identity?
 3. Is gathering local materials around camp possible while a mission is active, and what risks exist there?
 4. What is shared versus personal, including recovered gear and ammunition?

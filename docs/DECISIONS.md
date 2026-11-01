@@ -22,6 +22,7 @@ This is the durable project memory. User-confirmed direction and agent recommend
 - Revival preserves injuries and reduces capability for a duration; numerical penalties, timers, and recovery rules remain open.
 - Camp supports hands-on equipment organization, building, trench digging, cooking, water collection, food storage, weapon repair, and ammunition gathering/organization. The owner cites Valheim as a reference for camp activities and structures.
 - Players at camp can perform these activities while friends continue the active mission.
+- Construction uses a mixture of freely placed pieces and predefined facility sites/upgrades. Exact assignments and placement mechanics remain open.
 - Development context should be preserved in documentation and agent instructions for work across multiple agents.
 
 ## Proposed, not yet confirmed
@@ -60,6 +61,12 @@ Status: user-confirmed starting rules and feature direction.
 The owner accepted the initial equipment-loss proposal, rejected same-mission re-entry after death, chose mission death for solo/all-incapacitated cases, and confirmed injuries and reduced capability persist for a duration after revival. The owner also expanded camp from preparation into an interactive space with building, trenches, wells/water, food storage, cooking, equipment organization, weapon repair, and ammunition gathering, including while friends remain on mission.
 
 This supersedes the earlier unresolved entries about those outcomes and the suggestion that camp might be only a preparation interface. Building is confirmed product scope, while complex construction remains outside the first mission slice. Exact construction tools, terrain deformation, recipes, timers, and permissions are not approved by this feature direction.
+
+## Mixed construction — 2026-11-01
+
+Status: user-confirmed direction.
+
+The owner selected a mixture when offered freely placed construction, predefined sites/upgrades, or both. This resolves that high-level construction choice. Freely arranged shelters/trenches and predefined wells/workshops are the starting interpretation; object-by-object rules, snapping, terrain technology, costs, and permissions remain undecided.
 
 ## Recording future decisions
 

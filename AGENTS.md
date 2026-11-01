@@ -26,6 +26,7 @@ Preserve these user requirements:
 - On mission death, carried equipment stays on the body for teammates to recover; camp-stored supplies remain safe under this starting rule. Dead players cannot rejoin that mission.
 - Solo incapacitation and total group incapacitation resolve as mission death. Revival preserves injuries and temporarily reduced capability; exact durations remain open.
 - Camp is an interactive place: organize equipment, build structures, dig trenches, cook, collect water, store food, repair weapons, and gather/organize ammunition. Returned players can work there while friends continue a mission. See `docs/CAMP_AND_PROGRESSION.md`.
+- Construction uses a mixture of freely placed pieces and predefined facility sites/upgrades. Exact piece catalogs, snapping, terrain changes, and upgrade costs are unresolved; do not replace the mixed approach with an exclusively freeform or exclusively fixed system.
 - Keep the repository private.
 
 Four-player maximum co-op and individual mission death are confirmed. Do not treat proposed medical item effects, numerical balance, or a proposed engine as approved requirements. Check the decision log and `docs/MISSIONS_AND_MEDICINE.md` for their status.

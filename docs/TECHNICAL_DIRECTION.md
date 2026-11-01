@@ -52,7 +52,7 @@ See [camp and progression](CAMP_AND_PROGRESSION.md) for confirmed scope and prop
 - Keep the death lockout independent from player location or equipment: preparing at camp must not enable same-mission deployment.
 - Preserve carried inventory on the mission body when returning a dead player to camp; never duplicate that inventory onto the returned character. Ownership on recovery is unresolved.
 - Track post-revival penalties explicitly. Timer units, offline progression, treatment acceleration, and which camp actions injuries affect must be decided before implementing those behaviors.
-- Construction placement, supported terrain changes, persistence size, and resource permissions require deliberate scope choices. Trench digging does not itself require arbitrary terrain deformation.
+- Support both freely placed pieces and predefined facility sites/upgrades in the construction design. Placement validation and persistence must distinguish placed-piece identity from facility-site identity when implemented. Snapping, supported terrain changes, persistence size, and resource permissions still require deliberate scope choices. Trench digging does not itself require arbitrary terrain deformation.
 - Camp and mission time need a coherent shared rule; do not implement a global sleep/time skip that advances or disrupts an active mission without an approved design.
 
 ## Content and persistence

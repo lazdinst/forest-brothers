@@ -47,7 +47,7 @@ Begin with a compact playable location and a few interacting systems. Scale by a
 Support solo play and co-op with a maximum of four players. A player returning to camp after death must not interrupt teammates still on a mission. A host-owned campaign is the proposed initial format; competitive PvP is not approved.
 
 ### Camp is a place to play
-Hands-on camp life is confirmed product scope, with Valheim as the owner's reference for building and productive activities. Wells/water infrastructure, food storage, cooking facilities, equipment organization, trenches, and weapon repair support preparation and give returned players useful work. Specific structures and progression rules are detailed in [camp and progression](CAMP_AND_PROGRESSION.md). Larger construction systems follow a minimal proof, rather than blocking the first playable mission.
+Hands-on camp life is confirmed product scope, with Valheim as the owner's reference for building and productive activities. Wells/water infrastructure, food storage, cooking facilities, equipment organization, trenches, and weapon repair support preparation and give returned players useful work. Construction combines freely placed pieces with predefined facility sites/upgrades. Specific structures and progression rules are detailed in [camp and progression](CAMP_AND_PROGRESSION.md). Larger construction systems follow a minimal proof, rather than blocking the first playable mission.
 
 ## Visual and audio direction
 
