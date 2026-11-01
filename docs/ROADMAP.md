@@ -50,6 +50,12 @@ Prototype the headquarters mission table and a build-planning table that changes
 
 Done when: both interfaces work with players simultaneously at camp and on mission; stock is not double-spent; plans are visibly distinct from completed structures; upgrading preserves stored contents; both free placement and facility upgrade rules remain supported. Civilian construction/hauling/harvesting needs its own scope decision before implementation.
 
+## 3C — One civilian rescue that grows camp
+
+Begin with one civilian resident. Add one rescuable civilian who receives directions, visibly departs toward camp, and remains a pending arrival until mission resolution.
+
+Done when: a successful result adds exactly one resident, solo/total-group mission-death failure adds none, the camp roster does not change before resolution, and repeated rescue/result events do not duplicate the civilian. Verify that surviving teammates can secure the recruit after the rescuer dies, including host-character death, without adding them prematurely. Show pending versus arrived civilians and the debrief result. Do not expand this milestone into a civilian labor simulation.
+
 ## 4 — A campaign that remembers
 
 Implement the agreed save ownership and failure rules. Persist the relevant camp state, inventory, and mission result, including built structures, station/storage state, recoverable gear rules, and per-player mission death lockouts where an active mission can be resumed.

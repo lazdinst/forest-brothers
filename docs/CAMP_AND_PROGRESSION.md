@@ -15,6 +15,26 @@ Confirmed activities and infrastructure:
 
 The camp starts rough, with tents, and develops through gradual building upgrades toward a more established forest settlement/hideout. A headquarters tent or bunker houses the mission-planning table. A separate build-planning table opens a city-builder view for placing plans. Specific upgrade tiers, construction complexity, materials, recipes, and the eventual settlement scale remain undecided.
 
+## Starting residents and rescue recruitment
+
+Confirmed start: the player and one civilian in the rough tent camp. An old man is the owner's suggested identity; name, background, abilities, and narrative role remain undesigned. Additional human co-op participants are separate from this initial civilian roster; the maximum remains four players.
+
+Confirmed recruitment flow:
+1. Find and rescue civilians during a mission.
+2. Give them directions to the camp.
+3. They run off toward camp during the mission.
+4. Keep them as pending arrivals until the mission resolves. Do not add them to the visible camp population or give them camp jobs yet.
+5. On successful resolution, they appear at camp and join its resident roster.
+6. Mission-death failure loses those pending civilians: they were lost or died en route, and do not join camp.
+
+Confirmed co-op rule: surviving teammates can secure the civilians' arrival even if the rescuer dies. Pending recruitment belongs to the group, not an individual player. Solo/total-group mission death loses the pending arrivals. Do not remove existing camp residents or cancel pending recruits on an individual player death.
+
+The civilian departing toward camp does not require a fully simulated journey across maps. A short departure animation/path followed by mission-result resolution is a proposed initial implementation. Ongoing escorts, route combat, random travel losses, rediscovery, and deaths after a successful rescue resolution are not approved.
+
+Population feedback should distinguish current camp residents from civilians pending on the active mission. Mission debrief should report arrivals/losses clearly. Exact UI, capacity constraints, rescue conditions, mission-success criteria, and whether partial success can secure recruits remain to be designed.
+
+Recruitment is confirmed; construction, hauling, and harvesting assignments remain the separate workforce proposal below. The initial civilian's specific tasks also remain open.
+
 ## How camp and missions connect
 
 Mission outings obtain resources and help locals. Camp turns supplies into preparation, sustenance, repaired equipment, and lasting improvements. Players can contribute through camp work while others face the mission's risks.
@@ -78,7 +98,7 @@ Confirmed progression: start with rough tents and improve buildings gradually. E
 
 ## Civilian labor — owner-suggested proposal
 
-The owner suggested directing civilians to construct buildings, move materials, and harvest trees. If adopted, this could connect helping locals with camp development. Recruitment, rescue-to-worker conversion, assignments, pathfinding, supplies, skills, wages, schedules, and danger are not approved by that suggestion.
+The owner suggested directing civilians to construct buildings, move materials, and harvest trees. If adopted, this could connect helping locals with camp development. Rescue-based recruitment is now confirmed in the section above. Automatic conversion of recruits into workers, assignments, pathfinding, supplies, skills, wages, schedules, and danger remain unapproved by the workforce suggestion.
 
 Prototype plans and resource accounting first. A simple timed construction job is a possible feasibility step before visible hauling and tree harvesting, not an approved replacement for the desired presentation. Compare hands-on player work, civilian jobs, and a mixture before deciding how construction actually completes.
 
@@ -119,3 +139,5 @@ Do not assume mission death fully heals the player, camp entry clears all injuri
 6. Are food and water camp stocks, player survival requirements, or both?
 7. Should work require active participation, timed completion, or both?
 8. How should camp time interact with ongoing missions?
+9. What feedback tells a player who died that surviving teammates secured the group's civilian arrivals?
+10. What qualifies as a successful rescue mission resolution, including partial success or an early return?

@@ -30,6 +30,7 @@ Preserve these user requirements:
 - All equipment and supplies are communal, including recovered gear. Carried inventory represents location/custody, not private ownership. Make available quantities easy to inspect; communal ownership does not imply instant remote access.
 - Start with a rough tent camp and progressively upgrade buildings. A headquarters tent/bunker contains the mission-planning table; a build-planning table opens a city-builder view for construction plans within the mixed building system.
 - Art direction is gritty illustrated sprites: painted characters with a low-resolution finish. Agent-generated sprites need a reference-led, visually checked pipeline; read `docs/ART_DIRECTION.md`. Civilian building/hauling/tree-harvesting is a proposal, not an implemented or fully approved workforce simulation.
+- Initially the camp has the player and one civilian (an old man is the suggested identity). Rescue civilians on missions, direct them toward camp, and show them running off. They remain pending until mission resolution; successful rescue arrivals then join camp. Solo/total-group mission death loses pending recruits. Surviving teammates can secure arrivals even if the rescuer dies; individual death must not cancel the group's recruits.
 - Keep the repository private.
 
 Four-player maximum co-op and individual mission death are confirmed. Do not treat proposed medical item effects, numerical balance, or a proposed engine as approved requirements. Check the decision log and `docs/MISSIONS_AND_MEDICINE.md` for their status.

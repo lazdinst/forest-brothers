@@ -4,7 +4,7 @@ Status: initial concept draft. See [the decision log](DECISIONS.md) for which ch
 
 ## The premise
 
-You are part of a small Latvian resistance group living in a concealed forest hideout after World War II. You venture into the surrounding countryside to obtain supplies, help local people, and sustain the camp under occupation.
+You begin in a rough Latvian forest camp after World War II with one civilian, suggested as an old man. You venture into the surrounding countryside to obtain supplies, help local people, and develop a resistance hideout under occupation. Rescued civilians receive directions and run off toward camp; they become residents when the mission resolves successfully. Solo/total-group mission death loses those pending arrivals; surviving co-op teammates can secure them even if the rescuer dies.
 
 The central question is: **what are you willing to risk to keep your people alive?**
 
@@ -47,7 +47,7 @@ Begin with a compact playable location and a few interacting systems. Scale by a
 Support solo play and co-op with a maximum of four players. A player returning to camp after death must not interrupt teammates still on a mission. A host-owned campaign is the proposed initial format; competitive PvP is not approved.
 
 ### Camp is a place to play
-Hands-on camp life is confirmed product scope, with Valheim as the owner's reference for building and productive activities. Wells/water infrastructure, food storage, cooking facilities, equipment organization, trenches, and weapon repair support preparation and give returned players useful work. Start with rough tents and gradually upgrade buildings. All supplies are communal and quantities must be easy to inspect. The headquarters mission table organizes outings; the build-planning table opens a city-builder view to place plans. Construction combines freely placed pieces with predefined facility sites/upgrades. Civilian construction, hauling, and tree harvesting are an owner-suggested possibility, not a settled workforce system. Specific structures and progression rules are detailed in [camp and progression](CAMP_AND_PROGRESSION.md). Larger construction systems follow a minimal proof, rather than blocking the first playable mission.
+Hands-on camp life is confirmed product scope, with Valheim as the owner's reference for building and productive activities. Wells/water infrastructure, food storage, cooking facilities, equipment organization, trenches, and weapon repair support preparation and give returned players useful work. Start with rough tents and gradually upgrade buildings. All supplies are communal and quantities must be easy to inspect. The headquarters mission table organizes outings; the build-planning table opens a city-builder view to place plans. Construction combines freely placed pieces with predefined facility sites/upgrades. Camp population grows through mission rescues, with new residents arriving at mission resolution. Civilian construction, hauling, and tree harvesting are an owner-suggested possibility, not a settled workforce system. Specific structures and progression rules are detailed in [camp and progression](CAMP_AND_PROGRESSION.md). Larger construction systems follow a minimal proof, rather than blocking the first playable mission.
 
 ## Visual and audio direction
 

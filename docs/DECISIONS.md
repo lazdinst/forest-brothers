@@ -27,6 +27,9 @@ This is the durable project memory. User-confirmed direction and agent recommend
 - Start with a rough camp of tents and progressively upgrade buildings over time, with city-builder-like camp development.
 - A mission-planning table sits in a headquarters tent or bunker.
 - Desired construction interface: a build-planning table opens a city-builder view to place plans. This complements the confirmed mixture of freely placed pieces and predefined facility upgrades.
+- Initially the camp consists of the player and one civilian; an old man is the suggested civilian identity, not a finished character specification. This does not change the four-player co-op limit.
+- More civilians are rescued during missions and given directions to camp. They run off toward camp rather than requiring a confirmed full-route escort system.
+- Departed civilians are pending arrivals until the mission ends. Successful mission resolution brings them into camp; mission-death failure means they were lost or died en route and are not recruited. In co-op, surviving teammates can secure arrivals even if the rescuer dies. Loss is tied to solo/total-group mission death, not an individual death.
 - Development context should be preserved in documentation and agent instructions for work across multiple agents.
 
 ## Proposed, not yet confirmed
@@ -47,7 +50,7 @@ This is the durable project memory. User-confirmed direction and agent recommend
 - Bleed-out duration, revival requirements, fatal injury exceptions, physical gear recovery, body persistence, camp recovery, and save rules. See `MISSIONS_AND_MEDICINE.md`.
 - Mission/map boundaries, launch/return transitions, reconnect handling, and rewards for players who died. Mission death, same-mission lockout, and solo/all-player casualty outcomes are confirmed.
 - Shared stock visibility and physical access, spending/build permissions, camp/mission time, construction mechanics, repair and food/water rules, and character progression. Ownership is communal. See `CAMP_AND_PROGRESSION.md`.
-- Balance of combat, civilian assistance, stealth, and management.
+- Balance of combat, civilian assistance, stealth, and management; precise mission-success/partial-success conditions for securing pending civilian arrivals.
 - Engine version, art tools, asset pipeline, and budget.
 
 ## Mission and medical clarification — 2026-11-01
@@ -79,6 +82,14 @@ Status: user-confirmed direction, with civilian workforce marked as a proposal.
 The owner chose gritty illustrated sprites, communal ownership with easily visible stock quantities, a headquarters mission table, a rough tent-camp start, and progressive building upgrades. The requested build-planning table opens a city-builder view for placing construction plans. Civilian construction, hauling, and tree harvesting were introduced as a possibility, so agents must preserve that proposal without silently approving a full workforce/resource-chain simulation.
 
 These decisions supersede the private-versus-shared inventory question and the earlier starting-bunker proposal. Communal ownership does not undo body-based equipment loss, authorize remote transfers, or settle spending permissions. No images or gameplay have been produced yet.
+
+## Starting population and civilian arrivals — 2026-11-01
+
+Status: user-confirmed recruitment flow, including the co-op casualty rule.
+
+The owner specified a start with the player and one civilian, suggested as an old man. Civilians rescued during missions receive directions and run off toward camp. They join camp at successful mission resolution, not immediately after the rescue interaction. Mission-death failure loses those arrivals, explained as the civilians getting lost or dying on their journey. The owner clarified that surviving teammates can secure arrival even if the rescuer dies. Pending civilian loss is a solo/total-group mission-death outcome; one player dying does not cancel the rescue.
+
+This resolves how the camp population grows, but does not by itself approve the proposed construction/hauling workforce simulation or make the starting civilian an AI combat companion.
 
 ## Recording future decisions
 

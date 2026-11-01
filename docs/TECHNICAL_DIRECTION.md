@@ -65,6 +65,16 @@ See [camp and progression](CAMP_AND_PROGRESSION.md) for confirmed scope and prop
 - Civilian labor is a proposal. Do not implement autonomous harvesting, worker pathfinding, or a broad job simulation before its role and prototype scope are approved.
 - Test the same buildings from first-person and the planning camera. A sprite that looks correct from the player camera may fail in a city-builder view; rendering choices remain open.
 
+## Civilian recruitment and pending arrivals
+
+- Keep confirmed camp residents separate from civilians pending arrival on a mission. A civilian departing the mission is not yet a resident or available worker.
+- Track civilian and mission identities so repeated rescue interactions, multiple players, reconnects, or repeated result processing cannot award the same recruit twice.
+- Initialize one civilian resident, separately from human player membership. Do not invent the initial civilian's combat or labor capabilities.
+- Resolve pending arrivals through authoritative group mission results. Solo/total-group mission death loses pending recruits. Surviving teammates can secure arrival even if the rescuer dies; do not attach recruitment validity to the rescuer's alive/dead state.
+- Distinguish lost pending recruits from existing residents. Do not clear established population because someone dies on a mission.
+- A short visible departure path followed by result-driven arrival is a proposed prototype; a simulated cross-map civilian journey is not required by the current design.
+- Persist enough mission/result state to avoid duplicate or premature arrivals when saving/loading is introduced. Crash/reconnect resolution remains an open policy, not an automatic loss or success.
+
 ## Content and persistence
 
 - Store reusable definitions for items, weapons, and missions separately from mutable instances when those systems are introduced.
