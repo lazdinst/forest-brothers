@@ -23,7 +23,7 @@ You should see a small blockout yard and storehouse with a supplies door, plus t
 | Click | Capture the mouse again |
 | F8 in the editor | Stop the running project |
 
-Movement values, input bindings, camera height/FOV, and interaction distance are prototype choices, not final balance. Edit movement exports on the Player scene and bindings in Project Settings > Input Map.
+Movement values, input bindings, camera height/FOV, and interaction distance are prototype choices, not final balance. The camera now uses a 60-degree vertical FOV (about 92 degrees horizontally at 16:9), reduced from 80 to soften wide-angle stretching. The character visual follows the camera plane around its foot anchor so looking down close to it does not enlarge the head relative to the feet. Edit movement exports on the Player scene and bindings in Project Settings > Input Map.
 
 ## What exists
 
@@ -50,6 +50,7 @@ Run these from the repository, substituting your actual Godot executable path fo
 <godot> --headless --path . --import
 <godot> --headless --path . --script res://tests/prototype_smoke.gd
 <godot> --headless --path . --script res://tests/civilian_views_smoke.gd
+<godot> --headless --path . --script res://tests/civilian_projection_smoke.gd
 <godot> --path .
 ```
 

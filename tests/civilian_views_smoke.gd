@@ -27,7 +27,7 @@ func _run() -> void:
 			camera.position = civilian.global_basis * entry[0]
 			await process_frame
 			await process_frame
-			var sprite: Sprite3D = civilian.get_node("IdleSprite")
+			var sprite: Sprite3D = civilian.get_node("FacingVisual/IdleSprite")
 			_check(sprite.texture.resource_path.contains("_%s_" % entry[1]), "Wrong texture for view %s at yaw %.2f" % [entry[1], yaw])
 			_check(sprite.flip_h == entry[2], "Wrong profile mirroring at yaw %.2f" % yaw)
 	# Small movements across a sector boundary should not flicker between views.
@@ -38,7 +38,7 @@ func _run() -> void:
 	camera.position = Vector3(3.05, 1.6, 3)
 	await process_frame
 	await process_frame
-	_check(civilian.get_node("IdleSprite").texture == civilian.front_texture, "Direction must remain stable near a boundary")
+	_check(civilian.get_node("FacingVisual/IdleSprite").texture == civilian.front_texture, "Direction must remain stable near a boundary")
 	if failures.is_empty():
 		print("PASS: front/back/both profiles, rotated actor, angle wrapping, direction-boundary stability")
 	else:

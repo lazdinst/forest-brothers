@@ -142,6 +142,14 @@ Generated one side view and one back view using the owner-approved front as the 
 
 Four directions and profile mirroring are temporary test choices. Mirroring also reverses asymmetric patches; the new views need owner review and may need additional consistency cleanup. Animation, final sprite resolution, final direction count, and multiplayer verification remain pending. Source PNGs are preserved unchanged; prompts are recorded beside them.
 
+## Close-range sprite projection correction — 2026-11-01
+
+Status: implementation fix following owner playtest feedback; FOV remains a tunable prototype setting.
+
+Reproduced severe head-to-feet taper when viewing the fixed-Y billboard close up with the camera pitched down. The character now uses a camera-plane-aligned visual pivot anchored at its feet, while the physical collider and direction-selection frame stay upright. Orientation updates each frame even when the selected artwork stays the same. No source artwork was changed.
+
+The default camera FOV is reduced from 80 to 60 vertical degrees to soften wide-angle stretching. This does not switch the world camera to orthographic or lock a final FOV. A projection regression checks close/medium/far tilted views from several directions, equal projected scale across the sprite, a fixed foot anchor, and an upright body. Elevated planning-camera presentation still needs its own visual test because this remains flat artwork.
+
 ## Recording future decisions
 
 For each consequential decision, add the date, status, choice, reason, relevant user direction, and any decision it supersedes. Update the concept, roadmap, or technical direction when needed. Do not mark an agent proposal as owner-approved without evidence.

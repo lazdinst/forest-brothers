@@ -20,11 +20,13 @@ back_texture = ExtResource("3_back")
 position = Vector3(0, 0.85, 0)
 shape = SubResource("BodyShape")
 
-[node name="IdleSprite" type="Sprite3D" parent="."]
+[node name="FacingVisual" type="Node3D" parent="."]
+
+[node name="IdleSprite" type="Sprite3D" parent="FacingVisual"]
 position = Vector3(0, 0.85, 0)
 cast_shadow = 0
 texture_filter = 0
 pixel_size = 0.0012
-billboard = 2
+billboard = 0
 alpha_cut = 1
 texture = ExtResource("1_texture")
