@@ -19,9 +19,12 @@ Preserve these user requirements:
 - First-person play with low-resolution/retro visuals and sprite-based characters as the intended visual direction.
 - Meaningful resource collection, helping locals, and sustaining the hideout.
 - Single-player can come first; multiplayer is an intended future capability and must influence early design.
+- Support solo play and cooperative missions with a maximum of four players.
+- Death ends only that player's mission participation and returns them to camp; surviving teammates continue. Host character death must not end the session.
+- Include a limited incapacitation/bleed-out window for teammate revival, distinct injury treatments, light/heavy bleeding, fractures, and period-appropriate medicines including morphine.
 - Keep the repository private.
 
-Do not treat suggested mechanics, four-player co-op, or a proposed engine as approved requirements. Check the decision log for their status.
+Four-player maximum co-op and individual mission death are confirmed. Do not treat proposed medical item effects, numerical balance, or a proposed engine as approved requirements. Check the decision log and `docs/MISSIONS_AND_MEDICINE.md` for their status.
 
 ## Scope and design
 

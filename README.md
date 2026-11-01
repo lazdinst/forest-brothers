@@ -2,13 +2,14 @@
 
 **Mežabrāļi** — a working concept for an immersive first-person survival game set in postwar Latvia, centered on supporting a small forest resistance camp.
 
-Venture into nearby settlements and woodland, recover supplies, help local people, and bring what you can back to those depending on you. Combat is dangerous; food, medicine, and relationships matter alongside ammunition.
+Venture into nearby settlements and woodland, recover supplies, help local people, and bring what you can back to those depending on you. Play alone or in co-op with up to four players. Teammates can treat and revive you during a limited incapacitation window; mission death sends you back to camp while survivors continue. Combat is dangerous; food, medicine, and relationships matter alongside ammunition.
 
 The project is in **concept/preproduction**. There is no playable build yet.
 
 ## Project context
 
 - [Game concept](docs/GAME_CONCEPT.md): vision, player experience, scope, and open questions.
+- [Missions and medicine](docs/MISSIONS_AND_MEDICINE.md): four-player co-op, individual death, revival, and period-grounded injury treatment.
 - [Technical direction](docs/TECHNICAL_DIRECTION.md): proposed Godot foundation and early co-op planning.
 - [Roadmap](docs/ROADMAP.md): small, verifiable milestones.
 - [Decision log](docs/DECISIONS.md): confirmed direction versus working assumptions.

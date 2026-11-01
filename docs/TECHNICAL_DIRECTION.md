@@ -20,7 +20,7 @@ Recommended starting model: a host runs the campaign and authoritative world sim
 - Plan movement replication and responsiveness explicitly. Generic property synchronization alone does not solve shooter latency or perceived input delay.
 - Test two clients competing for the same pickup, disconnecting, and observing the same mission result.
 
-Proposed initial constraints: friends join at camp before a mission; the host owns the save; leaving the host ends the session. Player limits, reconnect behavior, character ownership, and death/revival need decisions before implementation depends on them.
+Proposed initial constraints: friends join at camp before a mission; the host owns the save; leaving the host ends the session. The co-op maximum is four players. Reconnect behavior, character ownership, and detailed revival rules still need decisions before implementation depends on them. Host character death is a gameplay event and must never be treated as the host leaving.
 
 Godot references, to re-check against the selected version:
 - [High-level multiplayer](https://docs.godotengine.org/en/stable/tutorials/networking/high_level_multiplayer.html)
@@ -28,6 +28,20 @@ Godot references, to re-check against the selected version:
 - [MultiplayerSynchronizer](https://docs.godotengine.org/en/stable/classes/class_multiplayersynchronizer.html)
 
 Steam invitations, lobbies, and networking transport integration are later work. Local two-instance testing does not prove internet connectivity. Verify any Steam integration dependency and its license before selecting it.
+
+## Mission participation and injury state
+
+Confirmed rules and proposed treatment design are in [missions and medicine](MISSIONS_AND_MEDICINE.md).
+
+- Keep session membership, per-player mission participation, character condition, and group mission status separate. One character dying does not end the mission or disconnect that player.
+- Design for players at camp and in an active mission at the same time. Whether camp is an interactive map or a preparation interface remains open. Do not use a global scene transition that pulls survivors back to camp.
+- The host remains authoritative even when their own character is incapacitated, dead, or at camp. Actual host disconnection remains a separate session-lifetime limitation.
+- Represent wounds separately from consciousness/mobility. Revived does not imply all bleeding, fractures, pain, or blood loss are cleared.
+- Authoritative logic owns bleed-out deadlines, treatment completion, resource consumption, death, and mission results. Clients display those outcomes; they do not independently decide death from a local timer.
+- Treatment actions must validate the target, active mission, item availability, range, and current condition. Interruption, duplicated requests, and concurrent treatment must not duplicate items, revive a dead character, or apply a completed treatment twice.
+- Resolve the race between death and treatment completion explicitly, and test it. Disconnecting must not silently reset wounds or revive timers.
+- A player's death resolves only that player's participation. Group failure, rewards, mission re-entry, and total-incapacitation rules remain explicit design questions.
+- Validate host-character death with survivors continuing, not only a non-host dying. Test the intended four-player capacity; early two-player tests are insufficient to claim full co-op support.
 
 ## Content and persistence
 

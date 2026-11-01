@@ -17,16 +17,16 @@ The owner initially considered a mercenary role, then proposed a Forest Brothers
 - Care about returning with food or medicine because people at camp need them.
 - Make meaningful choices about what to carry, whom to help, and when to return.
 - Build familiarity with a small place and its people over repeated outings.
-- Eventually share that experience with friends; solo play remains important.
+- Share that experience in co-op with a maximum of four players; solo play remains important.
 
-Tarkov is a reference for immersion, tension, and consequences. This game is not an extraction shooter: the proposed campaign revolves around the needs of a continuing resistance camp, local relationships, and lasting world state. Session and map transitions remain undecided.
+Tarkov is a reference for immersion, tension, and consequences. This game is not an extraction shooter: the proposed campaign revolves around the needs of a continuing resistance camp, local relationships, and lasting world state. Mission outings from camp and individual return to camp after death are confirmed; detailed map transitions remain undecided. Surviving teammates continue their mission.
 
 ## Core loop — proposed
 
-1. At camp, learn about a need, prepare equipment, and choose a task.
+1. At camp, learn about a need, prepare equipment, and choose a mission alone or with a group of up to four players.
 2. Travel through a compact area of woodland and rural settlements.
 3. Explore, gather resources, help locals, and decide whether to engage or avoid threats.
-4. Return with what you recovered, living with the cost of the journey.
+4. Return with what you recovered, living with the cost of the journey. If incapacitated, teammates have a limited opportunity to revive you; if you die, you return to camp while they continue.
 5. Apply supplies and mission outcomes to the camp; choose what to attempt next.
 
 ## Design pillars
@@ -35,7 +35,7 @@ Tarkov is a reference for immersion, tension, and consequences. This game is not
 Food, medicine, and ammunition support survival and specific human needs. Avoid making every object valuable only because it can be sold.
 
 ### Danger with understandable consequences
-The owner wants punishing play. Threats and consequences should be legible enough that players can learn. Exact injury, death, recovery, and save rules are open questions.
+The owner wants punishing play. Threats and consequences should be legible enough that players can learn. Individual mission death returns the player to camp, not a group-wide restart. Incapacitation allows a limited teammate revival window. Distinct medical resources address light/heavy bleeding, fractures, and pain with period-appropriate presentation. Exact balance, equipment loss, and recovery rules remain open. See [missions and medicine](MISSIONS_AND_MEDICINE.md).
 
 ### Latvia shapes the world
 Landscape, architecture, language, objects, and lived experience should establish place. Research these details rather than relying on a generic Eastern European visual shorthand.
@@ -44,7 +44,7 @@ Landscape, architecture, language, objects, and lived experience should establis
 Begin with a compact playable location and a few interacting systems. Scale by adding authored areas, tasks, and content once the core loop works.
 
 ### Cooperation belongs in the foundation
-Build toward multiplayer without assuming a single global player. Proposed initial format: small-group cooperative play with a host-owned campaign. Player count and PvP scope are unconfirmed.
+Support solo play and co-op with a maximum of four players. A player returning to camp after death must not interrupt teammates still on a mission. A host-owned campaign is the proposed initial format; competitive PvP is not approved.
 
 ## Visual and audio direction
 
@@ -74,7 +74,8 @@ A short mission: recover medicine from a nearby farmhouse and return to help an 
 - One item pickup and a simple inventory before expanding resource types.
 - One firearm and one enemy type once interaction works.
 - A camp resident and visible mission result.
-- Early two-player proof of shared interactions, followed by the complete loop in solo and co-op.
+- A minimal injury/revive test: incapacitation, timed teammate treatment, individual mission death, and return to camp while another player continues. Expand to the full medical range incrementally.
+- Early two-player proof of shared interactions, followed by the complete loop in solo and co-op; validate the four-player maximum before expanding content.
 
 This slice is a learning and feasibility exercise, not a commitment to a final campaign mission.
 
@@ -84,10 +85,10 @@ Large open worlds, competitive PvP, AI squad command, complex construction, vehi
 
 ## Questions to settle
 
-1. Is multiplayer cooperative only, and what player count should we target?
+1. Is any competitive multiplayer ever desired? Co-op is confirmed at a maximum of four; PvP remains outside the prototype.
 2. Is the protagonist a fictional Latvian partisan, or a different role?
 3. Which region and period should anchor the setting?
-4. How severe should death and failure be? What can a player recover?
-5. Should play be organized into missions, connected areas, or a continuous world?
+4. What equipment is lost or recoverable after mission death, and what recovery happens at camp? How do solo incapacitation and total group defeat resolve?
+5. How are confirmed mission outings represented: separate maps, connected areas, or another structure? Can a dead player re-enter the same mission?
 6. How much camp management should be hands-on versus handled through decisions?
 7. What are the desired balance of combat, stealth, exploration, and civilian assistance?

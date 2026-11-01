@@ -20,11 +20,17 @@ Add a basic host/join test before building a large inventory or campaign. Exerci
 
 Done when: two running instances observe the same world; simultaneous pickup attempts award only one item; disconnecting does not leave invalid shared state. Record how movement behaves with simulated latency and how the test was performed.
 
+## 2A — Individual casualties and teammate rescue
+
+Before adding a broad medical inventory, create a minimal playable state flow for injury, incapacitation, teammate treatment during a finite window, mission death, and return to camp. The full medical range is the product direction; this milestone proves the underlying behavior with placeholders.
+
+Done when: a teammate can revive a downed player before expiry; expiry sends only that player to camp; survivors continue; host-character death also leaves survivors playing. Both camp-side and mission-side players stay connected. Interrupted/concurrent treatments and expiry at treatment completion have a defined, consistent result without duplicate item use. Solo incapacitation and all-player casualty rules must be agreed before those cases are considered complete.
+
 ## 3 — One meaningful outing
 
-Build the compact forest/camp/farmhouse slice, a simple objective, one threat, and an observable camp outcome. Prototype gunplay and resource handling only as far as needed for this mission.
+Build the compact forest/camp/farmhouse slice, a simple objective, one threat, and an observable camp outcome. Prototype gunplay and resource handling only as far as needed for this mission. Add distinct light/heavy bleed, fracture, and pain treatment categories incrementally; keep period research and gameplay effects separate.
 
-Done when: the mission can be completed or failed in solo and two-player co-op, supplies have a visible purpose, and a playtester can understand the objective without coaching.
+Done when: the mission can be completed or failed in solo and co-op, supplies have a visible purpose, individual death leaves surviving teammates able to finish, and a playtester can understand the objective without coaching. Exercise all four player slots before expanding content.
 
 ## 4 — A campaign that remembers
 
@@ -34,7 +40,7 @@ Done when: completing a mission, quitting, and loading restores the expected sta
 
 ## 5 — Prove the intended experience
 
-Improve sound, sprite presentation, feedback, pacing, and usability. Measure performance and test the agreed player count over a real network. Select and validate internet connection/Steam integration options when needed.
+Improve sound, sprite presentation, feedback, pacing, and usability. Measure performance and test one through four players over a real network, including the four-player cap and individual camp returns during an active mission. Select and validate internet connection/Steam integration options when needed.
 
 Done when: the owner can assess whether the slice delivers tension, immersion, and a reason to care about camp; known networking and performance limits are documented.
 
