@@ -43,6 +43,17 @@ Confirmed rules and proposed treatment design are in [missions and medicine](MIS
 - A player's death resolves only their participation and locks them out of that mission ID. Solo/all-incapacitated cases resolve as mission death. Keep reconnect identity and mission outcomes authoritative; exact quest reward/commit conditions remain unresolved; the full-campaign host-crash rollback policy is confirmed.
 - Validate host-character death with survivors continuing, not only a non-host dying. Test the intended four-player capacity; early two-player tests are insufficient to claim full co-op support.
 
+## Combat state and ammunition consistency
+
+See [combat design](COMBAT_DESIGN.md) for confirmed behavior and open balance.
+
+- Separate loose-ammunition stock from identifiable magazines and their contents. Moving cartridges into a magazine transfers quantities; it does not create ammunition. Retain partial-magazine state across inventory transfers, death/body recovery, reconnects, and saves.
+- Authoritative rules validate loading, unloading where supported, reloading, shots, and ammunition consumption. Concurrent actions and interrupted operations must not duplicate or destroy rounds. If chamber state is modeled, include it explicitly in conservation checks; its detail is not yet a product decision.
+- Track maintenance state in an agreed representation and make neglected weapons more likely to jam. The host resolves shared jam/fire outcomes; clients must not independently decide incompatible results. Exact formulas and cleaning/service actions are unchosen.
+- Friendly-fire hits use the normal injury/incapacitation/death rules; a player-team filter must not silently discard teammate damage. Damage scaling and optional safeguards require decisions.
+- Enemy knowledge is based on perceived events and communicated alerts. Breaking sight must not leave enemies with a live player-position feed. Search expiry/escalation thresholds remain balance parameters.
+- Full host-crash rollback includes magazine contents, loose cartridges, weapon condition/maintenance, and jam state along with all other campaign state.
+
 ## Concurrent camp activity
 
 See [camp and progression](CAMP_AND_PROGRESSION.md) for confirmed scope and proposals.

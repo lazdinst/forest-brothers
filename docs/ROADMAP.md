@@ -32,6 +32,12 @@ Before adding a broad medical inventory, create a minimal playable state flow fo
 
 Done when: a teammate can revive a downed player before expiry; expiry sends only that player to camp; survivors continue; host-character death also leaves survivors playing. Both camp-side and mission-side players stay connected. Interrupted/concurrent treatments and expiry at treatment completion have a defined, consistent result without duplicate item use. Solo/all-incapacitated cases resolve as mission death. Verify that dead players cannot rejoin the same mission, their carried equipment remains recoverable on the body, and camp-stored supplies remain safe. Revival must preserve injuries and temporary capability penalties; agree on placeholder balance values before implementation.
 
+## 2B — One readable combat encounter
+
+Prototype one weapon, separate loose rounds and magazines, manual refilling, retained partial magazines, maintenance-dependent jams, and friendly-fire injuries. Add one enemy with line-of-sight recognition, pace/surface sound investigation, last-known-position searching with eventual decay, and a local alert to a second observer when ready. Use deliberate placeholder balance values, not invented final tuning.
+
+Done when: cartridge totals remain consistent through loading/reloading/firing and interrupted or concurrent actions; partial contents survive transfers; neglected-weapon jam risk is demonstrably higher under a controlled test; a friendly hit can cause the agreed injury/incapacitation; hiding can end a search without enemies tracking unseen movement. Show readable weapon state and verify multiplayer agreement. Exact weapon-specific loading/clearing animations and final detection/jam rates remain later tuning work.
+
 ## 3 — One meaningful outing
 
 Build a compact slice of the handcrafted map (for example a town-edge building), a simple objective, one threat, and an observable camp outcome. Add randomized supplies and one bounded variation of a selected area, without generating a whole town. Prototype gunplay and resource handling only as far as needed for this mission. Add distinct light/heavy bleed, fracture, and pain treatment categories incrementally; keep period research and gameplay effects separate.

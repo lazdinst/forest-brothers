@@ -34,7 +34,10 @@ This is the durable project memory. User-confirmed direction and agent recommend
 - Start with one handcrafted mission map and randomize supplies and selected portions. A Latvian town/city is an example, not a chosen real location. Outings have a maximum one-hour limit; expiry is mission death for remaining on-map players, losing carried gear and pending civilians.
 - Civilians perform construction, cooking, and similar camp jobs; some can simply be resident NPCs. Players may assist construction as foremen. Main-mission completion awards construction materials; detailed task systems and other material sources are not fully defined.
 - Supply shortages can kill civilians and prevent adequately supplied main-quest attempts. Optional scavenging outings provide recovery; there is no permanent campaign game-over.
-- Stealth, sound, enemy searching, ammunition scarcity, and weapon condition all matter. Their concrete mechanics remain to be chosen.
+- Combat perception: enemies require line of sight; recognition builds with exposure and depends on distance/movement/stance. Footsteps vary by pace/surface; noise prompts investigation toward an approximate location. Enemies search last-known areas, searches eventually decay, and alerts spread locally rather than instantly across the map. Enemy reaction/accuracy must have readable limits.
+- Ammunition: loose cartridges and magazines are distinct; players manually refill magazines and keep partial magazines. Exact loading timings, magazine compatibility, chamber detail, and ammo-count UI remain open.
+- Weapons can jam and jam more often without cleaning/servicing. Condition is visible and weapons have a maintenance/repair path. Numerical rates, clearing actions, wear effects, and service requirements remain open.
+- Friendly fire is enabled; teammate hits can cause injuries/incapacitation under the game's normal casualty rules. Damage scaling and any optional safeguards remain undecided.
 - A medical facility unlocked after a handful of main missions accelerates healing. Exact unlock count, durations, and recovery multipliers remain deferred.
 - Disconnected non-host characters stay on the mission and remain vulnerable until killed; reconnect restores control of a surviving character and must not bypass mission death.
 - First-pass host crash ends the mission and restores the entire campaign to pre-mission data, including building, cooking, and all concurrent camp changes. This is a rollback, not an ordinary mission death or a partial rewards commit.
@@ -59,7 +62,7 @@ This is the durable project memory. User-confirmed direction and agent recommend
 - Bleed-out duration, revival requirements, fatal injury exceptions, physical gear recovery, body persistence, camp recovery, and save rules. See `MISSIONS_AND_MEDICINE.md`.
 - Safe exit design, staggered-return/civilian arrival timing, main-quest completion/turn-in checks, and real-time versus simulation-time details within the one-hour cap. See `MISSION_STRUCTURE.md`.
 - Shared stock visibility and physical access, spending/build permissions, camp/mission time, construction mechanics, repair and food/water rules, and character progression. Ownership is communal. See `CAMP_AND_PROGRESSION.md`.
-- Concrete combat perception/searching/ammunition/wear rules; civilian needs and labor details; when partial returns commit shared rescue arrivals. See `COMBAT_DESIGN.md`.
+- Combat perception thresholds, search/alert durations, ammunition/loading UI, jam/maintenance balance, and friendly-fire damage tuning; civilian needs and labor details; when partial returns commit shared rescue arrivals. See `COMBAT_DESIGN.md`.
 - Engine version, art tools, asset pipeline, and budget.
 
 ## Mission and medical clarification — 2026-11-01
@@ -107,6 +110,12 @@ Status: user-confirmed direction, superseding earlier open questions and proposa
 The owner confirmed early return with supplies/civilians without main-quest completion; one handcrafted map with randomized supplies/portions; a one-hour maximum with timeout death; civilian construction/cooking with player help; main-mission construction rewards and quest unlocks; lethal civilian shortages without permanent campaign failure; later medical-facility healing benefits; persistent vulnerable disconnected characters; and later dedicated-server support. The owner chose approximately 1946 as the working setting.
 
 Follow-up answers confirmed that timeout loses carried gear and pending civilians, and host crashes roll back the entire campaign, including camp work, to before the mission. Do not treat a network interruption as character death or retain rewards from a rolled-back outing. Detailed combat mechanics and numerical balance are still open.
+
+## Combat approval and magazine/maintenance rules — 2026-11-01
+
+Status: user-confirmed behavior; numerical balance and detailed interactions remain open.
+
+The owner accepted the preceding combat suggestions, including visual recognition, approximate sound investigation, last-known-position searches with eventual decay, local alerts, finite ammunition/partial magazines, visible condition/repair, and readable enemy limits. The owner additionally specified separate bullets and magazines with manual magazine refilling, jams that become more likely without cleaning/service, and friendly fire. This supersedes the earlier combat proposal status. No weapon roster, ammunition variant system, loading/clearing procedure, jam probability, or difficulty numbers have been approved.
 
 ## Recording future decisions
 

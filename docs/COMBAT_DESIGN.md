@@ -1,20 +1,48 @@
-# Combat choices to resolve
+# Combat design
 
-Status: stealth, sound, enemy searching, ammunition scarcity, and weapon condition are confirmed priorities. Detailed mechanics below are discussion choices, not approved behavior.
+Status: approved behavior from the owner's combat discussion on 2026-11-01. Detailed interaction design, numerical tuning, and weapon selection remain open. No gameplay is implemented.
 
-The useful design questions describe what the player can observe and do, rather than merely asking whether a system is important.
+## Perception and searching — confirmed
 
-| Topic | Concrete decision | Proposed starting behavior |
-|---|---|---|
-| Visual detection | How do stance, movement, distance, light, and cover affect detection? | Enemies need line of sight; recognition builds with exposure instead of every distant glimpse causing immediate combat |
-| Sound | Which actions can enemies hear, and how accurately can they locate them? | Footsteps depend on pace/surface; gunfire alerts nearby enemies to an approximate location rather than granting knowledge through walls |
-| Searching | What happens after an enemy hears a sound or loses sight of a player? | Investigate/search the last-known area, with defined escalation and eventual search decay |
-| Group alerts | Does one alerted enemy instantly alert the whole map? | Local communication/escalation rather than automatic map-wide shared knowledge |
-| Ammunition | Are cartridges tracked individually, are partial magazines retained, and is ammo count exact? | Finite ammunition and retained partial magazines; exact magazine/loading interaction needs a weapon prototype |
-| Weapon condition | Does wear affect reliability, accuracy, or both; can weapons malfunction? | Visible condition and a repair path; approve malfunction behavior before adding random failures |
-| Enemy accuracy | Do reactions, aim, and information obey readable limits? | Avoid immediate perfect fire through vegetation or from unseen positions; choose reaction/accuracy values through tests |
-| Friendly fire | Can players injure/incapacitate each other? | Undecided; settle before treatment and hit validation depend on it |
+- Enemies need line of sight for visual recognition. Recognition builds with exposure, affected by distance, movement, and stance rather than every distant glimpse producing instant combat.
+- Footstep sound depends on pace and surface. Gunfire/noise prompts investigation toward an approximate location, without granting exact tracking through walls.
+- After losing sight or hearing a suspicious sound, enemies investigate/search a last-known area. Searches eventually decay, allowing successfully hidden players to escape detection.
+- Alerts spread locally with escalation, not through instant map-wide shared knowledge.
+- Reaction and accuracy follow readable limits. Avoid immediate perfect fire through vegetation or from unseen positions.
 
-The proposed behaviors are a discussion baseline, not a promise to build every factor at once. Start by testing one enemy with visual detection, a sound investigation, last-known-position search, and one weapon. Define observable tests before adding additional perception factors or tactical coordination.
+Exact detection curves, hearing range/occlusion, recognition thresholds, search duration, communication range/delay, and reaction/accuracy values require playtesting. Light/cover modeling and additional perception factors need a scoped implementation decision; acceptance of the starting behavior is not approval for unlimited AI complexity.
 
-Historical weapons and ammunition must fit the working 1946 setting and local availability; no weapon roster is approved yet. Do not infer specific suppressed weapons, advanced optics, modern equipment, or elaborate ballistics from the Tarkov reference.
+## Physical ammunition and manual magazine loading — confirmed
+
+Loose cartridges and magazines are separate inventory items. Players refill magazines using the cartridges they have, rather than reloading from an abstract ammo pool. A partial magazine retains its remaining rounds when removed or moved between inventories. All items remain communal; physical custody still controls which ammunition a player can use.
+
+The owner cites Tarkov's manual loading as the reference. This does not automatically approve its complete ammunition catalog, UI, inventory layout, skills, or loading timings.
+
+Detailed choices still open:
+- Loading duration, interruption behavior, and whether unloading is supported initially.
+- Magazine/weapon compatibility, capacities, and which historical weapon is prototyped first.
+- Detachable versus integral-magazine handling for the eventual roster; do not force every period weapon into one detachable-magazine model.
+- Chamber representation, mixed cartridge types/order, and ammunition variants.
+- Exact versus estimated on-weapon counts, inspection interaction, magazine selection, and reload controls.
+
+Readable communal stock counts remain required. This does not settle whether the firing HUD exposes an exact magazine count. Any stock summary must avoid counting loaded rounds twice.
+
+## Maintenance and jams — confirmed
+
+Weapons can jam. Jam risk rises when a weapon is not cleaned or serviced. Condition is visible, and there is a maintenance/repair path. Cleaning, servicing, repair, and clearing a current jam are related concepts whose exact gameplay relationship still needs design; do not silently make them identical or automatically repair a weapon during a reload.
+
+Open choices include how maintenance degrades, what supplies/workstations are needed, whether field cleaning is possible, who performs service, how a jam is communicated and cleared, and how service changes reliability. Accuracy penalties, permanent deterioration, specific malfunction types, and exact jam rates are not confirmed.
+
+The prototype should make a neglected weapon measurably less reliable under controlled tests while keeping state understandable. Fairness and final frequency need playtesting.
+
+## Friendly fire — confirmed
+
+Teammates can injure and incapacitate one another. Apply the normal medical, rescue-window, and mission-death rules to friendly-fire casualties. Friendly fire does not itself make competitive PvP an approved mode.
+
+Damage scaling, identity cues, accidental-fire feedback, camp weapon use, explosive interactions, optional toggles, and anti-griefing policies are unresolved. Do not invent immunity, punishments, or a safety switch as default behavior.
+
+## Verification and scope
+
+Start with one appropriate weapon and a bounded encounter. Verify round conservation, partial-magazine persistence, jam-state agreement, teammate injury/revival, recognition buildup, approximate sound investigation, and search decay. Test interruption, disconnect, death recovery, and full-campaign rollback once those systems exist.
+
+Historical weapons and ammunition must fit the working 1946 setting and local availability; no roster is selected yet. Modern optics, specific suppressors, elaborate ballistics, and a full tactical AI squad system are not implied by these approvals.
