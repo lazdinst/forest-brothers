@@ -1,10 +1,10 @@
 # Technical direction
 
-Status: proposed foundation, not an implemented architecture. The repository currently contains documentation only.
+Status: initial Godot movement/interaction prototype exists. Networking, campaign architecture, and later systems below remain design guidance, not implemented features. See `GETTING_STARTED.md` for the executable scope and verification commands.
 
 ## Engine and platform
 
-Proposed: Godot standard edition, GDScript, and the Compatibility renderer for an initial Windows PC prototype. Steam is the intended distribution destination. Choose and record a stable engine version before creating the project; do not silently depend on the latest release or unstable documentation.
+Selected initial toolchain: Godot 4.7.2 standard, GDScript, Compatibility renderer, Windows PC. Steam remains the intended distribution destination. Keep this version explicit; evaluate upgrades deliberately rather than silently following the latest release.
 
 Use simple 3D environments and prototype sprite characters. Validate readability, editor usability, and performance on the owner's machine before increasing visual scope.
 
@@ -114,6 +114,6 @@ Keep the root `AGENTS.md` authoritative. Add a nested instruction file only when
 
 ## Verification
 
-No executable project or automated checks exist yet. When the prototype is created, record the exact engine version, import/run/export commands, and manual playtest steps.
+The movement/interaction prototype and a headless integration check exist. `GETTING_STARTED.md` records engine version, import/run/check commands, manual playtest steps, and limitations. No export configuration, final artwork, or multiplayer implementation exists yet.
 
 Use focused tests for important rules such as inventory ownership, duplicate pickup prevention, mission completion, and save restoration. Use running game instances to verify networking and visual playtests for first-person movement, sprite readability, and UI. Record what was actually tested and any limitations.

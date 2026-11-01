@@ -1,6 +1,6 @@
 # Development roadmap
 
-All milestones are pending. This is a proposed order, designed for a first-time developer and early multiplayer validation.
+This is a proposed order for a first-time developer and early multiplayer validation. The minimal engine scaffold and milestone 1 mechanics now exist; milestone 1 awaits owner playtesting. The art feasibility gate and all multiplayer/campaign milestones remain pending.
 
 ## 0 — Agree on the first experiment
 
@@ -15,6 +15,8 @@ Before broad asset production, make a small reference-led art test in the confir
 Done when: the owner approves the visual direction, transparent sprites align and animate consistently, the character is readable against the environment, and camp assets remain readable from both first-person and a prototype planning camera. Record generation references/settings and processing steps. Exact resolution/direction counts must be selected through the test, not assumed final. This is a feasibility gate, not an art pack for the entire game.
 
 ## 1 — A room you can inhabit
+
+Status: implemented as a placeholder yard/storehouse scene; automated scene checks and a rendered-frame inspection passed. Owner movement/interaction playtesting remains pending. The engine scaffold supports the still-pending art feasibility work; it does not settle the final visual style.
 
 Create the minimal engine project. Add first-person movement, mouse look, collision, a door, and a single pickup in a tiny test area. Use placeholders.
 

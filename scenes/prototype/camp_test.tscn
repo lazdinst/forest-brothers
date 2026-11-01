@@ -1,0 +1,236 @@
+[gd_scene load_steps=26 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player/first_person_player.tscn" id="1_player"]
+[ext_resource type="Script" path="res://scripts/prototype/camp_test.gd" id="2_world"]
+[ext_resource type="Script" path="res://scripts/interactions/door.gd" id="3_door"]
+[ext_resource type="Script" path="res://scripts/interactions/supply_pickup.gd" id="4_pickup"]
+
+[sub_resource type="Environment" id="Environment"]
+background_mode = 1
+background_color = Color(0.28, 0.33, 0.31, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.72, 0.76, 0.7, 1)
+ambient_light_energy = 0.7
+tonemap_mode = 0
+
+[sub_resource type="StandardMaterial3D" id="GroundMaterial"]
+albedo_color = Color(0.24, 0.26, 0.18, 1)
+roughness = 1.0
+[sub_resource type="StandardMaterial3D" id="WallMaterial"]
+albedo_color = Color(0.34, 0.31, 0.23, 1)
+roughness = 1.0
+[sub_resource type="StandardMaterial3D" id="DoorMaterial"]
+albedo_color = Color(0.2, 0.25, 0.21, 1)
+roughness = 1.0
+[sub_resource type="StandardMaterial3D" id="FoodMaterial"]
+albedo_color = Color(0.62, 0.47, 0.24, 1)
+[sub_resource type="StandardMaterial3D" id="WaterMaterial"]
+albedo_color = Color(0.27, 0.46, 0.49, 1)
+[sub_resource type="StandardMaterial3D" id="MedicineMaterial"]
+albedo_color = Color(0.68, 0.65, 0.51, 1)
+
+[sub_resource type="BoxMesh" id="FloorMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(12, 0.4, 16)
+[sub_resource type="BoxShape3D" id="FloorShape"]
+size = Vector3(12, 0.4, 16)
+[sub_resource type="BoxMesh" id="SideMesh"]
+material = SubResource("WallMaterial")
+size = Vector3(0.3, 3.4, 16)
+[sub_resource type="BoxShape3D" id="SideShape"]
+size = Vector3(0.3, 3.4, 16)
+[sub_resource type="BoxMesh" id="EndMesh"]
+material = SubResource("WallMaterial")
+size = Vector3(12, 3.4, 0.3)
+[sub_resource type="BoxShape3D" id="EndShape"]
+size = Vector3(12, 3.4, 0.3)
+[sub_resource type="BoxMesh" id="PartitionMesh"]
+material = SubResource("WallMaterial")
+size = Vector3(5.2, 3.4, 0.25)
+[sub_resource type="BoxShape3D" id="PartitionShape"]
+size = Vector3(5.2, 3.4, 0.25)
+[sub_resource type="BoxMesh" id="DoorMesh"]
+material = SubResource("DoorMaterial")
+size = Vector3(1.6, 2.5, 0.16)
+[sub_resource type="BoxShape3D" id="DoorShape"]
+size = Vector3(1.6, 2.5, 0.16)
+[sub_resource type="BoxMesh" id="TableMesh"]
+material = SubResource("DoorMaterial")
+size = Vector3(6, 0.85, 1.2)
+[sub_resource type="BoxShape3D" id="TableShape"]
+size = Vector3(6, 0.85, 1.2)
+[sub_resource type="BoxMesh" id="PickupMesh"]
+size = Vector3(0.36, 0.44, 0.36)
+[sub_resource type="BoxShape3D" id="PickupShape"]
+size = Vector3(0.36, 0.44, 0.36)
+
+[node name="CampTest" type="Node3D"]
+script = ExtResource("2_world")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment")
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-55, -25, 0)
+light_color = Color(0.95, 0.88, 0.72, 1)
+light_energy = 1.1
+shadow_enabled = true
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+position = Vector3(0, 0.1, 4.3)
+
+[node name="Floor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.2, -2)
+[node name="Mesh" type="MeshInstance3D" parent="Floor"]
+mesh = SubResource("FloorMesh")
+[node name="Shape" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("FloorShape")
+
+[node name="LeftWall" type="StaticBody3D" parent="."]
+position = Vector3(-6, 1.7, -2)
+[node name="Mesh" type="MeshInstance3D" parent="LeftWall"]
+mesh = SubResource("SideMesh")
+[node name="Shape" type="CollisionShape3D" parent="LeftWall"]
+shape = SubResource("SideShape")
+[node name="RightWall" type="StaticBody3D" parent="."]
+position = Vector3(6, 1.7, -2)
+[node name="Mesh" type="MeshInstance3D" parent="RightWall"]
+mesh = SubResource("SideMesh")
+[node name="Shape" type="CollisionShape3D" parent="RightWall"]
+shape = SubResource("SideShape")
+[node name="BackWall" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.7, -10)
+[node name="Mesh" type="MeshInstance3D" parent="BackWall"]
+mesh = SubResource("EndMesh")
+[node name="Shape" type="CollisionShape3D" parent="BackWall"]
+shape = SubResource("EndShape")
+[node name="FrontWall" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.7, 6)
+[node name="Mesh" type="MeshInstance3D" parent="FrontWall"]
+mesh = SubResource("EndMesh")
+[node name="Shape" type="CollisionShape3D" parent="FrontWall"]
+shape = SubResource("EndShape")
+
+[node name="PartitionLeft" type="StaticBody3D" parent="."]
+position = Vector3(-3.4, 1.7, -2)
+[node name="Mesh" type="MeshInstance3D" parent="PartitionLeft"]
+mesh = SubResource("PartitionMesh")
+[node name="Shape" type="CollisionShape3D" parent="PartitionLeft"]
+shape = SubResource("PartitionShape")
+[node name="PartitionRight" type="StaticBody3D" parent="."]
+position = Vector3(3.4, 1.7, -2)
+[node name="Mesh" type="MeshInstance3D" parent="PartitionRight"]
+mesh = SubResource("PartitionMesh")
+[node name="Shape" type="CollisionShape3D" parent="PartitionRight"]
+shape = SubResource("PartitionShape")
+
+[node name="Door" type="AnimatableBody3D" parent="."]
+position = Vector3(-0.8, 0, -2)
+script = ExtResource("3_door")
+[node name="Mesh" type="MeshInstance3D" parent="Door"]
+position = Vector3(0.8, 1.25, 0)
+mesh = SubResource("DoorMesh")
+[node name="Shape" type="CollisionShape3D" parent="Door"]
+position = Vector3(0.8, 1.25, 0)
+shape = SubResource("DoorShape")
+[node name="Sign" type="Label3D" parent="Door"]
+position = Vector3(0.8, 1.75, 0.09)
+text = "SUPPLIES"
+font_size = 40
+pixel_size = 0.006
+outline_size = 6
+
+[node name="Table" type="StaticBody3D" parent="."]
+position = Vector3(0, 0.425, -6)
+[node name="Mesh" type="MeshInstance3D" parent="Table"]
+mesh = SubResource("TableMesh")
+[node name="Shape" type="CollisionShape3D" parent="Table"]
+shape = SubResource("TableShape")
+
+[node name="FoodPickup" type="StaticBody3D" parent="."]
+position = Vector3(-2, 1.07, -5.8)
+script = ExtResource("4_pickup")
+[node name="Shape" type="CollisionShape3D" parent="FoodPickup"]
+shape = SubResource("PickupShape")
+[node name="Mesh" type="MeshInstance3D" parent="FoodPickup"]
+material_override = SubResource("FoodMaterial")
+mesh = SubResource("PickupMesh")
+
+[node name="WaterPickup" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.07, -5.8)
+script = ExtResource("4_pickup")
+item_id = &"water"
+display_name = "Water bottle"
+[node name="Shape" type="CollisionShape3D" parent="WaterPickup"]
+shape = SubResource("PickupShape")
+[node name="Mesh" type="MeshInstance3D" parent="WaterPickup"]
+material_override = SubResource("WaterMaterial")
+mesh = SubResource("PickupMesh")
+
+[node name="MedicinePickup" type="StaticBody3D" parent="."]
+position = Vector3(2, 1.07, -5.8)
+script = ExtResource("4_pickup")
+item_id = &"medicine"
+display_name = "Medical supplies"
+[node name="Shape" type="CollisionShape3D" parent="MedicinePickup"]
+shape = SubResource("PickupShape")
+[node name="Mesh" type="MeshInstance3D" parent="MedicinePickup"]
+material_override = SubResource("MedicineMaterial")
+mesh = SubResource("PickupMesh")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+[node name="Title" type="Label" parent="HUD"]
+offset_left = 28.0
+offset_top = 22.0
+theme_override_colors/font_color = Color(0.88, 0.85, 0.71, 1)
+theme_override_font_sizes/font_size = 26
+text = "FOREST BROTHERS"
+[node name="Subtitle" type="Label" parent="HUD"]
+offset_left = 29.0
+offset_top = 55.0
+theme_override_font_sizes/font_size = 16
+text = "FIRST STEPS  /  movement & interaction test"
+[node name="Stock" type="Label" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -430.0
+offset_right = -28.0
+offset_top = 25.0
+horizontal_alignment = 2
+theme_override_font_sizes/font_size = 19
+[node name="Crosshair" type="Label" parent="HUD"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -8.0
+offset_top = -16.0
+offset_right = 8.0
+offset_bottom = 16.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 24
+text = "+"
+[node name="Prompt" type="Label" parent="HUD"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_right = 300.0
+offset_top = 40.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 22
+[node name="Status" type="Label" parent="HUD"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = -85.0
+theme_override_font_sizes/font_size = 18
+[node name="Controls" type="Label" parent="HUD"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = -48.0
+theme_override_font_sizes/font_size = 16
+text = "WASD  Move    Mouse  Look    Shift  Run    Space  Jump    E  Interact    Esc  Release mouse"

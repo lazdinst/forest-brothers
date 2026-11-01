@@ -42,11 +42,12 @@ This is the durable project memory. User-confirmed direction and agent recommend
 - Disconnected non-host characters stay on the mission and remain vulnerable until killed; reconnect restores control of a surviving character and must not bypass mission death.
 - First-pass host crash ends the mission and restores the entire campaign to pre-mission data, including building, cooking, and all concurrent camp changes. This is a rollback, not an ordinary mission death or a partial rewards commit.
 - Dedicated-server support is a later goal. Completing the main quest line unlocks further missions; the current long-term goal is building the forest camp and resisting, with no fixed ending specified.
+- Engine: user-selected Godot. The first prototype uses verified Godot 4.7.2 standard, GDScript, and Compatibility.
 - Development context should be preserved in documentation and agent instructions for work across multiple agents.
 
 ## Proposed, not yet confirmed
 
-- Godot standard edition, GDScript, Compatibility renderer.
+
 - Fictional local partisan protagonist and fictional group within a researched setting.
 - Specific mission launch/late-join UI and safe exit points; reconnect returns to the existing living character, while death locks the player out of that mission. Competitive PvP remains unapproved and outside the prototype.
 - Host-authoritative shared world and host-owned campaign save.
@@ -63,7 +64,7 @@ This is the durable project memory. User-confirmed direction and agent recommend
 - Safe exit design, staggered-return/civilian arrival timing, main-quest completion/turn-in checks, and real-time versus simulation-time details within the one-hour cap. See `MISSION_STRUCTURE.md`.
 - Shared stock visibility and physical access, spending/build permissions, camp/mission time, construction mechanics, repair and food/water rules, and character progression. Ownership is communal. See `CAMP_AND_PROGRESSION.md`.
 - Combat perception thresholds, search/alert durations, ammunition/loading UI, jam/maintenance balance, and friendly-fire damage tuning; civilian needs and labor details; when partial returns commit shared rescue arrivals. See `COMBAT_DESIGN.md`.
-- Engine version, art tools, asset pipeline, and budget.
+- Art tools, asset pipeline, and budget. The first runnable project is pinned to Godot 4.7.2 standard.
 
 ## Mission and medical clarification — 2026-11-01
 
@@ -116,6 +117,14 @@ Follow-up answers confirmed that timeout loses carried gear and pending civilian
 Status: user-confirmed behavior; numerical balance and detailed interactions remain open.
 
 The owner accepted the preceding combat suggestions, including visual recognition, approximate sound investigation, last-known-position searches with eventual decay, local alerts, finite ammunition/partial magazines, visible condition/repair, and readable enemy limits. The owner additionally specified separate bullets and magazines with manual magazine refilling, jams that become more likely without cleaning/service, and friendly fire. This supersedes the earlier combat proposal status. No weapon roster, ammunition variant system, loading/clearing procedure, jam probability, or difficulty numbers have been approved.
+
+## First runnable Godot prototype — 2026-11-01
+
+Status: engine confirmed by the user; initial implementation verified locally.
+
+The owner chose Godot and downloaded the standard Windows build. Its executable reports `4.7.2.stable.official.ed1daf0bf`. The repository now contains `project.godot`, a reusable first-person player, an editable placeholder yard/storehouse scene, a door, three supply pickups, and a scene-owned communal stock ledger. This supersedes prior statements that no playable project exists; historical design entries describe the state when recorded.
+
+Verification: Godot import completed; the headless scene integration check passed floor landing, movement, door interaction/traversal, one-shot pickups, and wall collision. A Compatibility-rendered frame on the GTX 1080 was visually inspected. Owner playtesting, final art, multiplayer, missions, saving, and broader gameplay remain pending. The sample pickups deposit directly into a reset-on-run ledger solely to test interactions; final carrying/mission-return rules are unchanged.
 
 ## Recording future decisions
 

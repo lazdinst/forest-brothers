@@ -40,7 +40,7 @@ Preserve these user requirements:
 - Weapons can jam, with higher jam risk when not cleaned/serviced. Friendly fire can injure/incapacitate teammates under the normal casualty rules. Maintenance costs, jam rates/clearing, damage balance, and ammo-count UI remain open.
 - Keep the repository private.
 
-Four-player maximum co-op and individual mission death are confirmed. Do not treat proposed medical item effects, numerical balance, or a proposed engine as approved requirements. Check the decision log and `docs/MISSIONS_AND_MEDICINE.md` for their status.
+Four-player maximum co-op and individual mission death are confirmed. Do not treat proposed medical item effects, numerical balance, or later engine changes as approved requirements. Check the decision log and `docs/MISSIONS_AND_MEDICINE.md` for their status.
 
 ## Scope and design
 
@@ -60,7 +60,7 @@ Four-player maximum co-op and individual mission death are confirmed. Do not tre
 - Validate co-op with two running instances early, before expanding content. Networking support is not proven by clean-looking interfaces alone.
 - Do not select dependencies, engine versions, or third-party assets without checking their current suitability and license.
 - Never commit secrets, generated engine caches, export credentials, local saves, or unlicensed assets.
-- There is no automated test or build command yet. Do not invent passing checks. Add instructions when a runnable project exists.
+- The local prototype uses Godot 4.7.2 standard and Compatibility. Read `docs/GETTING_STARTED.md` for actual import/run/integration-check commands. Preserve `.gd.uid` files and ignore generated `.godot/` caches. Do not claim headless checks establish graphics, game feel, or multiplayer support.
 
 ## Working with other agents
 

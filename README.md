@@ -4,7 +4,7 @@
 
 Venture into nearby settlements and woodland, recover supplies, help local people, and bring what you can back to those depending on you. Play alone or in co-op with up to four players. Teammates can treat and revive you during a limited incapacitation window; mission death sends you back to camp while survivors continue. Combat is dangerous; food, medicine, and relationships matter alongside ammunition.
 
-The project is in **concept/preproduction**. There is no playable build yet.
+The project now has a **small local movement/interaction prototype** in Godot 4.7.2 standard (Compatibility renderer). Import `project.godot` and press **F5**. Walk with WASD, look with the mouse, open the door with E, and collect the three supplies. See [Getting Started](docs/GETTING_STARTED.md) for controls, checks, and current limitations.
 
 ## Project context
 
@@ -19,6 +19,6 @@ The project is in **concept/preproduction**. There is no playable build yet.
 - [Decision log](docs/DECISIONS.md): confirmed direction versus working assumptions.
 - [Agent instructions](AGENTS.md): collaboration and implementation expectations.
 
-Start with the concept and root agent instructions before making changes. Godot is the proposed engine; no engine version or project scaffold has been selected yet.
+Start with the concept and root agent instructions before making changes. Use Godot **4.7.2 standard**, GDScript, and the Compatibility renderer for this prototype. The scene uses placeholder geometry; final art, multiplayer, missions, construction, and saving are not implemented yet.
 
 Repository visibility must remain private. Do not publish source, builds, or assets without the owner's instruction.
