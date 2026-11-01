@@ -3,7 +3,7 @@ config_version=5
 
 [application]
 config/name="Forest Brothers"
-run/main_scene="res://scenes/prototype/camp_test.tscn"
+run/main_scene="res://startup/startup.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [display]

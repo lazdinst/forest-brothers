@@ -1,7 +1,8 @@
 # Main menu and training startup
 
-Status: isolated UI implementation for review. No project configuration, training,
-environment or character source files are changed. This work introduces no campaign,
+Status: UI implementation integrated into the shared `main` branch at the owner's
+request. Only the default startup scene changes in project configuration; training,
+environment and character source files are unchanged. This work introduces no campaign,
 network, save or gameplay rules. Shared design logs are intentionally untouched.
 
 ## Visual direction and components
@@ -28,7 +29,7 @@ Game are visibly unavailable because those systems do not exist. Controls replac
 the concept's Settings entry for now: no settings persistence or rendering changes
 are implied. Records explains the prototype's current limits.
 
-## Run without changing project.godot
+## Run
 
 From this worktree, replace `<godot>` with the installed Godot 4.7.2 executable:
 
@@ -41,7 +42,7 @@ From this worktree, replace `<godot>` with the installed Godot 4.7.2 executable:
 Alternatively set `FOREST_BROTHERS_START=training` for the launching process.
 User arguments after `--` take precedence over the environment. Only `training`
 selects the testbed; empty/unknown routes select the menu. No environment file is
-written. Existing F5 behavior and direct training launch remain unchanged. Open
+written. F5 now opens the menu; direct training launch remains available. Open
 `startup/startup.tscn` in Godot and press F6 to try the launcher in the editor.
 
 Escape from routed training opens a UI-owned navigation layer. Resume restores the
@@ -52,9 +53,9 @@ local training subtree; it never pauses SceneTree. This is a local prototype
 navigation policy, not a multiplayer pause, casualty, disconnect or mission rule.
 Directly launching the training scene retains its existing Escape behavior.
 
-## Integration checkpoint (approval required)
+## Approved integration
 
-After reviewing this branch and coordinating shared-file ownership, the optional
+The owner requested integration into the branch used by the other agents. The
 one-line change in the existing `[application]` section of `project.godot` is:
 
 ```diff
@@ -62,11 +63,10 @@ one-line change in the existing `[application]` section of `project.godot` is:
 +run/main_scene="res://startup/startup.tscn"
 ```
 
-This change has **not** been applied. No rendering, input, autoload or other project
-settings are needed. Integrate only this branch's UI/startup files, focused test and
-this document; retain other agents' training/environment/character changes. The
-registry will then load the combined checkout's current training scene at its
-existing path. Do not cherry-pick other workstreams to make the launcher work.
+This change has been applied. No rendering, input, autoload or other project settings
+were changed by this work. The UI commit was cherry-picked into `main`, preserving
+the other agents' uncommitted changes. The registry loads the combined checkout's
+current training scene at its existing path.
 
 ## Validation and manual acceptance
 
@@ -84,8 +84,11 @@ discard confirmation, and readable layouts at 1280 × 720 and 1920 × 1080.
 
 The worktree starts at commit `55d727e`. Other agents' uncommitted environment and
 polygon changes remain in the original checkout and are not copied or committed.
-Tests here prove routing to the committed training version; the combined current
-training content needs an integration run after authorized integration.
+The original isolated checks proved routing to the committed training version.
+After integration, the focused check passed against the combined current checkout,
+including its environment and polygon character additions. Default startup and the
+`--start=training` override also launched successfully with bounded headless runs.
+These integration runs do not establish graphics quality or multiplayer support.
 
 ## Validation record and changed files
 
@@ -98,12 +101,14 @@ reported restricted-environment certificate-store warnings; initial editor impor
 also could not save user-level editor settings. Neither blocked the scene checks.
 Import's incidental line-ending changes were restored only in the isolated worktree;
 the final protected-path diff is empty. No game-feel or multiplayer validation is
-claimed. No merge or shared default-startup change was performed.
+claimed. These results describe the original isolated validation; the approved
+shared default-startup integration is described above.
 
-Changed-file manifest (all new):
+Changed-file manifest (UI files new; project startup setting modified on integration):
 
 ```text
 docs/UI_DESIGN_SYSTEM.md
+project.godot
 startup/scene_registry.gd
 startup/scene_registry.gd.uid
 startup/startup.tscn
