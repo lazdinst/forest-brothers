@@ -1,0 +1,24 @@
+# Godot generated state and export credentials
+.godot/
+.import/
+.mono/
+export.cfg
+export_credentials.cfg
+
+# Local builds and saves
+builds/
+exports/
+*.save
+*.save.bak
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
