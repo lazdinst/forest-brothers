@@ -83,3 +83,17 @@ Checks exit nonzero on assertion failures. They exercise real scene collisions, 
 Muzzle attachment/depth (0.85 m), 75 ms flash timing, and light intensity are prototype tuning. The weapon is still a 2D foreground sprite; full 3D barrel collision/retraction and network-visible gunfire are future work. Flash art provenance is in assets/MUZZLE_FLASH_PROMPT.md. Test hip/ADS firing near cover and verify light fades after each successful shot; empty/jammed attempts must not flash.
 
 Weapon content, action timelines, and future animation authoring are documented in [Weapon Animation Workflow](WEAPON_ANIMATION_WORKFLOW.md). The training rifle is now labeled SVT-inspired; its generated art is not a verified historical model. Other loading mechanisms such as the Garand require distinct rules, not just different sprite clips.
+
+## Camp / NPC / enemy annex
+
+Restart F8 → F5. Turn behind-left at the original spawn and press **F** at the new annex table (approximately x −2, z 6). It connects the same player, weapon and communal ledger to the camp/workshop/enemy training area. The southwest return table brings you back. Claim the quartermaster cache once, assign the civilian as cook/builder, then try the well, kitchen, food store, armourer, ammo store, medical patient, shelter/trench sites, planning camera and HQ rescue exercise. The northern control table enables/reset opponents. Recipes, effects, labels and remaining limits are detailed in [Camp and Combat Tests](CAMP_AND_COMBAT_TESTS.md).
+
+Additional checks:
+
+```text
+<godot> --headless --fixed-fps 60 --path . --script res://tests/camp_workshops_smoke.gd
+<godot> --headless --fixed-fps 60 --path . --script res://tests/camp_annex_smoke.gd
+<godot> --headless --fixed-fps 60 --path . --script res://tests/enemy_encounter_smoke.gd
+```
+
+These are local fixtures, not campaign completion. The earlier 'not implemented' limits refer to full campaign/network systems; bounded camp/medical/opponent tests now exist. No saving, co-op, real outings, player wounds, death/revive, cash trading or complete character animation is proven. The environment agent's art remains unchanged and its existing proof/integration checks also pass against this work.

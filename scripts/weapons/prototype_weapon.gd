@@ -1,4 +1,5 @@
 extends CanvasLayer
+signal shot_fired(origin: Vector3)
 ## Presentation/input adapter for the local training rifle. Not network authority.
 
 const WeaponState = preload("res://scripts/weapons/prototype_weapon_state.gd")
@@ -138,10 +139,14 @@ func _fire() -> void:
 	var end := aim_point
 	if not hit.is_empty():
 		end = hit.position
-		if hit.collider.has_method("take_hit"):
+		if hit.collider.has_method("receive_hit"):
+			hit.collider.receive_hit(definition.damage,hit.position,hit.normal,_player)
+			hits += 1
+		elif hit.collider.has_method("take_hit"):
 			hit.collider.take_hit()
 			hits += 1
 	last_shot_origin = start
+	shot_fired.emit(start)
 	last_shot_end = end
 	_world_light.global_position = start
 	if start.distance_to(end) < 0.02:

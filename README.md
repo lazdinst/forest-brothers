@@ -6,6 +6,8 @@ Venture into nearby settlements and woodland, recover supplies, help local peopl
 
 The project now has a **local movement, animation, and firing-range prototype** in Godot 4.7.2 standard (Compatibility renderer). Import `project.godot` and press **F5**. Walk with WASD, look with the mouse, interact with F, and explore the obstacle course and firing lane. Ctrl crouches, Q/E lean, V vaults/climbs, and the mouse fires/aims. See [Getting Started](docs/GETTING_STARTED.md) for controls, checks, and current limitations.
 
+The local training yard also connects to a **camp/workshop/NPC and opponent annex**. Turn behind-left at spawn and use F at its table. [Camp and Combat Tests](docs/CAMP_AND_COMBAT_TESTS.md) covers every station, planning, rescue exercises and enemy controls. These remain local tests rather than a saved/co-op campaign.
+
 ## Project context
 
 - [Game concept](docs/GAME_CONCEPT.md): vision, player experience, scope, and open questions.

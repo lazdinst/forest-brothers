@@ -54,6 +54,7 @@ Four-player maximum co-op and individual mission death are confirmed. Do not tre
 ## Technical habits
 
 - Separate player input, authoritative game rules, and presentation. Shared world changes must have a clear owner.
+- Read `docs/CAMP_AND_COMBAT_TESTS.md` before expanding the camp/opponent training annex. Reuse the environment pipeline assets, keep communal spending in rules, and do not confuse debug bout vitality/manual rescue results with campaign casualties or multiplayer authority.
 - Do not assume there is exactly one player or use a global player reference as the foundation of shared systems.
 - When changing weapon rules, art, or animations, read `docs/WEAPON_ANIMATION_WORKFLOW.md`. Keep per-weapon assets/timelines in definitions and ammunition effects in rules; do not award ammo from animation callbacks or assume all weapons use detachable magazines.
 - Use stable IDs for persistent entities and content where needed. Keep definitions separate from mutable runtime state.

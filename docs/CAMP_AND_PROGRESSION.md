@@ -1,6 +1,6 @@
 # Camp life and progression
 
-Status: confirmed feature direction with proposed mechanics and unresolved balance. No gameplay is implemented.
+Status: confirmed feature direction with proposed mechanics and unresolved balance. Local workshop/NPC/planning/rescue exercises now exist; see [Camp and Combat Tests](CAMP_AND_COMBAT_TESTS.md). Campaign progression, shared network authority and saving remain unimplemented.
 
 ## Confirmed by the owner — 2026-11-01
 

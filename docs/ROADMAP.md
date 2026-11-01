@@ -1,6 +1,6 @@
 # Development roadmap
 
-This is a proposed order for a first-time developer and early multiplayer validation. The owner has playtested milestone 1 movement, the door, and all three supplies. At the owner's request, the current increment is a local animation/movement/weapon training area before the multiplayer milestone. The art feasibility gate and all multiplayer/campaign milestones remain pending.
+This is a proposed order for a first-time developer and early multiplayer validation. The owner has playtested milestone 1 movement, the door, and all three supplies. At the owner's request, the current local training increments cover weapons/movement, camp stations/NPCs, planning/recruitment, and an opponent encounter before the multiplayer milestone. The art feasibility gate and all multiplayer/campaign milestones remain pending.
 
 ## 0 — Agree on the first experiment
 
@@ -95,3 +95,19 @@ Done when: the owner can assess whether the slice delivers tension, immersion, a
 Choose additional locations, tasks, resources, residents, and systems based on playtest findings. Expand the confirmed camp building, trench, food, water, and maintenance systems from the small camp proof. Plan a separate later milestone for dedicated-server hosting (a confirmed future goal). Revisit scope before adding AI squadmates, vehicles, or a large world; these remain unapproved/deferred.
 
 A Steam release plan follows a convincing slice: store materials, licensing review, packaging, onboarding, and release testing. No release date is committed.
+
+## 1B — Communal camp workshop laboratory
+
+Owner-directed increment while the environment agent develops woodland assets. Implemented local training fixtures: one shared ledger, one-time quartermaster cache, well, civilian cooking and food provisioning, armourer service, physical ammunition transfers, distinct medical test-patient treatments, predefined shelter upgrade and marked trench work. Costs reserve atomically; jobs own a worker, cancel/refund once, and permit one foreman assist. Values are prototype choices. Twelve stations and real UI interaction are checked. Owner playtesting, work animations, campaign persistence, and concurrent network authority remain pending; this does not complete milestone 3A/3D.
+
+## 1C — Civilian, planning and rescue laboratories
+
+Implemented a starting civilian role panel, worker assignment/busy rules, overhead build-table camera, validated free rack plans and civilian construction alongside the fixed shelter upgrade. Reuses existing civilian art. A separate manual rescue exercise proves departure, pending-versus-arrived residents, early safe return without quest reward, objective rewards once, and pending-recruit loss on group death. Jobs continue during planning; it does not globally pause. These local exercises do not implement full missions, individual deaths, civilian schedules, hauling or save/rollback. Camera/input/placement and result accounting checks pass; milestones 3B/3C still require their full mission/co-op acceptance cases.
+
+## 1D — Opponent encounter laboratory
+
+Two local test opponents now receive actual rifle damage, show brief hit/blood feedback, collapse into nonblocking corpses and reset cleanly. A controlled bout exercises recognition/reaction delays, stance/distance sensitivity, cover LOS, approximate gunshot/pace noise, finite search, local alerts and ray-checked return fire. A separate training vitality counter ends a bout; it is not player wounds/incapacitation/mission death. One new front-only guard candidate; death is procedural and opponent weapons are flash proxies. Navigation, proper weapon/walk/death frames, surface-specific footsteps, friendly-fire casualties and multiplayer remain unfinished. Milestone 2B is partial, not complete.
+
+Validation: all 13 current local checks pass, including the other agent's isolated environment proof and integrated yard checks. GPU frames of camp, panels, overhead plans, enemies and corpse state inspected on GTX 1080 Compatibility. See [CAMP_AND_COMBAT_TESTS.md](CAMP_AND_COMBAT_TESTS.md) for the entry point, each station's playtest and limits. No final art, stable-performance or co-op acceptance is inferred.
+
+Next foundational priority after owner review remains milestone 2 host/join and two-instance authority, then 2A individual casualties/revival and a real mission loop. Preserve the environment agent's visual-review gate and ownership; do not duplicate its assets or mark the full biome complete from these laboratories.

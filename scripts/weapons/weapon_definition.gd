@@ -7,6 +7,7 @@ extends Resource
 @export var initial_loaded: int = 10
 @export var initial_spare: int = 0
 @export var initial_loose: int = 30
+@export var damage: float = 40.0
 @export var fire_interval: float = 0.22
 @export var hip_texture: Texture2D
 @export var ads_texture: Texture2D
@@ -31,7 +32,7 @@ func get_clip(action: StringName) -> Resource:
 func validation_error() -> String:
 	if weapon_id == &"" or loading_rule != &"detachable_magazine":
 		return "This prototype supports detachable magazines only"
-	if capacity < 1 or initial_loaded < 0 or initial_loaded > capacity or initial_spare < 0 or initial_spare > capacity or initial_loose < 0 or fire_interval <= 0.0:
+	if capacity < 1 or initial_loaded < 0 or initial_loaded > capacity or initial_spare < 0 or initial_spare > capacity or initial_loose < 0 or fire_interval <= 0.0 or damage <= 0.0:
 		return "Invalid ammunition configuration"
 	if hip_texture == null or ads_texture == null or flash_texture == null or magazine_uv.size() < 3 or magazine_uv.size() > 8:
 		return "Missing visual assets or magazine mask"

@@ -6,6 +6,7 @@ const Civilian = preload("res://scenes/characters/starting_civilian.tscn")
 
 
 func _ready() -> void:
+	call_deferred("_install_systems_annex")
 	_box("JumpHurdle", Vector3(-11, 0.2, 7), Vector3(3, 0.4, 0.4), Color(0.46, 0.35, 0.2))
 	_box("VaultBarrier", Vector3(-11, 0.425, 3.5), Vector3(3, 0.85, 0.55), Color(0.45, 0.37, 0.24), true)
 	_box("MantlePlatform", Vector3(-11, 0.55, -1), Vector3(3, 1.1, 2), Color(0.38, 0.4, 0.35), true)
@@ -84,3 +85,9 @@ func _label(text: String, at: Vector3) -> void:
 	label.pixel_size = 0.0025
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(label)
+
+
+func _install_systems_annex() -> void:
+	var annex = load("res://scripts/camp/training_annex.gd").new()
+	annex.name = "SystemsAnnex"
+	get_parent().add_child(annex)
