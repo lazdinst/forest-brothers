@@ -1,6 +1,6 @@
 # Art direction and production
 
-Status: owner-selected style and production need; detailed specifications and asset examples are pending. No artwork has been generated yet.
+Status: owner-selected style and production need. A first painted front-view starting civilian candidate exists; owner approval, in-engine scale testing, directional views, and animation remain pending. See [the asset and generation prompts](../assets/characters/starting_civilian/README.md). This is a visual candidate, not a completed sprite animation pipeline.
 
 ## Confirmed direction
 
