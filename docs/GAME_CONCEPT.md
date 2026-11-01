@@ -4,7 +4,7 @@ Status: initial concept draft. See [the decision log](DECISIONS.md) for which ch
 
 ## The premise
 
-You begin in a rough Latvian forest camp after World War II with one civilian, suggested as an old man. You venture into the surrounding countryside to obtain supplies, help local people, and develop a resistance hideout under occupation. Rescued civilians receive directions and run off toward camp; they become residents when the mission resolves successfully. Solo/total-group mission death loses those pending arrivals; surviving co-op teammates can secure them even if the rescuer dies.
+You begin in a rough Latvian forest camp around 1946 with one civilian, suggested as an old man. You venture into the surrounding countryside to obtain supplies, help local people, and develop a resistance hideout under occupation. Rescued civilians receive directions and run off toward camp; they become residents when the mission resolves successfully. Solo/total-group mission death loses those pending arrivals; surviving co-op teammates can secure them even if the rescuer dies.
 
 The central question is: **what are you willing to risk to keep your people alive?**
 
@@ -24,9 +24,9 @@ Tarkov is a reference for immersion, tension, and consequences. This game is not
 ## Core loop — proposed
 
 1. At the headquarters mission table, learn about a need, prepare communal equipment, and choose a mission alone or with a group of up to four players.
-2. Travel through a compact area of woodland and rural settlements.
+2. Deploy to the first handcrafted map, with randomized supplies and selected portions. A Latvian town/city is an example location. Outings last at most one hour; timeout kills players still on-map.
 3. Explore, gather resources, help locals, and decide whether to engage or avoid threats.
-4. Return with what you recovered, living with the cost of the journey. If incapacitated, teammates have a limited opportunity to revive you; if you die, you return to camp while they continue.
+4. Return with what you recovered, living with the cost of the journey. You may leave early with supplies and civilians while the main quest remains incomplete; quest progress, supplies, and rescue outcomes are separate. If incapacitated, teammates have a limited opportunity to revive you; if you die, you return to camp while they continue.
 5. Use supplies to sustain and develop camp: organize equipment, build, dig trenches, collect water, cook, store food, repair weapons, and gather ammunition. Players who died can work at camp while survivors continue. They cannot rejoin that same mission.
 
 ## Design pillars
@@ -41,13 +41,13 @@ The owner wants punishing play. Threats and consequences should be legible enoug
 Landscape, architecture, language, objects, and lived experience should establish place. Research these details rather than relying on a generic Eastern European visual shorthand.
 
 ### Small environments with depth
-Begin with a compact playable location and a few interacting systems. Scale by adding authored areas, tasks, and content once the core loop works.
+Begin with one handcrafted mission map and a compact playable slice. Randomize supplies and selected portions; exact modular variation remains open. Scale with further authored locations after the loop works. See [mission structure](MISSION_STRUCTURE.md).
 
 ### Cooperation belongs in the foundation
 Support solo play and co-op with a maximum of four players. A player returning to camp after death must not interrupt teammates still on a mission. A host-owned campaign is the proposed initial format; competitive PvP is not approved.
 
 ### Camp is a place to play
-Hands-on camp life is confirmed product scope, with Valheim as the owner's reference for building and productive activities. Wells/water infrastructure, food storage, cooking facilities, equipment organization, trenches, and weapon repair support preparation and give returned players useful work. Start with rough tents and gradually upgrade buildings. All supplies are communal and quantities must be easy to inspect. The headquarters mission table organizes outings; the build-planning table opens a city-builder view to place plans. Construction combines freely placed pieces with predefined facility sites/upgrades. Camp population grows through mission rescues, with new residents arriving at mission resolution. Civilian construction, hauling, and tree harvesting are an owner-suggested possibility, not a settled workforce system. Specific structures and progression rules are detailed in [camp and progression](CAMP_AND_PROGRESSION.md). Larger construction systems follow a minimal proof, rather than blocking the first playable mission.
+Hands-on camp life is confirmed product scope, with Valheim as the owner's reference for building and productive activities. Wells/water infrastructure, food storage, cooking facilities, equipment organization, trenches, and weapon repair support preparation and give returned players useful work. Start with rough tents and gradually upgrade buildings. All supplies are communal and quantities must be easy to inspect. The headquarters mission table organizes outings; the build-planning table opens a city-builder view to place plans. Construction combines freely placed pieces with predefined facility sites/upgrades. Camp population grows through mission rescues, with new residents arriving at mission resolution. Civilians perform construction/cooking, players may help as foremen, and some residents may simply be NPCs. Main-mission completion rewards building materials and unlocks further missions. Shortages can kill residents and force optional scavenging, but there is no permanent game-over. Detailed hauling and tree harvesting remain unconfirmed. Specific structures and progression rules are detailed in [camp and progression](CAMP_AND_PROGRESSION.md). Larger construction systems follow a minimal proof, rather than blocking the first playable mission.
 
 ## Visual and audio direction
 
@@ -66,7 +66,7 @@ Sources to begin research:
 - [Partisan / guerrilla bunker](https://militaryheritagetourism.info/en/military/topics/view/99?lang=en)
 - [Museum of the Occupation of Latvia](https://okupacijasmuzejs.lv/en)
 
-Proposed approach: fictional characters and locations within a researched historical setting. Exact year, region, realism level, and treatment of historical events need owner input. The confirmed starting camp is rough tents, with gradual upgrades to functional buildings. Headquarters may be a tent or bunker as the camp develops. How large or visible the forest settlement becomes remains open.
+Proposed approach: fictional characters and locations within a researched historical setting. The working year is approximately 1946; exact region, realism level, and treatment of historical events still need owner input. The confirmed starting camp is rough tents, with gradual upgrades to functional buildings. Headquarters may be a tent or bunker as the camp develops. How large or visible the forest settlement becomes remains open.
 
 ## First playable slice — proposed
 
@@ -90,8 +90,8 @@ Large open worlds, competitive PvP, AI squad command, complex construction, vehi
 
 1. Is any competitive multiplayer ever desired? Co-op is confirmed at a maximum of four; PvP remains outside the prototype.
 2. Is the protagonist a fictional Latvian partisan, or a different role?
-3. Which region and period should anchor the setting?
+3. Which Latvian region and settlement should anchor the working setting around 1946?
 4. How long do injuries and capability penalties persist, what recovery happens at camp, and how is communal equipment physically recovered from a teammate's body?
 5. How are mission outings and concurrent camp activity represented across maps? Dead players cannot rejoin the same mission; reconnect rules must preserve that lockout.
 6. How do building placement, trenches, camp permissions, shared resources, and time progression work? Hands-on camp work is confirmed.
-7. What are the desired balance of combat, stealth, exploration, and civilian assistance?
+7. Which concrete perception, searching, ammunition, and weapon-condition rules should support the confirmed combat priorities? See [combat design](COMBAT_DESIGN.md).

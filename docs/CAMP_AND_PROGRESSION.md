@@ -31,9 +31,9 @@ Confirmed co-op rule: surviving teammates can secure the civilians' arrival even
 
 The civilian departing toward camp does not require a fully simulated journey across maps. A short departure animation/path followed by mission-result resolution is a proposed initial implementation. Ongoing escorts, route combat, random travel losses, rediscovery, and deaths after a successful rescue resolution are not approved.
 
-Population feedback should distinguish current camp residents from civilians pending on the active mission. Mission debrief should report arrivals/losses clearly. Exact UI, capacity constraints, rescue conditions, mission-success criteria, and whether partial success can secure recruits remain to be designed.
+Population feedback should distinguish current camp residents from civilians pending on the active mission. Mission debrief should report arrivals/losses clearly. Early safe return can secure rescued civilians without completing the main objective. Exact UI, capacity constraints, rescue conditions, and timing when teammates return separately remain to be designed. See [mission structure](MISSION_STRUCTURE.md).
 
-Recruitment is confirmed; construction, hauling, and harvesting assignments remain the separate workforce proposal below. The initial civilian's specific tasks also remain open.
+Recruitment and civilian construction/cooking roles are confirmed. Some residents may simply be NPCs rather than workers. Detailed assignments, hauling/harvesting, and the initial civilian's specific tasks remain open.
 
 ## How camp and missions connect
 
@@ -96,11 +96,11 @@ The build-planning table opens a city-builder view to place plans within the mix
 
 Confirmed progression: start with rough tents and improve buildings gradually. Example progression to discuss: a basic facility becomes weatherproof, then gains storage or work capacity. Exact tiers, bonuses, costs, historical appearance, and construction times are proposals. Upgrading must define what happens to stored items and an in-progress station task.
 
-## Civilian labor — owner-suggested proposal
+## Civilian labor — confirmed roles, unresolved detailed simulation
 
-The owner suggested directing civilians to construct buildings, move materials, and harvest trees. If adopted, this could connect helping locals with camp development. Rescue-based recruitment is now confirmed in the section above. Automatic conversion of recruits into workers, assignments, pathfinding, supplies, skills, wages, schedules, and danger remain unapproved by the workforce suggestion.
+The owner confirmed that civilians construct buildings, cook, and perform similar camp jobs. Players can assist as foremen; exactly how assistance changes work is unresolved. Some civilians can simply be resident NPCs. Main-mission completion awards construction materials. Detailed assignments, worker suitability, hauling, tree harvesting, pathfinding, skills, wages, and schedules still need design; neither instant labor nor an elaborate workforce simulation is implied.
 
-Prototype plans and resource accounting first. A simple timed construction job is a possible feasibility step before visible hauling and tree harvesting, not an approved replacement for the desired presentation. Compare hands-on player work, civilian jobs, and a mixture before deciding how construction actually completes.
+Prototype one civilian construction job and one cooking job after plans/resource accounting work. Add one player-assistance action to test the foreman role. A simple timed job is a possible feasibility step before visible hauling/tree harvesting, not a final presentation decision. Job durations, assignment UI, assistance benefits, and the supply-delivery system remain open.
 
 ## Starting scope — proposed
 
@@ -108,7 +108,19 @@ Prove one useful camp job alongside an active co-op mission, then introduce one 
 
 For digging, compare authored trench segments or designated dig sites with deformable terrain before committing to technology. The player should feel they are digging; the implementation remains open.
 
-No automatic production chains, farming, raids, NPC workforce simulation, hunger/thirst meters, spoilage, weather damage, or ammunition crafting have been approved. They may be discussed later; the existence of food, wells, trenches, or a workbench does not imply those systems.
+Detailed automatic production chains, farming, raids, complex workforce simulation, player hunger/thirst meters, spoilage, weather damage, and ammunition crafting are not approved. Basic civilian work and lethal camp shortages are confirmed. They may be discussed later; the existence of food, wells, trenches, or a workbench does not imply those systems.
+
+## Survival pressure and progression
+
+Civilian shortages can cause deaths. Insufficient supplies can prevent adequately preparing for main-quest missions, pushing players into optional scavenging outings to recover. There is no permanent campaign game-over: decline makes survival harder, while scavenging must remain a viable route back. Exact food/water/shelter needs, warning/grace periods, consumption rates, and whether supplies are a formal deployment gate remain open.
+
+Personal player hunger/thirst meters are not confirmed by the civilian survival rule. Scarcity must not accidentally soft-lock the campaign when all civilians or equipment are lost; a minimum viable scavenging/deployment rule still needs design, rather than silently granting free kits or unlimited resources.
+
+Main-mission completion awards construction materials and unlocks further missions. Exact reward quantities, whether repeat completions grant materials, and other resource sources remain open. A medical facility becomes available after a handful of main missions and improves healing speed; exact timing and bonuses are deferred.
+
+The current long-term goal is developing the forest settlement and resisting. No final victory, permanent defeat, or required campaign ending has been chosen.
+
+Host-crash policy: all concurrent camp work, resource consumption, construction, cooking, civilian state, and mission changes roll back to the pre-deployment campaign state. This is distinct from normal mission failure, which preserves ordinary campaign consequences under the agreed rules.
 
 ## Shared resources, time, and permissions
 
@@ -119,7 +131,7 @@ These are unresolved design decisions, not permission to add a full management f
 - Does work complete through active interaction, elapsed session time, or another rule?
 - Can camp players sleep or advance time while friends remain on mission?
 - Can resources move between camp and an active mission, and how is abuse prevented?
-- What happens to unfinished work when the host disconnects or the game is saved?
+- A host crash restores pre-mission camp state, including unfinished/completed work during the outing. How should between-mission saving and intentional shutdown work?
 
 Do not carry forward the earlier suggestion that every camp change waits until mission resolution as a confirmed rule. Hands-on camp work during missions is now required; consumption, completion, and time rules must support that.
 
@@ -136,8 +148,8 @@ Do not assume mission death fully heals the player, camp entry clears all injuri
 3. Is gathering local materials around camp possible while a mission is active, and what risks exist there?
 4. How are communal stock counts presented, which locations can supply a task, and who can reserve/spend supplies?
 5. Which tasks remain available while injured, and what speeds recovery?
-6. Are food and water camp stocks, player survival requirements, or both?
+6. What civilian needs consume food/water, how quickly do shortages cause deaths, and are personal player survival meters wanted too?
 7. Should work require active participation, timed completion, or both?
 8. How should camp time interact with ongoing missions?
 9. What feedback tells a player who died that surviving teammates secured the group's civilian arrivals?
-10. What qualifies as a successful rescue mission resolution, including partial success or an early return?
+10. How are civilians committed when teammates leave at different times, given that early safe return can secure them without main-quest completion?

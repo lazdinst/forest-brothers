@@ -34,9 +34,9 @@ Done when: a teammate can revive a downed player before expiry; expiry sends onl
 
 ## 3 — One meaningful outing
 
-Build the compact forest/camp/farmhouse slice, a simple objective, one threat, and an observable camp outcome. Prototype gunplay and resource handling only as far as needed for this mission. Add distinct light/heavy bleed, fracture, and pain treatment categories incrementally; keep period research and gameplay effects separate.
+Build a compact slice of the handcrafted map (for example a town-edge building), a simple objective, one threat, and an observable camp outcome. Add randomized supplies and one bounded variation of a selected area, without generating a whole town. Prototype gunplay and resource handling only as far as needed for this mission. Add distinct light/heavy bleed, fracture, and pain treatment categories incrementally; keep period research and gameplay effects separate.
 
-Done when: the mission can be completed or failed in solo and co-op, supplies have a visible purpose, individual death leaves surviving teammates able to finish, and a playtester can understand the objective without coaching. Exercise all four player slots before expanding content.
+Done when: the mission can be completed or failed in solo and co-op, supplies have a visible purpose, individual death leaves surviving teammates able to finish, and a playtester can understand the objective without coaching. Verify an early safe return with loot/rescues but no main-quest completion, a completion reward/unlock, and a shortened test deadline that exercises the one-hour-cap timeout/death rule. Exercise all four player slots before expanding content.
 
 ## 3A — Useful work at camp
 
@@ -48,7 +48,7 @@ Done when: a returned player can complete the chosen camp task without interrupt
 
 Prototype the headquarters mission table and a build-planning table that changes only the interacting player's camera. Place one plan, display communal stock/cost/shortage clearly, and complete one upgrade from the rough tent-camp starting state. Use approved placeholder construction completion rules before attempting a civilian workforce.
 
-Done when: both interfaces work with players simultaneously at camp and on mission; stock is not double-spent; plans are visibly distinct from completed structures; upgrading preserves stored contents; both free placement and facility upgrade rules remain supported. Civilian construction/hauling/harvesting needs its own scope decision before implementation.
+Done when: both interfaces work with players simultaneously at camp and on mission; stock is not double-spent; plans are visibly distinct from completed structures; upgrading preserves stored contents; both free placement and facility upgrade rules remain supported. Prototype one civilian builder with player assistance; detailed hauling/harvesting and a broad workforce simulation remain outside this milestone.
 
 ## 3C — One civilian rescue that grows camp
 
@@ -56,11 +56,17 @@ Begin with one civilian resident. Add one rescuable civilian who receives direct
 
 Done when: a successful result adds exactly one resident, solo/total-group mission-death failure adds none, the camp roster does not change before resolution, and repeated rescue/result events do not duplicate the civilian. Verify that surviving teammates can secure the recruit after the rescuer dies, including host-character death, without adding them prematurely. Show pending versus arrived civilians and the debrief result. Do not expand this milestone into a civilian labor simulation.
 
+## 3D — Civilian work and a recoverable shortage
+
+Add one civilian construction job, one cooking job, visible communal needs/stocks, a main-mission material reward, and an optional scavenging outing on the same map. Define placeholder consumption, warning, and assistance values before implementation; these are balance choices, not fixed design requirements.
+
+Done when: civilian work consumes resources once; player help has the agreed effect; shortages visibly threaten and can kill residents under the chosen rule; main progression can be delayed by poor supplies while optional scavenging still allows recovery. Test the zero-worker/low-equipment case to avoid an accidental permanent game-over. Medical-facility unlock and faster recovery follow a short placeholder quest chain; exact final quest count and durations remain deferred.
+
 ## 4 — A campaign that remembers
 
 Implement the agreed save ownership and failure rules. Persist the relevant camp state, inventory, and mission result, including built structures, station/storage state, recoverable gear rules, and per-player mission death lockouts where an active mission can be resumed.
 
-Done when: completing a mission, quitting, and loading restores the expected state; invalid or incompatible saves fail clearly without silently destroying progress.
+Done when: completing a mission, quitting, and loading restores the expected state; a non-host can disconnect and reconnect to the same living/vulnerable character; a host crash restores the entire pre-mission campaign including concurrent camp work. Test interrupted commits to prevent duplicated/lost rewards. Invalid or incompatible saves fail clearly without silently destroying progress.
 
 ## 5 — Prove the intended experience
 
@@ -70,6 +76,6 @@ Done when: the owner can assess whether the slice delivers tension, immersion, a
 
 ## 6 — Expand from evidence
 
-Choose additional locations, tasks, resources, residents, and systems based on playtest findings. Expand the confirmed camp building, trench, food, water, and maintenance systems from the small camp proof. Revisit scope before adding AI squadmates, vehicles, or a large world; these remain unapproved/deferred.
+Choose additional locations, tasks, resources, residents, and systems based on playtest findings. Expand the confirmed camp building, trench, food, water, and maintenance systems from the small camp proof. Plan a separate later milestone for dedicated-server hosting (a confirmed future goal). Revisit scope before adding AI squadmates, vehicles, or a large world; these remain unapproved/deferred.
 
 A Steam release plan follows a convincing slice: store materials, licensing review, packaging, onboarding, and release testing. No release date is committed.

@@ -20,7 +20,7 @@ Recommended starting model: a host runs the campaign and authoritative world sim
 - Plan movement replication and responsiveness explicitly. Generic property synchronization alone does not solve shooter latency or perceived input delay.
 - Test two clients competing for the same pickup, disconnecting, and observing the same mission result.
 
-Proposed initial constraints: friends join at camp before a mission; the host owns the save; leaving the host ends the session. The co-op maximum is four players. Reconnect behavior, character ownership, and detailed revival rules still need decisions before implementation depends on them. Host character death is a gameplay event and must never be treated as the host leaving.
+First-pass host crash ends the outing and restores the entire campaign to pre-mission data, including concurrent camp work. Non-host disconnection leaves the character in the mission and vulnerable; reconnect restores the same surviving character. Host-character death is a gameplay event and must never terminate hosting. Proposed initial constraints: friends join at camp before deployment and the host holds the save. Intentional host shutdown and late join remain open. Dedicated-server support is a confirmed later goal; the co-op cap remains four.
 
 Godot references, to re-check against the selected version:
 - [High-level multiplayer](https://docs.godotengine.org/en/stable/tutorials/networking/high_level_multiplayer.html)
@@ -40,7 +40,7 @@ Confirmed rules and proposed treatment design are in [missions and medicine](MIS
 - Authoritative logic owns bleed-out deadlines, treatment completion, resource consumption, death, and mission results. Clients display those outcomes; they do not independently decide death from a local timer.
 - Treatment actions must validate the target, active mission, item availability, range, and current condition. Interruption, duplicated requests, and concurrent treatment must not duplicate items, revive a dead character, or apply a completed treatment twice.
 - Resolve the race between death and treatment completion explicitly, and test it. Disconnecting must not silently reset wounds or revive timers.
-- A player's death resolves only their participation and locks them out of that mission ID. Solo/all-incapacitated cases resolve as mission death. Keep reconnect identity and mission outcomes authoritative; group rewards and crash recovery remain unresolved.
+- A player's death resolves only their participation and locks them out of that mission ID. Solo/all-incapacitated cases resolve as mission death. Keep reconnect identity and mission outcomes authoritative; exact quest reward/commit conditions remain unresolved; the full-campaign host-crash rollback policy is confirmed.
 - Validate host-character death with survivors continuing, not only a non-host dying. Test the intended four-player capacity; early two-player tests are insufficient to claim full co-op support.
 
 ## Concurrent camp activity
@@ -62,7 +62,7 @@ See [camp and progression](CAMP_AND_PROGRESSION.md) for confirmed scope and prop
 - The headquarters mission table and build-planning table are in-world entry points. A player's planning camera/UI must not change everyone else's camera or globally pause an active mission.
 - Keep plans separate from completed structures. Plan identity, placement, resource reservation/consumption, cancellation, upgrade state, and completion must be consistent across clients and saved when implemented. Exact reservation and job rules are unresolved.
 - Building upgrades must preserve or explicitly migrate container contents and station state; do not replace a building and silently lose or duplicate its stock.
-- Civilian labor is a proposal. Do not implement autonomous harvesting, worker pathfinding, or a broad job simulation before its role and prototype scope are approved.
+- Civilian construction/cooking and player foreman assistance are confirmed. Begin with a bounded job prototype; do not infer autonomous harvesting, elaborate pathfinding, or a broad economy simulation from these roles.
 - Test the same buildings from first-person and the planning camera. A sprite that looks correct from the player camera may fail in a city-builder view; rendering choices remain open.
 
 ## Civilian recruitment and pending arrivals
@@ -73,7 +73,19 @@ See [camp and progression](CAMP_AND_PROGRESSION.md) for confirmed scope and prop
 - Resolve pending arrivals through authoritative group mission results. Solo/total-group mission death loses pending recruits. Surviving teammates can secure arrival even if the rescuer dies; do not attach recruitment validity to the rescuer's alive/dead state.
 - Distinguish lost pending recruits from existing residents. Do not clear established population because someone dies on a mission.
 - A short visible departure path followed by result-driven arrival is a proposed prototype; a simulated cross-map civilian journey is not required by the current design.
-- Persist enough mission/result state to avoid duplicate or premature arrivals when saving/loading is introduced. Crash/reconnect resolution remains an open policy, not an automatic loss or success.
+- Persist enough mission/result state to avoid duplicate or premature arrivals when saving/loading is introduced. A host crash rolls these changes back with the entire campaign; a non-host reconnect preserves the existing mission state rather than awarding or cancelling arrivals.
+
+## Mission lifecycle, variation, and rollback
+
+See [mission structure](MISSION_STRUCTURE.md). Keep quest completion, physical returns, pending/secured recruits, per-player life state, and group session status separate.
+
+- The host owns the map instance, variation/loot choices, and deadline. Clients receive the same authoritative instance; they must not roll their own random supplies or reset the timer on reconnect.
+- Non-host disconnect preserves the character, wounds, gear, location, and exposure to damage. Rebind the same identity on reconnect if alive; dead players remain locked out. Behavior while uncontrolled still needs a concrete design.
+- Before deployment, durably capture a consistent campaign baseline. A host crash restores that baseline for every player and camp subsystem. Uncommitted loot, quest rewards, civilian arrivals, consumed supplies, injuries, building/cooking/work changes must not leak across rollback.
+- Keep the baseline separate from the in-progress session and mark when normal resolution commits. Test crashes before/after reward and save boundaries. Snapshot scope is the entire campaign, not only active mission characters.
+- Early returns may provisionally affect the running camp, but a later host crash still undoes them. Define finalization and staggered-exit rules explicitly before implementation.
+- Future dedicated hosting should run the same rules without depending on a local player/camera/UI. Do not implement infrastructure, accounts, or server operations before their milestone.
+- Civilian deaths from shortage are distinct from lost pending recruits and player mission deaths. The no-game-over rule needs a viable scavenging recovery path even when equipment/labor is depleted.
 
 ## Content and persistence
 

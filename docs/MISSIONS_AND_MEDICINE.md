@@ -33,7 +33,7 @@ Make medical choices understandable: identify the problem, use an appropriate re
 Distinguish three outcomes:
 1. **Stabilization:** control an immediate deterioration, such as bleeding.
 2. **Revival:** regain the ability to participate, once the game's rescue conditions are met.
-3. **Recovery:** restore capability over a duration while injuries persist after revival. Camp care, treatment acceleration, and timer behavior remain proposals to settle.
+3. **Recovery:** restore capability over a duration while injuries persist after revival. A medical facility unlocked after a handful of main missions accelerates healing. Exact durations, other treatment effects, and timer behavior are deferred.
 
 These need not be three separate interaction buttons. The important rule is that standing up does not silently cure every injury. Exact prerequisites and whether some conditions can be combined into one treatment action are open.
 
@@ -82,8 +82,8 @@ No specific tourniquet design, antibiotic access, or field blood-replacement sys
 3. What conditions and supplies are required to revive, and how long do preserved injuries and reduced capability last?
 4. How are simultaneous casualties resolved consistently, given that solo/all-incapacitated outcomes are confirmed as mission death?
 5. How is communal recovered gear physically returned, how long do bodies remain, and what happens to uncollected gear when the mission ends?
-6. How should reconnecting and saved mission results preserve the confirmed same-mission death lockout?
+6. How should identity and result persistence preserve reconnect control of living characters and the same-mission death lockout? See `MISSION_STRUCTURE.md` for confirmed reconnect and host-crash rules.
 7. How do injury penalties affect the confirmed camp activities? Is optional spectating also desirable?
 8. What recovery, cost, or delay applies at camp, and how is return after death explained?
 9. How do mission completion and rewards affect players who died earlier?
-10. Which exact historical year and sources establish the medical item list and packaging?
+10. Which local sources establish the medical item list and packaging for the working setting around 1946?

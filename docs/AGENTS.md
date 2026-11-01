@@ -5,7 +5,7 @@ Read the root `AGENTS.md` first.
 - `GAME_CONCEPT.md` describes the intended player experience and boundaries.
 - `DECISIONS.md` distinguishes user-confirmed direction, proposals, and unresolved questions. Update it when the owner settles a meaningful choice.
 - `TECHNICAL_DIRECTION.md` describes implementation guidance and its current status.
-- `MISSIONS_AND_MEDICINE.md` and `CAMP_AND_PROGRESSION.md` hold the detailed system rules and open questions.
+- `MISSION_STRUCTURE.md`, `MISSIONS_AND_MEDICINE.md`, and `CAMP_AND_PROGRESSION.md` hold the detailed system rules and open questions. `COMBAT_DESIGN.md` separates required combat concerns from unapproved detailed mechanics.
 - `ART_DIRECTION.md` records the chosen style, asset workflow, and visual validation requirements.
 - `ROADMAP.md` tracks milestones with observable completion criteria.
 - Keep these documents consistent; link to the source of a decision instead of duplicating it everywhere.

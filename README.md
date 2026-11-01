@@ -9,7 +9,9 @@ The project is in **concept/preproduction**. There is no playable build yet.
 ## Project context
 
 - [Game concept](docs/GAME_CONCEPT.md): vision, player experience, scope, and open questions.
+- [Mission structure](docs/MISSION_STRUCTURE.md): quest progress, early return, randomization, timeouts, reconnection, and crash rollback.
 - [Missions and medicine](docs/MISSIONS_AND_MEDICINE.md): four-player co-op, individual death, revival, and period-grounded injury treatment.
+- [Combat design](docs/COMBAT_DESIGN.md): concrete decisions to make about perception, searching, ammunition, and weapon wear.
 - [Camp and progression](docs/CAMP_AND_PROGRESSION.md): hands-on building, food, water, storage, maintenance, and concurrent camp activity.
 - [Art direction](docs/ART_DIRECTION.md): gritty painted sprites, agent-assisted production, and an early visual feasibility test.
 - [Technical direction](docs/TECHNICAL_DIRECTION.md): proposed Godot foundation and early co-op planning.
