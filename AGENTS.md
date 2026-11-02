@@ -13,7 +13,7 @@ The user's current instructions take precedence. This file applies throughout th
 
 ## Current owner priority
 
-Character art development is frozen. Preserve MPFB sources, rig, clips and separate clothing/bodyparts. Keep sprites as the default and MPFB available for comparison; do not create outfits or improve appearance. Read `docs/CHARACTER_FREEZE_AND_COMBAT_SLICE.md` for validated issues and the proposed combat/movement/AI slice. The scope awaits owner review: do not start a major combat, health or navigation refactor. Do not modify the nature/environment or main-menu agents' work. This priority supersedes earlier character-production steps.
+Character art development is frozen. Preserve MPFB sources, rig, clips and separate clothing/bodyparts. Keep sprites as the default and MPFB available for comparison; do not create outfits or improve appearance. Read `docs/CHARACTER_FREEZE_AND_COMBAT_SLICE.md` for validated issues. Combat is now owner-directed: follow `docs/COMBAT_ARENA_PLAN.md`, work in small chunks with a headless check each, and ask the owner before starting each chunk. Enemies stay sprite-based; the sprite production route is open. Numbers in combat code are placeholders, not approved balance. Do not modify the nature/environment or main-menu agents' work. This priority supersedes earlier character-production steps.
 
 ## Purpose
 
