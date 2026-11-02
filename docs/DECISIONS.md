@@ -414,3 +414,7 @@ Status: owner direction ("We have this concept that it's not an extraction shoot
 
 - Forest Brothers is a cooperative PvE extraction shooter: deploy from the camp, recover what you can, get out alive to keep it. The camp, locals and lasting world state remain the purpose. Competitive PvP, a player-trading or market-driven loot economy, and live-service remain unapproved.
 - All missions share one framework: definition resources, map markers (objective spots, exits), per-participant rules, one report shape and one summary screen. See MISSION_STRUCTURE.md.
+
+## Mission map and first mission world — 2026-11-02
+
+Status: owner direction while away ("We need to start with a basic mission scene world. A map to choose missions."). Choices made without the owner, all reversible: a blockout district rather than environment-agent art; three fictional missions (farmstead dispatch, village medicine, checkpoint codebook) with placeholder time limits and enemy counts; the mission map is opened directly, not yet from the main menu or the camp planning table; results are kept only for the current run of the game. Mission handoff between scenes uses a static holder (`MissionLaunch`), not an autoload.

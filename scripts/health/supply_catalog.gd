@@ -27,6 +27,10 @@ const SUPPLIES := {
 	# Mission objective, not a supply: carried like any item (it stays on a body), never used.
 	&"sealed_dispatch": {"name":"Sealed dispatch","icon":"document","size":Vector2i(1,1),"uses":1,"seconds":0.0,"targets_part":false,
 		"objective":true,"description":"A sealed envelope of papers. Carry it out of the area."},
+	&"medicine_bundle": {"name":"Bundle of medicine","icon":"medicine","size":Vector2i(2,1),"uses":1,"seconds":0.0,"targets_part":false,
+		"objective":true,"description":"Dressings and medicine wrapped in oilcloth, meant for the camp. Carry it out of the area."},
+	&"codebook": {"name":"Codebook","icon":"document","size":Vector2i(1,1),"uses":1,"seconds":0.0,"targets_part":false,
+		"objective":true,"description":"A small bound book of call signs and codes. Carry it out of the area."},
 	&"tinned_meat": {"name":"Tinned meat","icon":"food","size":Vector2i(1,1),"uses":1,"seconds":5.0,"targets_part":false,
 		"energy":60.0,"hydration":-10.0,"description":"Restores a lot of energy; makes you thirsty."},
 }

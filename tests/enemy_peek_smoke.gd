@@ -49,17 +49,19 @@ func _run() -> void:
 	_check(await _until(enemy, player, &"peek", 3.0), "The enemy reaches the peek")
 	_check(enemy.can_see(player), "Peeking, the enemy sees the player")
 	var frames_to_shot := 0
-	while shots.n == 0 and frames_to_shot < 60 * 3:
+	# Stop waiting once the peek is over, so a late (or no) shot cannot hide the step back.
+	while shots.n == 0 and frames_to_shot < 60 * 3 and enemy.cover_phase == &"peek":
 		await _frames(1)
 		frames_to_shot += 1
 	_check(shots.n > 0, "The enemy fires while peeking")
 	_check(frames_to_shot >= int(60 * enemy.peek_reaction) - 2, "It reacts before the first peek shot (%d frames)" % frames_to_shot)
-	_check(await _until(enemy, player, &"peek_back", 4.0), "The enemy steps back after the peek")
-	_check(await _until(enemy, player, &"hold", 4.0), "The enemy is back in cover")
+	_check(enemy.cover_phase in [&"peek_back", &"hold"] or await _until(enemy, player, &"peek_back", 4.0), "The enemy steps back after the peek")
+	_check(enemy.cover_phase == &"hold" or await _until(enemy, player, &"hold", 4.0), "The enemy is back in cover")
 	_check(_flat(enemy.global_position, cover) < 0.8 and enemy.hidden_from(space, eye, enemy.global_position), "Back in cover, the enemy is hidden again")
 	# A second peek, then the enemy gives up the position and moves on the threat.
 	_check(await _until(enemy, player, &"peek", 6.0), "The enemy peeks a second time")
-	_check(await _until(enemy, player, &"", 12.0) and enemy.search_phase == &"travel", "With its peeks spent, the enemy leaves cover toward the threat")
+	# Leaving: it moves on the threat, or engages at once if it already sees the player.
+	_check(await _until(enemy, player, &"", 12.0) and (enemy.search_phase == &"travel" or enemy.state == &"engage"), "With its peeks spent, the enemy leaves cover toward the threat")
 	# Out of ammunition during a peek: reload, step back into cover. Fresh start from the open.
 	enemy.cover_phase = &""
 	enemy.begin_search(Vector3(18, 0, 3))

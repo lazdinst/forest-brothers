@@ -20,6 +20,8 @@ signal mission_over(run)
 signal continue_requested
 
 @export var definition: Resource
+## Caption of the summary screen's button.
+@export var continue_text: String = "Go again"
 var run
 var players: Array = []
 var local_player: Node
@@ -100,7 +102,7 @@ func _ended(player) -> void:
 	var report := MissionReport.build(run, participant_id(player))
 	participant_ended.emit(player, report)
 	if player == local_player:
-		summary_screen.present(report)
+		summary_screen.present(report, continue_text)
 		if DisplayServer.get_name() != "headless":
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if run.is_over():

@@ -72,4 +72,12 @@ spots, exits, per-participant MissionRun, MissionReport, MissionController) and 
 HUD and summary screen); the arena now hosts `missions/arena_dispatch.tres` through it
 (`mission_run_smoke`, `arena_mission_smoke`).
 
-Next proposed: owner playtest of the arena, then the two-instance networking checkpoint.
+## 2026-11-02 — mission map and first mission world (owner away)
+
+Done: `scenes/missions/mission_board.tscn` (mission map, pins, briefing, deploy, results) and
+`scenes/missions/mission_world.tscn` (blockout district with objective spots, exits and enemy spawns)
+playing three catalog missions (`missions/*.tres`). Checks: `mission_board_smoke`, `mission_world_smoke`.
+`enemy_peek_smoke` was made robust to timing (it failed ~1 in 3 under full-sweep load).
+
+Open for the owner: link the mission map from the main menu (menu agent) or camp planning table;
+playtest; art for the district (environment agent).
