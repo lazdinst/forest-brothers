@@ -354,3 +354,17 @@ Later the same day the owner asked for a larger pack (now 9 × 6, placeholder) a
 Status: owner-confirmed direction; timings are placeholders.
 
 The owner asked to loot dead enemies instead of having their items fall to the ground. Chosen: F on a body opens the player's inventory with the body's gear beside it (Tarkov-style); the enemy's rifle is lootable, keeping its inserted magazine; searching takes a short time, revealing one item at a time while the body is open (0.8 s per item, placeholder). This is a deliberate exception to "the personal screen shows only what is on the person": a searched body appears beside it, camp stores still do not. Take-only for now; putting items onto bodies, search interruption rules and multiplayer authority remain open.
+
+## Tarkov-style player health, injuries, energy and water — 2026-11-02
+
+Status: owner-directed ("lean towards how Escape from Tarkov works"); implemented while the owner was away. All numbers are placeholders.
+
+The owner asked for a detailed Tarkov-like health and pain system, light and heavy bleeds, fractures, medical supplies, energy and water, and per-body-part health in the inventory. Another agent owns HUD effects and medical sprites; this work provides the rules and inventory side only.
+
+- Seven parts: head 35, thorax 85, stomach 70, arms 60, legs 65 (Tarkov's 440). Combat hit zones map by side and height (torso above 60% of standing height is thorax).
+- Confirmed rules kept: head at zero kills; thorax at zero downs (solo down is death); any hit on a downed body kills. A destroyed limb or stomach spreads further damage to the remaining parts at 70%.
+- Hits can cause light bleeding, heavy bleeding and (limbs) fractures. Bleeds drain their part; energy and water drain over about an hour, faster when sprinting, and when empty slowly damage thorax and stomach.
+- Pain (fracture, destroyed limb, recent heavy hit), shock (heavy hit or under 30% health), suppression (near misses), hungry and dehydrated are exposed via `PlayerHealth.effects()` for the HUD.
+- Broken or destroyed legs stop sprinting and slow movement unless morphine is active. Arm injuries expose an aim-sway multiplier that is not yet wired into aiming.
+- Supplies are physical inventory items with uses: cloth bandage (light bleed), field dressing (light or heavy bleed), splint (fracture), morphine (pain, 5 min), medical satchel (300-point pool: bleeds and health, not destroyed parts), canteen (3 drinks), rye bread, tinned meat. Treatment is timed, can be interrupted, and spends nothing if the supply leaves the person. No tourniquet, surgery or infection yet; period provenance of each item still needs research (MISSIONS_AND_MEDICINE.md).
+- Enemies keep the simpler four-zone health.

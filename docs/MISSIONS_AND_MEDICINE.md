@@ -16,6 +16,15 @@ Status: confirmed mission rules with proposed medical mechanics. This is game de
 
 These are mission-level death rules, not a confirmed permanent character-death system. Returning to camp is a gameplay rule; its narrative explanation is unresolved.
 
+## Implemented prototype (2026-11-02)
+
+A Tarkov-style local prototype now exists: `scripts/health/player_health.gd` (rules),
+`scripts/health/supply_catalog.gd` (supply definitions) and the inventory health figure. See
+the 2026-11-02 decision entry for parts, injuries, supplies and placeholder numbers. In the
+inventory: right-click a supply to choose a body part, drag it onto a body part, right-click a
+body part to pick a supply, or alt-click food, water and morphine. Revival, co-op treatment of
+teammates, camp recovery and network authority are not implemented.
+
 ## Proposed player flow
 
 `At camp -> On mission -> Incapacitated -> Revived on mission OR Dead for this mission -> At camp`

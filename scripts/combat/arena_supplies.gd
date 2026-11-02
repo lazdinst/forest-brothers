@@ -29,6 +29,10 @@ static func stage(arena: Node3D, weapon_id: StringName = &"svt_inspired_training
 		[_stack(stock.inventory, 14), Vector3(0.6, 0.06, 23.0)],
 		[_stack(stock.inventory, 5), Vector3(1.8, 0.06, 23.0)],
 	]
+	# A second row of medical supplies, food and water to practise treatment.
+	var row := [&"cloth_bandage", &"cloth_bandage", &"field_dressing", &"splint", &"morphine", &"medical_satchel", &"canteen", &"rye_bread", &"tinned_meat"]
+	for index in range(row.size()):
+		supplies.append([stock.inventory.create_supply(row[index]), Vector3(-4.5 + index * 0.9, 0.06, 20.6)])
 	for supply in supplies:
 		var item = supply[0]
 		item.location = Inventory.Location.new(&"ground", &"world")
@@ -42,12 +46,14 @@ static func stage(arena: Node3D, weapon_id: StringName = &"svt_inspired_training
 		placed.append(pickup)
 	return placed
 
-## A fallen rifleman by the crate: rifle with a few rounds left, two spare magazines and a stack.
+## A fallen rifleman by the crate: rifle with a few rounds left, two spare magazines, a stack
+## and a field dressing.
 static func _stage_body(arena: Node3D, weapon_id: StringName, capacity: int) -> Node3D:
 	var gear = Inventory.new(weapon_id, capacity, 3, 10, 12)
 	gear.items.erase(gear.backpack().id)
 	var extra = _magazine(gear, "Magazine C", 7)
 	extra.location = gear.empty_location_in(&"pocket", extra.id)
+	gear.create_supply(&"field_dressing", gear.empty_location_in(&"pocket"))
 	var body := BodyContainer.new()
 	body.inventory = gear
 	body.add_to_group(GROUP)

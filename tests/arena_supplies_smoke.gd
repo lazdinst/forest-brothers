@@ -40,12 +40,12 @@ func _run() -> void:
 	var gear = bodies[0].inventory
 	var kinds := {}
 	for item in gear.items.values(): kinds[item.kind] = kinds.get(item.kind, 0) + 1
-	_check(gear.equipped() and kinds.get(&"magazine", 0) == 3 and kinds.get(&"ammo_stack", 0) == 1 and gear.total_rounds() == 32, "The body carries a rifle with a magazine, two spares and loose cartridges")
+	_check(gear.equipped() and kinds.get(&"magazine", 0) == 3 and kinds.get(&"ammo_stack", 0) == 1 and kinds.get(&"supply", 0) == 1 and gear.total_rounds() == 32, "The body carries a rifle with a magazine, two spares, loose cartridges and a field dressing")
 	var seen := {}
 	for pickup in pickups:
 		var item = pickup.weapon_state.inventory.items[pickup.item_id]
 		seen[item.kind] = seen.get(item.kind, 0) + 1
-	_check(pickups.size() == 7 and seen.get(&"weapon", 0) == 1 and seen.get(&"magazine", 0) == 3 and seen.get(&"ammo_stack", 0) == 3, "Seven loose supplies: a rifle, three magazines and three cartridge stacks")
+	_check(pickups.size() == 16 and seen.get(&"weapon", 0) == 1 and seen.get(&"magazine", 0) == 3 and seen.get(&"ammo_stack", 0) == 3 and seen.get(&"supply", 0) == 9, "Sixteen loose supplies: a rifle, three magazines, three cartridge stacks and nine medical, food and water supplies")
 	var captions := pickups.map(func(p): return p.get_prompt())
 	_check(captions.any(func(c): return c.contains("rifle")) and captions.any(func(c): return c.contains("32 ×")) and not captions.any(func(c): return c.contains("10/") or c.contains("rounds left")), "Pickups say what they are; stacks show counts, magazines never do")
 	# Picking up the 14-round stack moves exactly those rounds to the player.
@@ -66,7 +66,7 @@ func _run() -> void:
 	arena.reset_enemies()
 	await _frames(3)
 	var restaged := _staged()
-	_check(restaged.size() == 8 and not restaged.any(func(node): return node.get_instance_id() == old_body_id), "Arena reset restages one body and seven supplies, replacing the old ones")
+	_check(restaged.size() == 17 and not restaged.any(func(node): return node.get_instance_id() == old_body_id), "Arena reset restages one body and sixteen supplies, replacing the old ones")
 	for failure in failures:
 		push_error(failure)
 	if failures.is_empty():

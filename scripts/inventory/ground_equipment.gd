@@ -1,6 +1,7 @@
 extends StaticBody3D
 ## Local F-interaction adapter for one persistent item ID, not a second item copy.
 ## Its blockout shape and label follow the item, so different supplies read apart.
+const SupplyCatalog = preload("res://scripts/health/supply_catalog.gd")
 var weapon_state
 var item_id: StringName
 var claimed := false
@@ -11,6 +12,7 @@ const LOOKS := {
 	&"magazine":[Vector3(0.17,0.05,0.09),Color("3d3f42")],
 	&"ammo_stack":[Vector3(0.13,0.05,0.09),Color("9a7a3c")],
 	&"backpack":[Vector3(0.5,0.22,0.36),Color("5b5a3e")],
+	&"supply":[Vector3(0.16,0.07,0.12),Color("d6ccb4")],
 }
 
 func _ready() -> void:
@@ -50,6 +52,7 @@ func caption() -> String:
 		&"magazine": return item.label.to_lower()
 		&"ammo_stack": return "%d × %s" % [item.quantity,inventory.ammo_definitions[item.ammo_type_id].display_name]
 		&"backpack": return item.label.to_lower()
+		&"supply": return SupplyCatalog.get_def(item.supply_id).name.to_lower()
 	return "recover equipment"
 
 func get_prompt() -> String:

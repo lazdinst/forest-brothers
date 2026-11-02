@@ -184,6 +184,12 @@ Planned chunks, each with a headless check and owner approval before starting:
    reveals one item at a time while open; drag into pockets/pack, or ctrl-click /
    right-click Take. Rules: `transfer_to`, `can_receive`, `auto_destination`.
 
+9. Done: health on the character sheet. Seven body-part buttons over the mannequin show
+   health and injuries (tinted by health); a summary shows total health, energy, water
+   and active effects. Supplies are items: right-click to treat a part, drag onto a part,
+   right-click a part to choose a supply, alt-click food/water/morphine. The supply being
+   used shows treatment progress; wounds keep bleeding while the inventory is open.
+
 All planned Tarkov-style chunks are done. Open: final pack and item sizes, more
 backpack sizes, a nearby-loot panel (needs owner approval) and network authority.
 4. Loading progress on the magazine cell; double-click inspect panel.

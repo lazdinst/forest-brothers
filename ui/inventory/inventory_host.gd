@@ -40,12 +40,18 @@ func open(loot = null) -> bool:
 	view = InventoryScene.instantiate()
 	view.data = InventorySnapshot.from_training(player)
 	view.loot = loot
+	view.health = player.body
+	view.owns_health = false
 	view.drop_requested.connect(player.weapon.drop_inventory_item)
 	_layer.add_child(view)
 	view.closed.connect(close)
 	is_open = true
 	opened.emit()
 	return true
+
+# Wounds keep bleeding and supplies keep working with the inventory open, as in Tarkov.
+func _physics_process(delta: float) -> void:
+	if is_open and is_instance_valid(player): player.advance_condition(delta)
 
 func close() -> void:
 	if not is_open: return
