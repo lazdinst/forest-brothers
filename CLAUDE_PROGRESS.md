@@ -66,4 +66,10 @@ listed in COMBAT_ARENA_PLAN 3b "Known placeholders and workarounds" (owner: addr
 Done: chunk 19 (`arena_mission_smoke`): find the sealed dispatch at one of four spots, leave by the
 west exit (5 s), debrief on complete / early return / death, Go again.
 
+Then (owner): the game IS a co-op PvE extraction shooter (AGENTS.md, GAME_CONCEPT, DECISIONS
+updated) and missions must share one framework. Built `scripts/missions/` (definition .tres, objective
+spots, exits, per-participant MissionRun, MissionReport, MissionController) and `ui/missions/` (shared
+HUD and summary screen); the arena now hosts `missions/arena_dispatch.tres` through it
+(`mission_run_smoke`, `arena_mission_smoke`).
+
 Next proposed: owner playtest of the arena, then the two-instance networking checkpoint.

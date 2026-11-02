@@ -18,7 +18,7 @@ The owner requested directional enemy sprites and action animations, rejected fu
 - Repository: `lazdinst/forest-brothers`. The owner requires private visibility; creation/access settings have not been independently verified in these documents.
 - Intended platform/distribution: a PC game for Steam.
 - First-person experience, immersive and punishing; Tarkov is an experiential reference.
-- The game is not intended to be an extraction shooter.
+- The game is not intended to be an extraction shooter. *(Superseded 2026-11-02: it is a cooperative PvE extraction shooter; see below.)*
 - Setting direction: Latvia around 1946, inspired by the Forest Brothers. This is the working year; the region and exact historical framing remain open.
 - Activities include supporting a forest group/hideout, obtaining supplies, helping Latvian locals, and conflict with occupying forces.
 - Art direction: gritty illustrated sprites, with painted characters and a low-resolution finish. The owner expects agent-generated sprite production; pipeline feasibility and consistency must be tested early.
@@ -407,3 +407,10 @@ Enemies may take a crate as cover when it hides a crouched body; full-height cov
 Status: owner direction ("It should be to locate a document and leave the mission with it"). Numbers and spots are placeholders.
 
 The arena's goal is to find a sealed dispatch (fictional; no historical document is implied) and leave through the west exit carrying it. It is a normal carried item, so death leaves it on the body like other gear, consistent with the confirmed equipment rule. Leaving without it is allowed as an early safe return. A debrief summarises each outing. Not built: the one-hour timeout, randomised supplies beyond the dispatch spot, camp-side rewards, co-op rules for who may carry it out, and any persistence beyond the arena.
+
+## Extraction shooter; one mission framework — 2026-11-02
+
+Status: owner direction ("We have this concept that it's not an extraction shooter but it really is, we need to update that clause"; "we need the same kinds of screens for any mission"). This supersedes "The game is not intended to be an extraction shooter" (2026-11-01) and the later note that Tarkov-style stakes fit that earlier direction.
+
+- Forest Brothers is a cooperative PvE extraction shooter: deploy from the camp, recover what you can, get out alive to keep it. The camp, locals and lasting world state remain the purpose. Competitive PvP, a player-trading or market-driven loot economy, and live-service remain unapproved.
+- All missions share one framework: definition resources, map markers (objective spots, exits), per-participant rules, one report shape and one summary screen. See MISSION_STRUCTURE.md.

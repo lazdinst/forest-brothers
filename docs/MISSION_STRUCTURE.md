@@ -53,6 +53,18 @@ Shortages can kill civilians and leave the group unable to prepare for main-ques
 
 A medical facility unlocks after a handful of completed main missions and speeds healing. Exact duration, unlock count, and recovery multiplier are intentionally deferred.
 
+## Mission framework (implemented, 2026-11-02)
+
+Every mission uses the same pieces, so a new mission is content plus map markers, never new screens:
+
+- **Definition** (`missions/<id>.tres`, `scripts/missions/mission_definition.gd`): title, briefing, objectives (`mission_objective.gd`; kind `carry_out` so far), exit time, and time limit (default one hour; time running out is mission death for anyone still in the area).
+- **Map markers**: `ObjectiveSpot` (a tag; the mission places each objective item at a random spot with its tag) and `MissionExit` (an exit area with posts and a sign).
+- **Rules** (`mission_run.gd`, no scene nodes): one record per participant, up to four. Each ends individually: extracted, killed, or timed out. A `carry_out` objective is done when someone extracts carrying the item; a fallen carrier leaves it on the body. Whole-mission outcome: success (required objectives carried out), returned (someone got out without them), failed (nobody got out). Missions can add counters (`count("Enemies killed")`).
+- **Report** (`mission_report.gd`): one shape for every mission and outcome: title, headline, and sections Objectives / Outing / Equipment / Condition of label-value rows.
+- **Presentation**: `MissionController` (one node per map) drives the rules for the mission players and shows the shared objective HUD (`ui/missions/mission_hud.gd`) and summary screen (`ui/missions/mission_summary_screen.gd`) to the local player.
+
+To add a mission: write a definition `.tres`, place `ObjectiveSpot` markers with matching tags and at least one `MissionExit` on the map, and add a `MissionController` with that definition. Not built yet: other objective kinds (rescue, reach, destroy), camp-side rewards, persistence, and network authority for who holds an item.
+
 ## Questions still requiring decisions
 
 - Physical exit locations, exit requirements, and whether players can return independently.

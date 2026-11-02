@@ -8,11 +8,14 @@ const MovementHud = preload("res://ui/components/tactical_movement_hud.gd")
 const InventoryHost = preload("res://ui/inventory/inventory_host.gd")
 const ArenaSupplies = preload("res://scripts/combat/arena_supplies.gd")
 const BloodTrail = preload("res://scripts/combat/blood_trail.gd")
-const ArenaMission = preload("res://scripts/combat/arena_mission.gd")
-const MissionDebrief = preload("res://ui/components/mission_debrief.gd")
-## Where the sealed dispatch may lie; one is drawn at each mission start.
-const DOCUMENT_SPOTS: Array[Vector3] = [Vector3(21.5, 0.06, -8.5), Vector3(-2, 0.06, -25.1), Vector3(-16.4, 0.06, -6), Vector3(28, 0.06, -28)]
-## The way out: a forest path at the west edge. Stand in it to leave the area.
+const MissionController = preload("res://scripts/missions/mission_controller.gd")
+const ObjectiveSpot = preload("res://scripts/missions/objective_spot.gd")
+const MissionExit = preload("res://scripts/missions/mission_exit.gd")
+## The mission this arena plays; any definition whose spot tags this map provides works.
+const MISSION = preload("res://missions/arena_dispatch.tres")
+## Places where a "dispatch" objective may lie.
+const DISPATCH_SPOTS: Array[Vector3] = [Vector3(21.5, 0.06, -8.5), Vector3(-2, 0.06, -25.1), Vector3(-16.4, 0.06, -6), Vector3(28, 0.06, -28)]
+## The way out: a forest path at the west edge.
 const EXIT_AT := Vector3(-32, 0, -4)
 const SIZE := 70.0
 const PLAYER_SPAWN := Vector3(0, 0.02, 28)
@@ -27,10 +30,7 @@ var ammo_crate: StaticBody3D
 var inventory
 var _prompt: Label
 var _crosshair: Label
-var _objective: Label
-var mission
-var document: Node3D
-var debrief
+var mission: Node
 
 func _ready() -> void:
 	_lighting()
@@ -64,11 +64,16 @@ func _ready() -> void:
 	inventory.world = self
 	inventory.player = player
 	add_child(inventory)
-	_exit_marker()
+	_mission_markers()
 	_hud()
 	reset_enemies()
-	player.casualty.connect(_player_casualty)
-	start_mission()
+	mission = MissionController.new()
+	mission.name = "Mission"
+	mission.definition = MISSION
+	mission.mission_over.connect(_mission_over)
+	mission.continue_requested.connect(restart)
+	add_child(mission)
+	mission.start([player], player)
 
 func reset_enemies() -> void:
 	for enemy in enemies:
@@ -94,40 +99,15 @@ func reset_enemies() -> void:
 		enemy.temperament = temperament_pool.pick_random()
 		enemies.append(enemy)
 
-## A fresh outing: the dispatch lies at a randomly drawn spot and the clock starts.
-func start_mission(spot_index := -1) -> void:
-	for old in get_tree().get_nodes_in_group(ArenaSupplies.DOCUMENT_GROUP):
-		old.queue_free()
-	var spot: Vector3 = DOCUMENT_SPOTS[spot_index if spot_index >= 0 else randi() % DOCUMENT_SPOTS.size()]
-	document = ArenaSupplies.stage_document(self, spot)
-	mission = ArenaMission.new(EXIT_AT)
-	mission.begin(player.weapon.state.inventory)
-	if debrief != null: debrief.hide()
-
-func _physics_process(delta: float) -> void:
-	if mission == null or mission.state != ArenaMission.ACTIVE or not player.body.is_alive():
-		return
-	if mission.advance(delta, player.global_position, player.weapon.state.inventory) != ArenaMission.ACTIVE:
-		_end_mission()
-
-func _player_casualty(_player, outcome: StringName) -> void:
-	if outcome == &"killed" and mission != null and mission.state == ArenaMission.ACTIVE:
-		mission.player_killed()
-		_end_mission()
-
 func _enemy_defeated(_enemy) -> void:
-	if mission != null and mission.state == ArenaMission.ACTIVE:
-		mission.enemies_killed += 1
+	if mission != null and mission.run != null and not mission.run.is_over():
+		mission.run.count("Enemies killed")
 
-## The outing is over: enemies stand down and the debrief shows.
-func _end_mission() -> void:
+## Nobody is left in the area: enemies stand down.
+func _mission_over(_run) -> void:
 	for enemy in enemies:
 		if is_instance_valid(enemy):
 			enemy.active = false
-	var downed := enemies.filter(func(enemy): return is_instance_valid(enemy) and enemy.state == &"downed").size()
-	debrief.present(mission.debrief(player.weapon.state.inventory, player.body, downed))
-	if DisplayServer.get_name() != "headless":
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 ## Go again: a fresh copy of the arena when it is the running scene; otherwise (tests) restage.
 func restart() -> void:
@@ -137,31 +117,21 @@ func restart() -> void:
 	player.restore_for_drill()
 	player.global_position = PLAYER_SPAWN
 	reset_enemies()
-	start_mission()
+	mission.start([player], player)
 
-## Posts and a sign marking the exit area; no collision, so it never blocks the way out.
-func _exit_marker() -> void:
-	var marker := Node3D.new()
-	marker.name = "Exit"
-	marker.position = EXIT_AT
-	add_child(marker)
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.32, 0.27, 0.18)
-	for corner in [Vector3(-2, 0, -3), Vector3(2, 0, -3), Vector3(-2, 0, 3), Vector3(2, 0, 3)]:
-		var post := MeshInstance3D.new()
-		var box := BoxMesh.new()
-		box.size = Vector3(0.12, 1.4, 0.12)
-		box.material = material
-		post.mesh = box
-		post.position = corner + Vector3.UP * 0.7
-		marker.add_child(post)
-	var sign := Label3D.new()
-	sign.text = "EXIT · forest path\nstand here to leave"
-	sign.font_size = 48
-	sign.pixel_size = 0.006
-	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	sign.position.y = 2.0
-	marker.add_child(sign)
+## Map markers any mission can use: objective spots and the exit.
+func _mission_markers() -> void:
+	for spot in DISPATCH_SPOTS:
+		var marker := ObjectiveSpot.new()
+		marker.tag = &"dispatch"
+		marker.position = spot
+		add_child(marker)
+	var exit := MissionExit.new()
+	exit.name = "WestExit"
+	exit.id = &"west_path"
+	exit.label = "forest path"
+	exit.position = EXIT_AT
+	add_child(exit)
 
 func _enemy_spotted(source, at: Vector3) -> void:
 	for enemy in enemies:
@@ -244,21 +214,12 @@ func _hud() -> void:
 	_prompt.add_theme_color_override("font_outline_color", Color.BLACK)
 	_prompt.add_theme_constant_override("outline_size", 4)
 	layer.add_child(_prompt)
-	_objective = Label.new()
-	_objective.position = Vector2(24, 20)
-	_objective.add_theme_color_override("font_outline_color", Color.BLACK)
-	_objective.add_theme_constant_override("outline_size", 4)
-	layer.add_child(_objective)
-	debrief = MissionDebrief.new()
-	debrief.name = "Debrief"
-	debrief.restart_requested.connect(restart)
-	layer.add_child(debrief)
 
 func _process(_delta: float) -> void:
 	if player == null or _prompt == null:
 		return
 	var mouse_free := Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and DisplayServer.get_name() != "headless"
 	_prompt.text = "Click to look around" if mouse_free else player.get_interaction_prompt()
-	if mission != null: _objective.text = mission.objective_text(player.weapon.state.inventory)
-	if debrief.visible: _prompt.text = ""
-	_crosshair.visible = not player.is_aiming and player.weapon.aim_fraction < 0.05 and not debrief.visible
+	var summary_open: bool = mission != null and mission.summary_screen != null and mission.summary_screen.visible
+	if summary_open: _prompt.text = ""
+	_crosshair.visible = not player.is_aiming and player.weapon.aim_fraction < 0.05 and not summary_open

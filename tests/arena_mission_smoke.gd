@@ -1,9 +1,10 @@
 extends SceneTree
-## The arena outing: the dispatch lies at one of the spots, the objective reads "find" then
-## "reach the exit", standing 5 s in the exit leaves (stepping out resets the count), leaving
-## with the dispatch completes, leaving without it is an early return, death leaves the dispatch
-## on the body, and each end stops the enemies and shows a debrief.
-const ArenaMission = preload("res://scripts/combat/arena_mission.gd")
+## The arena hosting a mission through the generic controller: the definition's objective item
+## lies at one of the map's tagged spots, the HUD reads "find" then "take it to an exit",
+## standing in the exit leaves (stepping out resets), leaving with the item completes, leaving
+## without it returns early, death leaves it on the body, and each end shows the shared summary.
+const MissionRun = preload("res://scripts/missions/mission_run.gd")
+const SupplyCatalog = preload("res://scripts/health/supply_catalog.gd")
 var failures: Array[String] = []
 func _initialize() -> void:
 	call_deferred("_run")
@@ -17,6 +18,8 @@ func _check(ok: bool, detail: String) -> void:
 func _calm(arena) -> void:
 	for enemy in arena.enemies:
 		enemy.active = false
+func _item(arena) -> Node3D:
+	return arena.get_tree().get_nodes_in_group(arena.MissionController.ITEM_GROUP).filter(func(node): return not node.is_queued_for_deletion())[0]
 
 func _run() -> void:
 	var arena = load("res://scenes/combat/combat_arena.tscn").instantiate()
@@ -26,57 +29,58 @@ func _run() -> void:
 	var player = arena.player
 	var inventory = player.weapon.state.inventory
 	var mission = arena.mission
-	_check(mission.state == ArenaMission.ACTIVE and is_instance_valid(arena.document), "An outing starts with the dispatch placed")
-	_check(arena.DOCUMENT_SPOTS.any(func(spot): return spot.distance_to(arena.document.position) < 0.01), "The dispatch lies at one of the hiding spots")
-	_check(arena._objective.text.contains("find the sealed dispatch"), "The objective says to find the dispatch")
+	var run = mission.run
+	var id: StringName = mission.participant_id(player)
+	var dispatch := _item(arena)
+	_check(run.participants.size() == 1 and run.state_of(id) == MissionRun.ACTIVE, "The mission starts with the player as its participant")
+	_check(arena.DISPATCH_SPOTS.any(func(spot): return spot.distance_to(dispatch.global_position) < 0.01), "The objective item lies at one of the map's tagged spots")
+	await _frames(2)
+	_check(mission.hud.text.contains("Find the sealed dispatch"), "The HUD says to find the dispatch")
 	# Leaving early without the dispatch.
 	player.global_position = arena.EXIT_AT + Vector3(0, 0.02, 0)
 	await _frames(60)
-	_check(arena._objective.text.contains("Leaving in") and arena._objective.text.contains("without"), "In the exit a countdown shows, warning there is no dispatch")
+	_check(mission.hud.text.contains("Leaving in") and mission.hud.text.contains("objectives incomplete"), "In the exit a countdown shows, warning the objective is incomplete")
 	await _frames(60 * 5)
-	_check(mission.state == ArenaMission.LEFT and arena.debrief.visible and arena.debrief.headline.text.contains("without"), "Five seconds in the exit leaves the area: early return debrief")
-	_check(arena.enemies.all(func(enemy): return not enemy.active), "Enemies stand down when the outing ends")
-	_check(not arena.debrief.summary.text.is_empty() and arena.debrief.summary.text.contains("Rounds carried"), "The debrief summarises the outing")
-	# A fresh outing: pick the dispatch up and carry it out.
+	_check(run.state_of(id) == MissionRun.EXTRACTED and run.outcome() == MissionRun.RETURNED, "Five seconds in the exit leaves the area: an early return")
+	_check(mission.summary_screen.visible and mission.summary_screen.headline.text == "Returned to camp" and mission.summary_screen.text().contains("Not recovered"), "The shared summary shows the early return")
+	_check(arena.enemies.all(func(enemy): return not enemy.active), "Enemies stand down when nobody is left in the area")
+	# A fresh outing: carry the dispatch out.
 	arena.restart()
 	await _frames(5)
 	_calm(arena)
-	mission = arena.mission
-	_check(mission.state == ArenaMission.ACTIVE and not arena.debrief.visible, "Going again starts a fresh outing")
-	player.global_position = arena.document.global_position + Vector3(0, 0.02, 0.8)
-	arena.document.interact(player)
+	run = mission.run
+	_check(run.state_of(id) == MissionRun.ACTIVE and not mission.summary_screen.visible, "Going again starts a fresh outing")
+	dispatch = _item(arena)
+	player.global_position = dispatch.global_position + Vector3(0, 0.02, 0.8)
+	dispatch.interact(player)
 	await _frames(3)
-	_check(ArenaMission.carries_document(inventory), "Picking up the dispatch puts it in the player's inventory")
-	var dispatch = inventory.items.values().filter(func(item): return item.kind == &"supply" and item.supply_id == ArenaMission.DOCUMENT)[0]
-	_check(player.body.treatment_problem(arena.ArenaMission.SupplyCatalog.get_def(dispatch.supply_id), &"", 1) != "", "The dispatch cannot be used like a supply")
-	_check(arena._objective.text.contains("reach the exit"), "The objective now says to reach the exit")
-	# Stepping out resets the countdown.
+	_check(MissionRun.carries(inventory, &"sealed_dispatch") and mission.hud.text.contains("Take the sealed dispatch to an exit"), "Picked up, the HUD says to take it to an exit")
+	_check(player.body.treatment_problem(SupplyCatalog.get_def(&"sealed_dispatch"), &"", 1) != "", "The dispatch cannot be used like a supply")
 	player.global_position = arena.EXIT_AT + Vector3(0, 0.02, 0)
 	await _frames(60 * 3)
 	player.global_position = arena.EXIT_AT + Vector3(6, 0.02, 0)
 	await _frames(5)
-	_check(mission.state == ArenaMission.ACTIVE and mission.exit_left < 0.0, "Stepping out of the exit cancels leaving")
+	_check(run.state_of(id) == MissionRun.ACTIVE and run.participants[id].exit_left < 0.0, "Stepping out of the exit cancels leaving")
 	player.global_position = arena.EXIT_AT + Vector3(0, 0.02, 0)
-	await _frames(60 * 3)
-	_check(mission.state == ArenaMission.ACTIVE, "Coming back starts the count again")
-	await _frames(60 * 3)
-	_check(mission.state == ArenaMission.COMPLETE and arena.debrief.headline.text.contains("recovered"), "Leaving with the dispatch completes the mission")
-	# Death while carrying it: the dispatch stays on the body.
+	await _frames(60 * 6)
+	_check(run.outcome() == MissionRun.SUCCESS and mission.summary_screen.headline.text == "Mission complete" and mission.summary_screen.text().contains("Carried out") and mission.summary_screen.text().contains("forest path"), "Leaving with the dispatch completes the mission")
+	# Death while carrying it.
 	arena.restart()
 	await _frames(5)
 	_calm(arena)
-	mission = arena.mission
-	player.global_position = arena.document.global_position + Vector3(0, 0.02, 0.8)
-	arena.document.interact(player)
+	run = mission.run
+	dispatch = _item(arena)
+	player.global_position = dispatch.global_position + Vector3(0, 0.02, 0.8)
+	dispatch.interact(player)
 	await _frames(3)
 	player.receive_hit(60, player.global_position + Vector3.UP * 1.7, Vector3.FORWARD, null, &"head")
 	await _frames(3)
-	_check(mission.state == ArenaMission.KILLED and arena.debrief.headline.text.contains("Killed"), "Death ends the outing with a debrief")
-	_check(ArenaMission.carries_document(inventory) and arena.debrief.summary.text.contains("including the dispatch"), "The dispatch stays with the carried gear on the body")
+	_check(run.state_of(id) == MissionRun.KILLED and run.outcome() == MissionRun.FAILED and mission.summary_screen.headline.text == "Killed in action", "Death ends the outing with the shared summary")
+	_check(MissionRun.carries(inventory, &"sealed_dispatch") and mission.summary_screen.text().contains("On a fallen body") and mission.summary_screen.text().contains("Left on your body"), "The dispatch stays with the carried gear on the body")
 	for failure in failures:
 		push_error(failure)
 	if failures.is_empty():
-		print("PASS: dispatch placed at a spot, find/exit objective, leave early, carry out to complete, exit count resets, death leaves it on the body, debriefs")
+		print("PASS: controller places the item at a tagged spot, HUD find/take, early return, complete, exit reset, death on body, shared summary")
 	arena.queue_free()
 	await process_frame
 	quit(0 if failures.is_empty() else 1)

@@ -17,7 +17,7 @@ Character art development is frozen. Preserve MPFB sources, rig, clips and separ
 
 ## Purpose
 
-Build an immersive, punishing first-person survival game about a small resistance group in postwar Latvia. The player helps local people and supports a concealed forest camp. Tarkov informs tension, vulnerability, and material consequences. The game is not an extraction shooter.
+Build an immersive, punishing first-person survival game about a small resistance group in postwar Latvia. The player helps local people and supports a concealed forest camp. Tarkov informs tension, vulnerability, and material consequences. It is a cooperative PvE extraction shooter: players deploy from the camp, recover what they can, and must get out alive to keep it. The camp, local people, and lasting world state give each outing its purpose.
 
 Preserve these user requirements:
 - Latvian identity and a Forest Brothers-inspired setting.
@@ -53,7 +53,7 @@ Four-player maximum co-op and individual mission death are confirmed. Do not tre
 - Keep open questions explicit. Make reversible local choices when needed and document consequential assumptions.
 - Explain tradeoffs before making changes that commit the project to a new engine, networking model, persistence model, or product direction.
 - Keep tension fair and understandable. Do not equate punishment with arbitrary losses or excessive chores.
-- Do not turn the game into competitive PvP, an extraction economy, or a live-service product without user direction.
+- Do not turn the game into competitive PvP, a player-trading or market-driven loot economy, or a live-service product without user direction.
 
 ## Technical habits
 
@@ -90,3 +90,4 @@ Four-player maximum co-op and individual mission death are confirmed. Do not tre
 - Keep visibility private; do not deploy, publish, change access, add collaborators, or buy services unless instructed.
 - Avoid destructive Git operations. Do not overwrite others' work or rewrite shared history without instruction.
 - Keep concept and roadmap documents current when approved behavior changes.
+- Build missions on the shared mission framework (definition resource, map markers, `MissionController`, one summary screen); do not write per-mission HUDs or summary screens. See `docs/MISSION_STRUCTURE.md`.

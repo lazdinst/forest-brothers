@@ -1,0 +1,21 @@
+[gd_resource type="Resource" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_definition.gd" id="1_definition"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_objective"]
+
+[sub_resource type="Resource" id="dispatch"]
+script = ExtResource("2_objective")
+kind = &"carry_out"
+item_id = &"sealed_dispatch"
+label = "the sealed dispatch"
+spot_tag = &"dispatch"
+required = true
+
+[resource]
+script = ExtResource("1_definition")
+id = &"arena_dispatch"
+title = "Combat arena: recover the dispatch"
+briefing = "A sealed dispatch lies somewhere in the arena. Find it and leave by the forest path on the west edge."
+objectives = Array[Resource]([SubResource("dispatch")])
+exit_seconds = 5.0
+time_limit_seconds = 3600.0
