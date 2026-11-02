@@ -7,6 +7,9 @@ const PLAYER_WORKER_ID: StringName = &"training_player"
 const ForestLayout = preload("res://scripts/environment/forest_layout.gd")
 const Station = preload("res://scripts/camp/camp_station.gd")
 const Enemy = preload("res://scripts/combat/enemy_actor.gd")
+const MissionLaunch = preload("res://scripts/missions/mission_launch.gd")
+const MISSION_MAP := "res://scenes/missions/mission_board.tscn"
+const COMBAT_ARENA := "res://scenes/combat/combat_arena.tscn"
 const Civilian = preload("res://scenes/characters/starting_civilian.tscn")
 const ResidentScript = preload("res://scripts/camp/camp_resident.gd")
 # Rig fixtures only; the owner rejected this blockout as character art.
@@ -450,6 +453,10 @@ func refresh_panel() -> void:
 			_button("Begin rescue exercise / reset enemies",_begin_exercise)
 			_button("Safe return (secures pending civilians)",runtime.resolve_exercise.bind(true))
 			_button("Group-death result (lose pending civilians)",runtime.resolve_exercise.bind(false))
+			_details.text += "
+MISSION-PLANNING TABLE: choose a region and missions; the outing returns here. Camp work in this session does not carry over yet."
+			_button("Open the mission map",_leave_camp.bind(MISSION_MAP))
+			_button("Combat arena (training outing)",_leave_camp.bind(COMBAT_ARENA))
 		&"combat":
 			_details.text += "\nBody %s. Enemies fire only while the bout is armed.\nEnemy weapons are flash proxies. Sprite default; MPFB comparison has frozen pose/clothing issues." % _body_text()
 			_button("Arm enemies / start exposure test",arm_bout)
@@ -461,6 +468,11 @@ func refresh_panel() -> void:
 		if runtime.jobs[_panel_station].worker != &"":
 			_button("Foreman assistance (once per civilian job)",runtime.assist.bind(_panel_station))
 		_button("Cancel job / refund reserved supplies",runtime.cancel_job.bind(_panel_station))
+
+## Leaves for the mission map or the combat arena; MissionLaunch remembers the way back.
+func _leave_camp(path: String) -> void:
+	close_panel()
+	MissionLaunch.leave_camp(get_tree(), path)
 
 func _recipe_button(recipe: StringName, station: StringName) -> void:
 	var data: Dictionary = runtime.RECIPES[recipe]

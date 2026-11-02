@@ -18,11 +18,16 @@ func _flat(a: Vector3, b: Vector3) -> float:
 func _until(enemy, player, phase: StringName, seconds: float) -> bool:
 	for i in range(int(60 * seconds)):
 		await _frames(1)
-		if not player.body.is_alive():
-			player.restore_for_drill()
+		_revive(enemy, player)
 		if enemy.cover_phase == phase:
 			return true
 	return false
+## A shot can kill the player; that ends the arena's outing, which stands its enemies down.
+## Restore the player and keep the enemy going so the cover cycle can be watched.
+func _revive(enemy, player) -> void:
+	if not player.body.is_alive():
+		player.restore_for_drill()
+		enemy.active = true
 func _sees(space: PhysicsDirectSpaceState3D, from: Vector3, to: Vector3, exclude: Array[RID]) -> bool:
 	return space.intersect_ray(PhysicsRayQueryParameters3D.create(from, to, 1, exclude)).is_empty()
 
@@ -62,8 +67,7 @@ func _run() -> void:
 	while shots.n == 0 and waited < 60 * 3:
 		await _frames(1)
 		waited += 1
-		if not player.body.is_alive():
-			player.restore_for_drill()
+		_revive(enemy, player)
 	_check(shots.n > 0, "It fires over the crate")
 	_check(await _until(enemy, player, &"hold", 6.0), "It drops back behind the crate")
 	await _frames(2)

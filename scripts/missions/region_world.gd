@@ -71,7 +71,7 @@ func _ready() -> void:
 	mission = MissionController.new()
 	mission.name = "Mission"
 	mission.definition = definition
-	mission.continue_text = "Return to the mission map"
+	mission.continue_text = "Return to camp" if MissionLaunch.camp_scene != "" else "Return to the mission map"
 	mission.mission_over.connect(_mission_over)
 	mission.continue_requested.connect(_continue)
 	add_child(mission)
@@ -115,7 +115,7 @@ func _mission_over(run) -> void:
 
 func _continue() -> void:
 	if get_tree().current_scene == self:
-		MissionLaunch.return_to_board(get_tree())
+		MissionLaunch.after_outing(get_tree())
 
 # --- Map ------------------------------------------------------------------------------------
 

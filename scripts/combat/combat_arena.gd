@@ -9,6 +9,7 @@ const InventoryHost = preload("res://ui/inventory/inventory_host.gd")
 const ArenaSupplies = preload("res://scripts/combat/arena_supplies.gd")
 const BloodTrail = preload("res://scripts/combat/blood_trail.gd")
 const MissionController = preload("res://scripts/missions/mission_controller.gd")
+const MissionLaunch = preload("res://scripts/missions/mission_launch.gd")
 const ObjectiveSpot = preload("res://scripts/missions/objective_spot.gd")
 const MissionExit = preload("res://scripts/missions/mission_exit.gd")
 ## The mission this arena plays; any definition whose spot tags this map provides works.
@@ -71,7 +72,12 @@ func _ready() -> void:
 	mission.name = "Mission"
 	mission.definition = MISSION
 	mission.mission_over.connect(_mission_over)
-	mission.continue_requested.connect(restart)
+	# Opened from the camp: the summary leads back there; opened directly: go again.
+	if MissionLaunch.camp_scene != "":
+		mission.continue_text = "Return to camp"
+		mission.continue_requested.connect(_return_to_camp)
+	else:
+		mission.continue_requested.connect(restart)
 	add_child(mission)
 	mission.start([player], player)
 
@@ -108,6 +114,11 @@ func _mission_over(_run) -> void:
 	for enemy in enemies:
 		if is_instance_valid(enemy):
 			enemy.active = false
+
+## Opened from the camp: the summary leads back there.
+func _return_to_camp() -> void:
+	if get_tree().current_scene == self:
+		MissionLaunch.return_to_camp(get_tree())
 
 ## Go again: a fresh copy of the arena when it is the running scene; otherwise (tests) restage.
 func restart() -> void:

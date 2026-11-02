@@ -88,5 +88,9 @@ tick any open missions (or none: scavenging), deploy. Second region: Deep forest
 (`scenes/missions/forest_world.tscn`, forester's hut, bunker, bog). World scenes share
 `scripts/missions/region_world.gd`. Missions complete separately and drop off the map.
 
-Open for the owner: link the mission map from the main menu (menu agent) or camp planning table;
-playtest; campaign save for completed missions.
+Then (owner): connect from the camp, no menu edits. The camp HQ station opens the mission map and
+the combat arena; map, outing summaries and arena return to camp (`camp_mission_flow_smoke`).
+`enemy_crouch_smoke` fixed: a shot that killed the player ended the arena outing and froze the enemy.
+
+Open for the owner: playtest; campaign save (completed missions and camp state across outings;
+the camp currently reloads on return); main menu New Game stays disabled (menu agent).

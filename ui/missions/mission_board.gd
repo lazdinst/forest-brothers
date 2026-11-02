@@ -23,6 +23,8 @@ var description_label: Label
 var details_label: Label
 var missions_list: VBoxContainer
 var deploy_button: Button
+## Shown when the map was opened from the camp.
+var back_button: Button
 
 const RESULT_TEXT := {MissionRun.SUCCESS:"Completed",MissionRun.RETURNED:"Returned early",MissionRun.FAILED:"Failed"}
 
@@ -82,6 +84,11 @@ func _ready() -> void:
 	deploy_button = Button.new()
 	deploy_button.pressed.connect(deploy)
 	column.add_child(deploy_button)
+	back_button = Button.new()
+	back_button.text = "Back to camp"
+	back_button.visible = MissionLaunch.camp_scene != ""
+	back_button.pressed.connect(back_to_camp)
+	column.add_child(back_button)
 	for region in catalog.regions:
 		var pin := Button.new()
 		pin.toggle_mode = true
@@ -156,6 +163,10 @@ func deploy() -> void:
 	else:
 		MissionLaunch.pending = selected.compose(picked)
 		deploy_requested.emit(selected, picked)
+
+func back_to_camp() -> void:
+	if get_tree().current_scene == self:
+		MissionLaunch.return_to_camp(get_tree())
 
 func _refresh_pins() -> void:
 	for region in catalog.regions:

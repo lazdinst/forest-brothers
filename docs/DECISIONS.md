@@ -426,3 +426,7 @@ Status: owner direction ("We should only be using these assets. Not recreating n
 ## Regions on the mission map — 2026-11-02
 
 Status: owner direction ("selecting different regions and doing missions. Kind of like how tarkov works"), with owner choices: several missions per outing, and a second region. The mission map offers regions; each region owns its world scene, time limit, exits and standing enemies, and lists its missions. Players tick any open missions before deploying, or none for a scavenging outing; each mission is completed separately and is then no longer offered. Choices made without the owner, all reversible: open missions start ticked; completed missions drop out for the rest of the game run (no campaign save yet); mission-added enemies stack on the region's; region time limits (60 and 40 minutes) and the Deep forest region's layout and missions are placeholders.
+
+## Missions reached from the camp — 2026-11-02
+
+Status: owner direction ("not really connected into a single grouping from the camp or menu"), choosing camp-only wiring with no main-menu or startup changes, and the combat arena reachable alongside. The camp HQ station opens the mission map and the combat arena; the map, every outing summary and the arena lead back to the camp (through startup's existing `training` route when the game was started from the menu). Known limit: the camp reloads on return, so session-only camp work is lost until a campaign save exists. The main menu's New Game stays disabled (menu agent's area).
