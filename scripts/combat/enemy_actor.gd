@@ -9,6 +9,10 @@ const BodyHealth = preload("res://scripts/combat/body_health.gd")
 const HitSounds = preload("res://scripts/combat/hit_sounds.gd")
 const GunshotSound = preload("res://scripts/combat/gunshot_sound.gd")
 const FIGURE_HEIGHT := 1.75
+# Rules-side firing geometry in actor space (+z is the true facing). The rifle proxy matches it.
+const SHOULDER := Vector3(0.18, 1.35, 0.0)
+const BARREL_LENGTH := 0.78
+const LOWERED_PITCH := 0.6
 @export var use_polygon: bool = false
 @export var character_scene: PackedScene
 var polygon_model
@@ -37,6 +41,8 @@ var aim_time: float = 0.0
 var rng := RandomNumberGenerator.new()
 var visual: Node3D
 var sprite: Sprite3D
+## Placeholder weapon proxy, not character art: shows where the enemy faces and aims.
+var rifle: Node3D
 var hit_zones
 var last_hit_zone: StringName = &""
 var _home := Vector3.ZERO
@@ -61,6 +67,7 @@ func _ready() -> void:
 	hit_zones.name = "HitZones"
 	add_child(hit_zones)
 	hit_zones.build(self, FIGURE_HEIGHT)
+	_build_rifle()
 	visual = Node3D.new()
 	visual.name = "Visual"
 	visual.position.y = 0.9
@@ -90,7 +97,13 @@ func _physics_process(delta: float) -> void:
 	shot_cooldown = maxf(0, shot_cooldown - delta)
 	_alert_cooldown = maxf(0, _alert_cooldown - delta)
 	_hit_tint = maxf(0, _hit_tint - delta)
-	sprite.modulate = Color(1,0.5,0.5) if _hit_tint > 0 else Color.WHITE
+	var shade := Color.WHITE
+	var viewer_camera := get_viewport().get_camera_3d()
+	if viewer_camera != null:
+		# The painted sprite always faces the camera, so dim it when the body is turned away.
+		var lit := lerpf(0.5, 1.0, clampf((facing_toward(viewer_camera.global_position) + 0.3) / 0.6, 0.0, 1.0))
+		shade = Color(lit, lit, lit)
+	sprite.modulate = Color(1,0.5,0.5) if _hit_tint > 0 else shade
 	if polygon_model != null:
 		polygon_model.set_hit_flash(_hit_tint > 0)
 	if state == &"downed":
@@ -102,6 +115,7 @@ func _physics_process(delta: float) -> void:
 		facing.y = 0
 		if facing.length_squared() > 0.001:
 			visual.global_basis = Basis.looking_at(-facing)
+	_update_rifle(delta)
 	if not active:
 		return
 	var seen: Node3D = null
@@ -184,7 +198,7 @@ func receive_alert(at: Vector3) -> void:
 
 func _shoot(actor: Node3D) -> void:
 	shot_cooldown = 1.1
-	var start := global_position + Vector3(0.2,1.25,0)
+	var start := global_transform * SHOULDER
 	var end: Vector3 = actor.center_of_mass() if actor.has_method("center_of_mass") else actor.global_position + Vector3.UP * 1.0
 	var space := get_world_3d().direct_space_state
 	var direction := _spread_direction((end - start).normalized(), shot_spread_degrees(actor))
@@ -216,7 +230,7 @@ func _shoot(actor: Node3D) -> void:
 	material.albedo_color = Color(1,0.7,0.2)
 	flash.material_override = material
 	add_child(flash)
-	flash.position = Vector3(0.2,1.25,0)
+	flash.global_position = muzzle_world_position()
 	get_tree().create_timer(0.06).timeout.connect(flash.queue_free)
 
 func receive_hit(damage: float, at: Vector3, _normal: Vector3, source = null, zone: StringName = &"") -> void:
@@ -250,6 +264,7 @@ func _impact_sound(at: Vector3, zone: StringName) -> void:
 
 func _go_down(source) -> void:
 	state = &"downed"
+	rifle.hide()
 	if source is Node3D:
 		last_known = source.global_position
 	recognition = 0.0
@@ -298,6 +313,7 @@ func _die() -> void:
 	set_deferred("collision_layer",0)
 	$Body.set_deferred("disabled",true)
 	hit_zones.disable()
+	rifle.hide()
 	# Resolve gameplay before choosing a cosmetic corpse animation.
 	defeated.emit(self)
 	if not was_downed:
@@ -383,3 +399,41 @@ func _gunshot(at: Vector3) -> void:
 	report.global_position = at
 	report.finished.connect(report.queue_free)
 	report.play()
+
+## 1 when this enemy's body faces the point, -1 when turned fully away.
+func facing_toward(point: Vector3) -> float:
+	var toward := point - global_position
+	toward.y = 0.0
+	if toward.length_squared() < 0.0001:
+		return 1.0
+	var forward := global_basis.z
+	forward.y = 0.0
+	return forward.normalized().dot(toward.normalized())
+
+func muzzle_world_position() -> Vector3:
+	return rifle.global_transform * Vector3(0, 0, BARREL_LENGTH)
+
+func _build_rifle() -> void:
+	rifle = Node3D.new()
+	rifle.name = "RifleProxy"
+	rifle.position = SHOULDER
+	rifle.rotation.x = LOWERED_PITCH
+	add_child(rifle)
+	var mesh := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3(0.05, 0.07, 0.98)
+	mesh.mesh = box
+	mesh.position.z = BARREL_LENGTH - box.size.z / 2.0
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.16, 0.12, 0.09)
+	mesh.material_override = material
+	rifle.add_child(mesh)
+
+## Rifle lowered while calm; raised toward the target while engaging, which is the tell before a shot.
+func _update_rifle(delta: float) -> void:
+	var pitch := LOWERED_PITCH
+	if state == &"engage":
+		var muzzle_height := global_position.y + SHOULDER.y
+		var flat := Vector2(last_known.x - global_position.x, last_known.z - global_position.z).length()
+		pitch = -atan2(last_known.y + 1.0 - muzzle_height, maxf(flat, 0.5))
+	rifle.rotation.x = move_toward(rifle.rotation.x, pitch, delta * 3.0)
