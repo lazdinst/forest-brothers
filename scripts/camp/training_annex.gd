@@ -549,7 +549,7 @@ func _process(delta: float) -> void:
 	if _summary.visible:
 		var states: Array[String] = []
 		for enemy in enemies:
-			states.append("%s: %.0fHP / %s" % [enemy.name,enemy.health,enemy.state])
+			states.append("%s: torso %.0f / %s" % [enemy.name,enemy.body.health[&"torso"],enemy.state])
 		_summary.text = runtime.message+"\nVitality %.0f | Jobs %d | Residents %d | Pending %d\n" % [vitality,runtime.jobs.size(),runtime.residents.size(),runtime.pending_recruits.size()] + " / ".join(states)
 
 func _sync_world() -> void:

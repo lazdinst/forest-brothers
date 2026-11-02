@@ -5,11 +5,16 @@ signal spotted(actor, at: Vector3)
 signal fired(actor, target, hit: bool)
 const ART = preload("res://assets/characters/training_guard/idle_front_v1.png")
 const HitZones = preload("res://scripts/combat/hit_zones.gd")
+const BodyHealth = preload("res://scripts/combat/body_health.gd")
 const FIGURE_HEIGHT := 1.75
 @export var use_polygon: bool = false
 @export var character_scene: PackedScene
 var polygon_model
-var health: float = 100.0
+var body = BodyHealth.new()
+# Placeholder pending owner tuning (open question 5).
+var bleed_out_seconds: float = 30.0
+var bleed_left: float = 0.0
+const CRAWL_SPEED := 0.3
 var state: StringName = &"idle"
 var active: bool = false
 var recognition: float = 0.0
@@ -30,6 +35,7 @@ var _hit_tint: float = 0.0
 
 func _ready() -> void:
 	_home = global_position
+	bleed_left = bleed_out_seconds
 	collision_layer = 1
 	collision_mask = 1 | 2
 	var capsule := CapsuleShape3D.new()
@@ -76,6 +82,9 @@ func _physics_process(delta: float) -> void:
 	sprite.modulate = Color(1,0.5,0.5) if _hit_tint > 0 else Color.WHITE
 	if polygon_model != null:
 		polygon_model.set_hit_flash(_hit_tint > 0)
+	if state == &"downed":
+		_crawl(delta)
+		return
 	var viewer := get_viewport().get_camera_3d()
 	if viewer != null and polygon_model == null:
 		var facing := viewer.global_position - visual.global_position
@@ -149,14 +158,14 @@ func can_see(actor: Node3D) -> bool:
 	return not hit.is_empty() and hit.collider == actor
 
 func hear_noise(at: Vector3, loudness: float = 1.0) -> void:
-	if not active or state == &"dead" or global_position.distance_to(at) > 22*loudness or state == &"engage":
+	if not active or state == &"dead" or state == &"downed" or global_position.distance_to(at) > 22*loudness or state == &"engage":
 		return
 	last_known = Vector3(snappedf(at.x,2), global_position.y, snappedf(at.z,2))
 	search_left = 6.0
 	state = &"search"
 
 func receive_alert(at: Vector3) -> void:
-	if active and state != &"dead":
+	if active and state != &"dead" and state != &"downed":
 		last_known = at
 		search_left = 6.0
 
@@ -180,21 +189,66 @@ func _shoot(actor: Node3D) -> void:
 	flash.position = Vector3(0.2,1.25,0)
 	get_tree().create_timer(0.06).timeout.connect(flash.queue_free)
 
-func receive_hit(damage: float, at: Vector3, _normal: Vector3, _source = null, zone: StringName = &"") -> void:
+func receive_hit(damage: float, at: Vector3, _normal: Vector3, source = null, zone: StringName = &"") -> void:
 	if state == &"dead" or damage <= 0:
 		return
-	# Recorded only; zone rules replace scalar health in the next chunk.
-	last_hit_zone = zone
-	health = maxf(0, health - damage)
+	# Callers without zone information (debug tools, older tests) strike centre mass.
+	last_hit_zone = zone if zone != &"" else BodyHealth.TORSO
+	var outcome: StringName = body.apply_damage(last_hit_zone, damage)
 	_hit_tint = 0.15
 	if blood_enabled:
-		_blood(at, health <= 0)
-	if health <= 0:
+		_blood(at, outcome == BodyHealth.KILLED)
+	if outcome == BodyHealth.KILLED:
 		_die()
+	elif outcome == BodyHealth.DOWNED:
+		_go_down(source)
 	elif active:
 		hear_noise(at)
 
+func _go_down(source) -> void:
+	state = &"downed"
+	if source is Node3D:
+		last_known = source.global_position
+	recognition = 0.0
+	velocity = Vector3.ZERO
+	bleed_left = bleed_out_seconds
+	# A movement capsule standing over a lying body would catch shots aimed at it.
+	var flat := BoxShape3D.new()
+	flat.size = Vector3(0.5, 0.245, FIGURE_HEIGHT)
+	$Body.shape = flat
+	$Body.position.y = flat.size.y / 2
+	hit_zones.set_layout(&"downed")
+	# Call out through the existing local alert so nearby enemies investigate.
+	spotted.emit(self, last_known if active else global_position)
+	if polygon_model != null:
+		polygon_model.set_hit_flash(false)
+		polygon_model.play(&"die")
+		return
+	visual.rotation = Vector3(-PI/2, 0, 0)
+	visual.position.y = 0.035
+
+func _crawl(delta: float) -> void:
+	bleed_left -= delta
+	if bleed_left <= 0.0:
+		body.bleed_out()
+		_die()
+		return
+	velocity.x = 0
+	velocity.z = 0
+	# Placeholder until cover search exists: drag away from the last known threat.
+	var away := global_position - last_known
+	away.y = 0
+	if active and away.length_squared() > 0.01:
+		away = away.normalized()
+		rotation.y = atan2(-away.x, -away.z)
+		velocity.x = away.x * CRAWL_SPEED
+		velocity.z = away.z * CRAWL_SPEED
+	if not is_on_floor():
+		velocity.y -= delta * 20
+	move_and_slide()
+
 func _die() -> void:
+	var was_downed := state == &"downed"
 	state = &"dead"
 	active = false
 	velocity = Vector3.ZERO
@@ -203,7 +257,8 @@ func _die() -> void:
 	hit_zones.disable()
 	# Resolve gameplay before choosing a cosmetic corpse animation.
 	defeated.emit(self)
-	_play_death_visual()
+	if not was_downed:
+		_play_death_visual()
 
 func _play_death_visual() -> void:
 	if polygon_model != null:

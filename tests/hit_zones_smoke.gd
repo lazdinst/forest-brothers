@@ -46,8 +46,8 @@ func _run() -> void:
 	_check(HitZones.zone_along(space, enemy, Vector3(0, 1.63, 0.3), Vector3.FORWARD)==&"","Downed body has no standing head zone")
 	enemy.hit_zones.set_layout(&"standing")
 	enemy.receive_hit(10, enemy.global_position + Vector3.UP, Vector3.FORWARD, null, &"legs")
-	_check(enemy.last_hit_zone==&"legs" and enemy.health==90,"Enemy records the reported zone")
-	enemy.receive_hit(500, enemy.global_position + Vector3.UP, Vector3.FORWARD)
+	_check(enemy.last_hit_zone==&"legs" and enemy.body.health[&"legs"]==55,"Enemy records the reported zone")
+	enemy.receive_hit(500, enemy.global_position + Vector3.UP, Vector3.FORWARD, null, &"head")
 	await _frames(2)
 	_check(HitZones.zone_along(space, enemy, Vector3(0, 1.2, 0.3), Vector3.FORWARD)==&"","Corpse zones stop catching shots")
 	for failure in failures:

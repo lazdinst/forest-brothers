@@ -66,18 +66,18 @@ func _run() -> void:
 		await frames(60)
 	player.weapon.rng.seed = 12345
 	for i in range(3):
-		player.camera.look_at(enemy.global_position+Vector3.UP)
+		player.camera.look_at(enemy.global_position+Vector3.UP*(0.12 if enemy.state==&"downed" else 1.0))
 		await frames(3)
 		player.weapon.command(&"fire")
 		await frames(18)
-	check(enemy.health==0 and enemy.state==&"dead","Three actual rifle rays defeat the MPFB enemy")
+	check(enemy.body.is_dead() and enemy.state==&"dead","Two torso rays down the MPFB enemy and a third finishes it")
 	await frames(75)
 	check(enemy.get_node("Body").disabled and enemy.collision_layer==0,"MPFB corpse no longer blocks or fights")
 	check(enemy.polygon_model.current_state==&"die","Lethal hit selects skeletal death")
 	check(get_nodes_in_group("training_blood").size()>0,"MPFB hits retain blood feedback")
 	annex.reset_enemies()
 	await frames(4)
-	check(annex.enemies[0].health==100 and annex.enemies[0].polygon_model.current_state==&"idle","Reset recreates living MPFB opponent")
+	check(annex.enemies[0].body.is_alive() and annex.enemies[0].polygon_model.current_state==&"idle","Reset recreates living MPFB opponent")
 	world.queue_free()
 	await frames(3)
 	for failure in failures:

@@ -10,7 +10,7 @@ func check(ok: bool, text: String) -> void:
 	if not ok:
 		failures.append(text)
 func snapshot(enemy, counters: Dictionary) -> Dictionary:
-	return {"health":enemy.health,"state":enemy.state,"recognition":snappedf(enemy.recognition,0.001),"search":snappedf(enemy.search_left,0.001),"position":enemy.global_position.snapped(Vector3.ONE*0.001),"facing":snappedf(enemy.rotation.y,0.001),"velocity":enemy.velocity.snapped(Vector3.ONE*0.001),"shots":counters.shots,"hits":counters.hits,"defeats":counters.defeats,"layer":enemy.collision_layer,"body_disabled":enemy.get_node("Body").disabled}
+	return {"health":enemy.body.health.duplicate(),"body":enemy.body.state,"state":enemy.state,"recognition":snappedf(enemy.recognition,0.001),"search":snappedf(enemy.search_left,0.001),"position":enemy.global_position.snapped(Vector3.ONE*0.001),"facing":snappedf(enemy.rotation.y,0.001),"velocity":enemy.velocity.snapped(Vector3.ONE*0.001),"shots":counters.shots,"hits":counters.hits,"defeats":counters.defeats,"layer":enemy.collision_layer,"body_disabled":enemy.get_node("Body").disabled}
 func exercise(use_mesh: bool) -> Array:
 	var world = load("res://scenes/prototype/camp_test.tscn").instantiate()
 	root.add_child(world)
@@ -43,19 +43,19 @@ func exercise(use_mesh: bool) -> Array:
 		trace.append(snapshot(enemy,counters))
 	enemy.receive_hit(40,enemy.global_position+Vector3.UP,Vector3.FORWARD,player)
 	trace.append(snapshot(enemy,counters))
-	check(enemy.health==60,"Visual choice does not change nonlethal damage")
+	check(enemy.body.health[&"torso"]==40,"Visual choice does not change nonlethal damage")
 	enemy.receive_hit(80,enemy.global_position+Vector3.UP,Vector3.FORWARD,player)
 	await frames(3)
 	trace.append(snapshot(enemy,counters))
 	enemy.receive_hit(40,enemy.global_position+Vector3.UP,Vector3.FORWARD,player)
 	await frames(75)
 	trace.append(snapshot(enemy,counters))
-	check(enemy.health==0 and counters.defeats==1 and enemy.get_node("Body").disabled,"Death resolves once and disables the same collider")
+	check(enemy.body.is_dead() and counters.defeats==1 and enemy.get_node("Body").disabled,"Death resolves once and disables the same collider")
 	var stock_before: int = world.stock.count(&"food")
 	var ammo_before: int = player.weapon.state.total_rounds()
 	annex._toggle_enemy_comparison()
 	await frames(3)
-	check(annex.use_mpfb_enemy != use_mesh and annex.enemies[0].health==100,"Comparison toggle resets the bout with the other visual")
+	check(annex.use_mpfb_enemy != use_mesh and annex.enemies[0].body.is_alive(),"Comparison toggle resets the bout with the other visual")
 	check(player.weapon.state.total_rounds()==ammo_before and world.stock.count(&"food")==stock_before,"Visual comparison does not change supplies or ammunition")
 	world.queue_free()
 	await frames(3)

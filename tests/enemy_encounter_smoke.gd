@@ -24,11 +24,11 @@ func _run() -> void:
 		await _frames(60)
 	player.weapon.rng.seed = 12345
 	for i in range(3):
-		player.camera.look_at(target.global_position+Vector3.UP)
+		player.camera.look_at(target.global_position+Vector3.UP*(0.12 if target.state==&"downed" else 1.0))
 		await _frames(3)
 		player.weapon.command(&"fire")
 		await _frames(18)
-	_check(target.health==0 and target.state==&"dead","Three actual rifle rays defeat the test enemy")
+	_check(target.body.is_dead() and target.state==&"dead","Two torso rays down the test enemy and a third finishes it")
 	await _frames(40)
 	_check(target.get_node("Body").disabled and target.collision_layer==0,"Corpse cannot block movement or continue fighting")
 	_check(target.visual.position.y < 0.05 and absf(target.visual.rotation.x)>1.5,"Death animation completes on the ground")
@@ -53,7 +53,7 @@ func _run() -> void:
 	_check(counts.shots>0,"Visible exposure eventually permits enemy firing")
 	annex.reset_enemies()
 	await _frames(3)
-	_check(annex.enemies[0].health==100 and get_nodes_in_group("training_blood").is_empty(),"Reset restores opponents and cleans blood effects")
+	_check(annex.enemies[0].body.is_alive() and get_nodes_in_group("training_blood").is_empty(),"Reset restores opponents and cleans blood effects")
 	# One witness sees the player while a nearby observer's own LOS is blocked.
 	player.global_position = annex.global_position+Vector3(-4,0.02,-8)
 	player.velocity = Vector3.ZERO
