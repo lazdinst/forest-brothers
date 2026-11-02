@@ -8,6 +8,8 @@ const BodyHealth = preload("res://scripts/combat/body_health.gd")
 const HitZones = preload("res://scripts/combat/hit_zones.gd")
 ## Emitted with BodyHealth.DOWNED or BodyHealth.KILLED. The session/drill decides what death means.
 signal casualty(player, outcome: StringName)
+## Presentation hook: which zone was struck and where the shot came from.
+signal hit_taken(zone: StringName, from: Vector3)
 var body = BodyHealth.new()
 var hit_zones
 var last_hit_zone: StringName = &""
@@ -59,6 +61,10 @@ func _ready() -> void:
 	hit_zones.name = "HitZones"
 	add_child(hit_zones)
 	hit_zones.build(self, body_shape.shape.height)
+	var feedback = load("res://scripts/combat/hit_feedback.gd").new()
+	feedback.name = "HitFeedback"
+	add_child(feedback)
+	feedback.attach(self)
 	if use_polygon_body:
 		body_visual = load("res://scripts/characters/polygon_character.gd").new()
 		body_visual.name = "BodyVisual"
@@ -364,11 +370,12 @@ func center_of_mass() -> Vector3:
 		return global_position + Vector3.UP * 0.12
 	return global_position + Vector3.UP * (body_shape.shape.height * 0.6)
 
-func receive_hit(damage: float, _at: Vector3, _normal: Vector3, _source = null, zone: StringName = &"") -> void:
+func receive_hit(damage: float, at: Vector3, _normal: Vector3, source = null, zone: StringName = &"") -> void:
 	if body.is_dead() or damage <= 0:
 		return
 	last_hit_zone = zone if zone != &"" else BodyHealth.TORSO
 	var outcome: StringName = body.apply_damage(last_hit_zone, damage)
+	hit_taken.emit(last_hit_zone, source.global_position if source is Node3D else at)
 	if outcome == BodyHealth.DOWNED and not has_teammate_nearby:
 		body.bleed_out()
 		outcome = BodyHealth.KILLED

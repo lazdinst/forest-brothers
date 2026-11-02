@@ -6,6 +6,7 @@ signal fired(actor, target, hit: bool)
 const ART = preload("res://assets/characters/training_guard/idle_front_v1.png")
 const HitZones = preload("res://scripts/combat/hit_zones.gd")
 const BodyHealth = preload("res://scripts/combat/body_health.gd")
+const HitSounds = preload("res://scripts/combat/hit_sounds.gd")
 const FIGURE_HEIGHT := 1.75
 @export var use_polygon: bool = false
 @export var character_scene: PackedScene
@@ -209,12 +210,25 @@ func receive_hit(damage: float, at: Vector3, _normal: Vector3, source = null, zo
 	_hit_tint = 0.15
 	if blood_enabled:
 		_blood(at, outcome == BodyHealth.KILLED)
+	_impact_sound(at, last_hit_zone)
 	if outcome == BodyHealth.KILLED:
 		_die()
 	elif outcome == BodyHealth.DOWNED:
 		_go_down(source)
 	elif active:
 		hear_noise(at)
+
+## Positional zone sound so the shooter can hear what they hit.
+func _impact_sound(at: Vector3, zone: StringName) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var player := AudioStreamPlayer3D.new()
+	player.stream = HitSounds.stream(zone)
+	player.unit_size = 6.0
+	get_parent().add_child(player)
+	player.global_position = at
+	player.finished.connect(player.queue_free)
+	player.play()
 
 func _go_down(source) -> void:
 	state = &"downed"
