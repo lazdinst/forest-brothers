@@ -166,7 +166,13 @@ Planned chunks, each with a headless check and owner approval before starting:
    inspect panel beside the pack: picture, type, earned magazine knowledge only,
    condition and where it is. Cancel stays in the right-click menu.
 
-Remaining planned chunk: rifle slot drag both ways.
+6. Done: drag the rifle from its slot into free pack space (it keeps its inserted
+   magazine and chamber), or drag a carried rifle onto the empty slot to equip it.
+   Ctrl-click the rifle slot stows the rifle; alt-click a stowed rifle equips it.
+   The slot drags with a rifle-sized picture.
+
+All planned Tarkov-style chunks are done. Open: final pack and item sizes, more
+backpack sizes, a nearby-loot panel (needs owner approval) and network authority.
 4. Loading progress on the magazine cell; double-click inspect panel.
 5. Rifle slot drag both ways (stow in pack, drag back to equip).
 

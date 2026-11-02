@@ -154,6 +154,8 @@ func _build() -> void:
 	rifle_button.set_process(true)
 	rifle_button.menu_requested.connect(func(at: Vector2): _open_menu_for(weapon_state.inventory.active_weapon_id,at))
 	rifle_button.inspect_requested.connect(func(): _show_inspect(weapon_state.inventory.active_weapon_id))
+	rifle_button.stow_requested.connect(func(): _quick({"id":str(weapon_state.inventory.active_weapon_id)},&"move"))
+	rifle_button.equip_requested.connect(_equip)
 	rifle_name = _label(rifle_button,data.rifle,Vector2(20,5),460,16)
 	rifle_art = AmmunitionArt.new()
 	rifle_art.kind = "rifle"
@@ -364,12 +366,21 @@ func _inventory_action(action: StringName) -> void:
 				merged = weapon_state.inventory.merge_stacks(source.id,item.id)
 				break
 		weapon_state.message = "Stacks merged; overflow retained" if merged else "No matching partial stack"
-	elif action == &"equip": weapon_state.inventory.equip_weapon(selected_id)
+	elif action == &"equip": _equip(selected_id)
 	elif action == &"drop":
 		if drop_requested.get_connections().is_empty(): weapon_state.inventory.drop_item(selected_id,Vector3.ZERO)
 		else: drop_requested.emit(selected_id)
 	elif action == &"inspect_loaded": weapon_state.request_action(&"inspect",weapon_state.inventory.weapon().inserted_magazine_id)
 	else: weapon_state.request_action(action,selected_id if action in [&"inspect",&"reload",&"pack",&"unload"] else &"",&"",action in [&"pack",&"unload"])
+	_refresh()
+
+## Equip a carried rifle; an already equipped one takes its place in the pack.
+func _equip(id: StringName) -> void:
+	if weapon_state.busy != &"": weapon_state.reject("Finish or cancel the current action first")
+	elif weapon_state.inventory.equip_weapon(id):
+		weapon_state.message = "Rifle equipped"
+		weapon_state.revision += 1
+	else: weapon_state.reject("That rifle cannot be equipped")
 	_refresh()
 
 ## Facts the carrier can see by looking: never an exact magazine count, only earned knowledge.
@@ -425,8 +436,10 @@ func _quick(item: Dictionary, kind: StringName) -> void:
 		return
 	if weapon_state.busy != &"": weapon_state.reject("Finish or cancel the current action first")
 	elif kind == &"use" and source is Inventory.MagazineInstance: weapon_state.request_action(&"reload",id)
-	elif kind == &"move" and source.location.kind in [&"pocket",&"pack"]:
-		var other := &"pack" if source.location.kind == &"pocket" else &"pocket"
+	elif kind == &"use" and source is Inventory.WeaponInstance and source.location.kind != &"equipped": _equip(id)
+	elif kind == &"move" and source.location.kind in [&"pocket",&"pack",&"equipped"]:
+		# The equipped rifle stows in the pack; everything else swaps between pockets and pack.
+		var other := &"pocket" if source.location.kind == &"pack" else &"pack"
 		var spot = inventory.empty_location_in(other,id,inventory.footprint(source))
 		if spot == null: weapon_state.reject("No room in the " + ("pack" if other == &"pack" else "pockets"))
 		else: weapon_state.move_item(id,other,spot.slot,spot.rotated)

@@ -233,6 +233,30 @@ func _run() -> void:
 		await process_frame
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png(OS.get_environment("TEMP").path_join("forest-brothers-inventory-inspect.png"))
+	# Rifle slot both ways: drag out to stow in the pack, drag back in to equip.
+	var slot_payload: Dictionary = preview.rifle_button.drag_payload()
+	check(slot_payload.cells == Vector2i(5,2) and slot_payload.preview.get_child(0).get_child_count() == 1,"Rifle slot drags with a rifle-sized picture")
+	check(not preview.pocket_grid._can_drop_data(Vector2(1.5,0.5)*preview.pocket_grid.cell,slot_payload),"The rifle cannot be dropped into a pocket")
+	var pack_centre: Vector2 = Vector2(4.5,3.0)*preview.pack_grid.cell
+	check(preview.pack_grid._can_drop_data(pack_centre,slot_payload),"The rifle can be dragged from its slot into free pack space")
+	var held_magazine: StringName = inv.weapon().inserted_magazine_id
+	var rounds_before: int = state.total_rounds()
+	preview.pack_grid._drop_data(pack_centre,slot_payload)
+	slot_payload.preview.free()
+	check(not state.equipped() and inv.weapon().location.kind == &"pack" and inv.weapon().inserted_magazine_id == held_magazine and state.total_rounds() == rounds_before,"Stowed rifle keeps its magazine and no rounds change")
+	preview._refresh()
+	var stowed: Button = find_card.call(preview.pack_grid,rifle_id)
+	var stowed_payload: Dictionary = stowed.drag_payload(Vector2(32,32))
+	check(preview.rifle_button._can_drop_data(Vector2.ZERO,stowed_payload) and not preview.rifle_button._can_drop_data(Vector2.ZERO,{"inventory_item_id":str(loose_mag)}),"Empty rifle slot accepts the rifle but not a magazine")
+	preview.rifle_button._drop_data(Vector2.ZERO,stowed_payload)
+	check(state.equipped() and inv.weapon().id == rifle_id,"Dropping the rifle on its slot equips it")
+	ctrl_click.position = Vector2(10,10)
+	preview.rifle_button._gui_input(ctrl_click)
+	check(not state.equipped() and inv.weapon().location.kind == &"pack","Ctrl-click on the rifle slot stows the rifle")
+	preview._refresh()
+	find_card.call(preview.pack_grid,rifle_id)._gui_input(alt_click)
+	check(state.equipped(),"Alt-click on a stowed rifle equips it")
+	preview._refresh()
 	# Backpack as an item: its cells belong to it, so contents travel with it.
 	var pack = inv.backpack()
 	var spare: StringName = inv.initial_magazine_ids[0] if inv.weapon().inserted_magazine_id == b else b
