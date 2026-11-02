@@ -25,7 +25,10 @@ func show_condition(health) -> void:
 	var tags: Array[String] = []
 	if health.heavy_bleeding[part]: tags.append("HEAVY")
 	elif health.light_bleeding[part]: tags.append("bleed")
+	if health.tourniquet[part]: tags.append("TQ")
 	if health.fractured[part]: tags.append("broken")
+	if health.infected[part]: tags.append("INFECT")
+	elif health.wound_left[part] >= 0.0: tags.append("wound")
 	if health.destroyed(part): tags.append("lost")
 	text = "%s\n%d/%d%s" % [health.LABELS[part],ceili(current),int(health.max_health[part]),("\n" + ", ".join(tags)) if not tags.is_empty() else ""]
 	var fill := Color("29251d") if fraction <= 0.0 else Color("8a3a32").lerp(Color("6f8a5a"),fraction)

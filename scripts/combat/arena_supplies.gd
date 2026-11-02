@@ -30,7 +30,7 @@ static func stage(arena: Node3D, weapon_id: StringName = &"svt_inspired_training
 		[_stack(stock.inventory, 5), Vector3(1.8, 0.06, 23.0)],
 	]
 	# A second row of medical supplies, food and water to practise treatment.
-	var row := [&"cloth_bandage", &"cloth_bandage", &"field_dressing", &"splint", &"morphine", &"medical_satchel", &"canteen", &"rye_bread", &"tinned_meat"]
+	var row := [&"cloth_bandage", &"cloth_bandage", &"field_dressing", &"tourniquet", &"splint", &"sulfa_powder", &"morphine", &"medical_satchel", &"surgical_kit", &"canteen", &"rye_bread", &"tinned_meat"]
 	for index in range(row.size()):
 		supplies.append([stock.inventory.create_supply(row[index]), Vector3(-4.5 + index * 0.9, 0.06, 20.6)])
 	for supply in supplies:
