@@ -1,5 +1,8 @@
 # Main menu and training startup
 
+Equipment and inventory layout: see [Inventory UI Design](INVENTORY_UI_DESIGN.md).
+It reuses these paper components and opens with Tab during routed training.
+
 Status: UI implementation integrated into the shared `main` branch at the owner's
 request. Only the default startup scene changes in project configuration; training,
 environment and character source files are unchanged. This work introduces no campaign,
