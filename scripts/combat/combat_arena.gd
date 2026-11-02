@@ -50,6 +50,8 @@ func reset_enemies() -> void:
 		if is_instance_valid(enemy):
 			enemy.queue_free()
 	enemies.clear()
+	for pickup in get_tree().get_nodes_in_group(&"combat_loot"):
+		pickup.queue_free()
 	for index in range(ENEMY_SPAWNS.size()):
 		var enemy = Enemy.new()
 		enemy.name = "ArenaEnemy%d" % index
@@ -59,6 +61,7 @@ func reset_enemies() -> void:
 		enemy.spotted.connect(_enemy_spotted)
 		# Active by default: the arena is a fight, not a passive exhibit.
 		enemy.active = true
+		enemy.loot_enabled = true
 		enemies.append(enemy)
 
 func _enemy_spotted(source, at: Vector3) -> void:

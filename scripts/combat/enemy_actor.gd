@@ -9,6 +9,7 @@ const HitZones = preload("res://scripts/combat/hit_zones.gd")
 const BodyHealth = preload("res://scripts/combat/body_health.gd")
 const HitSounds = preload("res://scripts/combat/hit_sounds.gd")
 const GunshotSound = preload("res://scripts/combat/gunshot_sound.gd")
+const BodyLoot = preload("res://scripts/combat/body_loot.gd")
 const FIGURE_HEIGHT := 1.75
 # Rules-side firing geometry in actor space (+z is the true facing). The rifle proxy matches it.
 const SHOULDER := Vector3(0.18, 1.35, 0.0)
@@ -49,6 +50,8 @@ var spare_magazines: Array[int] = [10, 10, 10]
 var reload_seconds: float = 3.0
 var reload_left: float = 0.0
 var fire_interval: float = 1.1
+## Off by default so the camp annex reset cannot accumulate loot; the arena turns it on.
+var loot_enabled: bool = false
 var search_speed: float = 1.4
 var return_speed: float = 1.0
 # Search, placeholders pending owner tuning: walk to the last known position (giving up after
@@ -391,6 +394,8 @@ func _die() -> void:
 	hit_zones.disable()
 	rifle.hide()
 	# Resolve gameplay before choosing a cosmetic corpse animation.
+	if loot_enabled:
+		BodyLoot.drop(self)
 	defeated.emit(self)
 	if not was_downed:
 		_play_death_visual()
