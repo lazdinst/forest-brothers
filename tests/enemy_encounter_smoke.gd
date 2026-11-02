@@ -80,9 +80,16 @@ func _run() -> void:
 		enemy.fired.connect(func(_e,actor,hit): if hit and actor==player: casualties.hits += 1)
 	player.casualty.connect(func(_p,outcome): if outcome==&"killed": casualties.killed += 1)
 	annex.arm_bout()
-	await _frames(240)
+	# Hits depend on random aim spread; wait for the first one rather than a fixed time.
+	for i in range(60 * 15):
+		if casualties.hits > 0: break
+		await _frames(1)
 	_check(casualties.hits > 0,"Armed enemy rays reach player hit zones")
-	await _frames(360)
+	# Seven-part player health takes a varying number of random hits; wait for the death itself.
+	for i in range(60 * 25):
+		if casualties.killed > 0: break
+		await _frames(1)
+	await _frames(5)
 	_check(casualties.killed==1 and not annex._bout_active and player.global_position.z > 10,"Solo player death stops enemies and returns only the test player to camp")
 	_check(player.body.is_alive() and player.controls_active(),"Drill debrief restores the training body")
 	_check(player.weapon.state.total_rounds()==carried_before,"Bout reset does not silently refill or consume carried ammunition")

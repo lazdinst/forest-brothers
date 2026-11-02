@@ -1,0 +1,66 @@
+extends RefCounted
+## Immutable definitions for medical and food supplies (definitions, not runtime state).
+## Effects are fictional game abstractions modelled on Escape from Tarkov, not real treatment
+## guidance. Names follow the period candidates in MISSIONS_AND_MEDICINE.md; every number is a
+## placeholder pending owner balance. "uses" is a count, or a resource pool for the satchel.
+const SUPPLIES := {
+	&"cloth_bandage": {"name":"Cloth bandage","icon":"medicine","size":Vector2i(1,1),"uses":1,"seconds":4.0,"targets_part":true,
+		"stops_light":true,"revives":true,"description":"Stops light bleeding on one body part. Can revive a downed teammate."},
+	&"field_dressing": {"name":"Field dressing","icon":"medicine","size":Vector2i(1,1),"uses":1,"seconds":5.0,"targets_part":true,
+		"stops_light":true,"stops_heavy":true,"revives":true,"description":"Stops heavy or light bleeding on one body part. Can revive a downed teammate."},
+	&"tourniquet": {"name":"Rubber tourniquet","icon":"medicine","size":Vector2i(1,1),"uses":1,"seconds":2.0,"targets_part":true,
+		"applies_tourniquet":true,"description":"Quickly stops heavy bleeding on an arm or leg. The limb slowly loses health until a field dressing replaces it."},
+	&"splint": {"name":"Splint","icon":"medicine","size":Vector2i(1,2),"uses":1,"seconds":6.0,"targets_part":true,
+		"fixes_fracture":true,"description":"Sets a broken arm or leg. Does not restore lost health."},
+	&"morphine": {"name":"Morphine","icon":"medicine","size":Vector2i(1,1),"uses":1,"seconds":3.0,"targets_part":false,
+		"painkiller":300.0,"description":"Removes pain and its limits for a while. Cures nothing."},
+	&"medical_satchel": {"name":"Medical satchel","icon":"medicine","size":Vector2i(2,2),"uses":300,"seconds":3.0,"targets_part":true,
+		"heals":true,"light_cost":40,"heavy_cost":120,"description":"Stops bleeding and restores health from its supply. Cannot save a destroyed part."},
+	&"sulfa_powder": {"name":"Sulfa powder","icon":"medicine","size":Vector2i(1,1),"uses":3,"seconds":4.0,"targets_part":true,
+		"disinfects":true,"description":"Cleans an open wound so it does not turn infected, or treats an infection."},
+	&"surgical_kit": {"name":"Surgical kit","icon":"medicine","size":Vector2i(2,1),"uses":2,"seconds":20.0,"targets_part":true,
+		"surgery":true,"description":"Brings a destroyed arm, leg or stomach back to low health. That part's maximum health shrinks for good."},
+	&"canteen": {"name":"Water canteen","icon":"water","size":Vector2i(1,2),"uses":3,"seconds":3.0,"targets_part":false,
+		"hydration":30.0,"description":"Three drinks of water."},
+	&"rye_bread": {"name":"Rye bread","icon":"food","size":Vector2i(1,1),"uses":1,"seconds":4.0,"targets_part":false,
+		"energy":40.0,"hydration":-5.0,"description":"A dense loaf. Restores energy."},
+	# Mission objective, not a supply: carried like any item (it stays on a body), never used.
+	&"sealed_dispatch": {"name":"Sealed dispatch","icon":"document","size":Vector2i(1,1),"uses":1,"seconds":0.0,"targets_part":false,
+		"objective":true,"description":"A sealed envelope of papers. Carry it out of the area."},
+	&"medicine_bundle": {"name":"Bundle of medicine","icon":"medicine","size":Vector2i(2,1),"uses":1,"seconds":0.0,"targets_part":false,
+		"objective":true,"description":"Dressings and medicine wrapped in oilcloth, meant for the camp. Carry it out of the area."},
+	&"codebook": {"name":"Codebook","icon":"document","size":Vector2i(1,1),"uses":1,"seconds":0.0,"targets_part":false,
+		"objective":true,"description":"A small bound book of call signs and codes. Carry it out of the area."},
+	&"forester_map": {"name":"Forester's map","icon":"document","size":Vector2i(1,1),"uses":1,"seconds":0.0,"targets_part":false,
+		"objective":true,"description":"A forester's hand-drawn map of paths through the forest and bog. Carry it out of the area."},
+	&"ration_cache": {"name":"Wrapped rations","icon":"food","size":Vector2i(2,1),"uses":1,"seconds":0.0,"targets_part":false,
+		"objective":true,"description":"Food wrapped in oilcloth and hidden for the winter. Carry it out of the area."},
+	# Money: carried as notes and coins (uses = the amount held), lost on the body at death, and
+	# deposited into the camp treasury at the quartermaster. Never used like a supply.
+	&"rubles": {"name":"Rubles","icon":"rubles","size":Vector2i(1,1),"uses":500,"seconds":0.0,"targets_part":false,
+		"money":true,"description":"Soviet banknotes, the only legal money in Latvia since March 1941. Deposit them in the camp treasury at the quartermaster."},
+	&"lats": {"name":"Lats","icon":"lats","size":Vector2i(1,1),"uses":50,"seconds":0.0,"targets_part":false,
+		"money":true,"description":"Pre-war Latvian money, withdrawn without notice in March 1941 and kept hidden since. Scarce; the camp's contact values it highly."},
+	&"tinned_meat": {"name":"Tinned meat","icon":"food","size":Vector2i(1,1),"uses":1,"seconds":5.0,"targets_part":false,
+		"energy":60.0,"hydration":-10.0,"description":"Restores a lot of energy; makes you thirsty."},
+}
+
+static func has(id: StringName) -> bool:
+	return SUPPLIES.has(id)
+
+static func get_def(id: StringName) -> Dictionary:
+	return SUPPLIES.get(id,{})
+
+static func is_objective(id: StringName) -> bool:
+	return SUPPLIES.get(id,{}).get("objective",false)
+
+static func is_money(id: StringName) -> bool:
+	return SUPPLIES.get(id,{}).get("money",false)
+static func is_food(def: Dictionary) -> bool:
+	return def.has("energy") or def.has("hydration")
+
+## Verb shown on the item's menu.
+static func verb(def: Dictionary) -> String:
+	if def.get("icon","") == "water": return "Drink"
+	if is_food(def): return "Eat"
+	return "Use"

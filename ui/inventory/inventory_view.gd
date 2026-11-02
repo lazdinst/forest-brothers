@@ -14,6 +14,9 @@ const WeaponSlot = preload("res://ui/inventory/inventory_weapon_slot.gd")
 const MenuModal = preload("res://ui/components/menu_modal.gd")
 const Inventory = preload("res://scripts/inventory/ammunition_inventory.gd")
 const ItemCard = preload("res://ui/inventory/inventory_item_card.gd")
+const PlayerHealth = preload("res://scripts/health/player_health.gd")
+const SupplyCatalog = preload("res://scripts/health/supply_catalog.gd")
+const BodyPartButton = preload("res://ui/inventory/body_part_button.gd")
 
 var data: Dictionary
 var composition: Control
@@ -37,6 +40,20 @@ var inspect_title: Label
 var inspect_body: Label
 var inspect_icon: Control
 var inspected_id: StringName
+## A searched body opened with F, or null. Its gear is shown beside the player's.
+var loot
+## The carrier's condition. The host passes the player's; the standalone preview owns a demo.
+var health
+var owns_health := true
+var part_buttons: Array = []
+var health_summary: Label
+var health_status: Label
+var _health_dirty := false
+var _health_clock := 0.0
+var loot_heading: Label
+var body_rifle_grid
+var body_pocket_grid
+var rifle_heading: Label
 var no_pack_label: Label
 var _menu_actions: Array[StringName] = []
 var _split_destination
@@ -48,6 +65,10 @@ func _ready() -> void:
 	if data.is_empty(): data = Snapshot.demo()
 	weapon_state = data.runtime
 	_appearance = data.appearance
+	if health == null:
+		health = PlayerHealth.new()
+		owns_health = true
+	health.changed.connect(_mark_health_dirty)
 	_build()
 	resized.connect(_fit)
 	_fit()
@@ -58,16 +79,31 @@ func _physics_process(delta: float) -> void:
 	# The startup owner suspends the local world subtree while this fixed-tick adapter
 	# advances the same weapon rules. Drawing/animation callbacks never award rounds.
 	weapon_state.advance(delta)
-	if _seen_revision != weapon_state.revision: _refresh()
+	if owns_health: health.advance(delta)
+	if _health_dirty or _seen_revision != weapon_state.revision:
+		_health_dirty = false
+		_refresh()
+	_health_clock += delta
+	if _health_clock >= 0.2:
+		_health_clock = 0.0
+		_refresh_health()
 	_show_action_progress()
+	if loot != null:
+		loot.advance_search(delta)
+		_refresh_loot_heading()
 
 ## The busy magazine's cell shows how far the timed action is; rifle actions show on the rifle slot.
 func _show_action_progress() -> void:
 	var id: StringName = weapon_state.target_magazine_id if weapon_state.busy != &"" else &""
 	var value: float = weapon_state.action_progress() if weapon_state.busy != &"" else -1.0
+	var treating: bool = health != null and not health.treatment.is_empty()
+	# A treatment in progress shows on the supply being used.
+	if treating:
+		id = health.treatment.item_id
+		value = health.treatment_progress()
 	var shown: bool = pocket_grid.show_progress(id,value)
 	shown = pack_grid.show_progress(id,value) or shown
-	rifle_button.set_progress(value if weapon_state.busy != &"" and not shown else -1.0)
+	rifle_button.set_progress(value if weapon_state.busy != &"" and not shown and not treating else -1.0)
 
 func _fit() -> void:
 	var factor := minf(size.x/1600, size.y/900)
@@ -143,8 +179,22 @@ func _build() -> void:
 			continue
 		var button := _button(character,slot[1]+"\n"+item_name,locations[index],Vector2(143,94),_inspect.bind(slot[1],item_name + (" · sample outfit" if data.demo else " · clothing record unavailable")))
 		button.add_theme_font_size_override("font_size",16)
+	# Tarkov-style health figure over the mannequin: one button per body part.
+	var figure := {PlayerHealth.HEAD:Rect2(209,92,80,44),PlayerHealth.THORAX:Rect2(199,140,100,52),PlayerHealth.STOMACH:Rect2(199,196,100,52),
+		PlayerHealth.LEFT_ARM:Rect2(143,150,54,96),PlayerHealth.RIGHT_ARM:Rect2(301,150,54,96),PlayerHealth.LEFT_LEG:Rect2(190,300,56,86),PlayerHealth.RIGHT_LEG:Rect2(252,300,56,86)}
+	for part in figure:
+		var part_button := BodyPartButton.new()
+		part_button.setup(part,figure[part].size)
+		part_button.position = figure[part].position
+		part_button.can_treat = can_treat_part
+		part_button.treat = _treat
+		part_button.gui_input.connect(_part_input.bind(part_button))
+		character.add_child(part_button)
+		part_buttons.append(part_button)
+	health_summary = _label(character,"",Vector2(0,424),498,15)
+	health_status = _label(character,"",Vector2(0,445),498,13)
 	if not character_preview.has_character:
-		_label(character,"Appearance in development",Vector2(134,460),226,15)
+		_label(character,"Appearance in development",Vector2(134,476),226,13)
 	else:
 		_button(character,"Turn left",Vector2(151,472),Vector2(94,48),func(): character_preview.rotate_character(-0.4))
 		_button(character,"Turn right",Vector2(250,472),Vector2(97,48),func(): character_preview.rotate_character(0.4))
@@ -178,8 +228,44 @@ func _build() -> void:
 	pocket_grid.item_quick.connect(_quick)
 	pocket_grid.drop_validator = _can_drop_in_grid.bind(&"pocket")
 	pocket_grid.item_dropped.connect(_drop_in_grid.bind(&"pocket"))
-	_label(carried,"RIFLE & AMMUNITION",Vector2(455,45),470,20)
+	rifle_heading = _label(carried,"RIFLE & AMMUNITION",Vector2(455,45),470,20)
 	ammunition_status = _label(carried,"",Vector2(455,87),470,18)
+	# A searched body takes this corner: its rifle slot and pockets, revealed as searched.
+	loot_heading = _label(carried,"",Vector2(455,45),500,20)
+	body_rifle_grid = Grid.new()
+	body_rifle_grid.position = Vector2(455,80)
+	body_rifle_grid.configure(5,2,64)
+	body_pocket_grid = Grid.new()
+	body_pocket_grid.position = Vector2(787,80)
+	body_pocket_grid.configure(2,2,64)
+	for grid in [body_rifle_grid,body_pocket_grid]:
+		carried.add_child(grid)
+		grid.item_selected.connect(_select_item)
+		grid.item_menu_requested.connect(_open_item_menu)
+		grid.item_quick.connect(_quick)
+		# Take-only from a body; a storage container (the camp cash chest) also takes items in.
+		grid.drop_validator = _can_store
+		grid.item_dropped.connect(_store)
+	var looting: bool = loot != null
+	if looting and _is_storage():
+		# A storage container (camp chest) takes the right-hand column in place of the inspect
+		# panel: one grid laid out like its own pack space, scrolling when it is large.
+		loot_heading.position = Vector2(600,45)
+		var stash := ScrollContainer.new()
+		stash.position = Vector2(600,80)
+		stash.size = Vector2(384,570)
+		stash.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		carried.add_child(stash)
+		carried.remove_child(body_pocket_grid)
+		stash.add_child(body_pocket_grid)
+		body_pocket_grid.position = Vector2.ZERO
+		body_pocket_grid.configure(loot.inventory.pack_columns,ceili(float(loot.inventory.pack_capacity)/loot.inventory.pack_columns),int(loot.get("cell") if loot.get("cell") != null else 64))
+	loot_heading.visible = looting
+	body_rifle_grid.visible = looting and not _is_storage()
+	body_pocket_grid.visible = looting
+	rifle_heading.visible = not looting
+	ammunition_status.visible = not looting
+	if looting: loot.search_progressed.connect(_refresh_loot)
 	_label(carried,"03  /  PACK SPACE",Vector2(0,200),920,20)
 	_label(carried,"Pack space · total capacity under review",Vector2(0,231),920,16)
 	pack_grid = Grid.new()
@@ -208,6 +294,8 @@ func _build() -> void:
 	inspect_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	inspect.add_child(inspect_icon)
 	inspect_body = _label(inspect,"",Vector2(14,192),336,15)
+	# An open camp chest uses this column.
+	inspect.visible = not (loot != null and _is_storage())
 	pack_grid.item_dropped.connect(_drop_in_grid.bind(&"pack"))
 	var footer := _frame(Vector2(24,829),Vector2(1552,60))
 	detail = _label(footer,"Select equipment or supplies to inspect. All equipment belongs to the group.",Vector2(0,-4),1490,17)
@@ -244,6 +332,8 @@ func _refresh() -> void:
 	no_pack_label.visible = not pack_grid.visible
 	backpack_button.text = "Backpack\n" + (data.backpack if data.backpack_id != "" else "None worn")
 	if inspected_id != &"": _show_inspect(inspected_id)
+	_refresh_loot()
+	_refresh_health()
 	rifle_name.text = data.rifle
 	rifle_button.disabled = not data.equipped
 	rifle_art.visible = data.equipped
@@ -253,6 +343,151 @@ func _refresh() -> void:
 	ammunition_status.text = "Inserted: %s\nChamber: %s\nLoose cartridges: %d\n%s" % [data.magazine_knowledge,"loaded" if data.chamber else "empty",data.loose,"K chamber · R swap · I inspect"]
 	detail.text = weapon_state.message + (" · " + String(weapon_state.busy) if weapon_state.busy != &"" else "")
 	_seen_revision = weapon_state.revision
+
+func _refresh_health() -> void:
+	if health == null or health_summary == null: return
+	for part_button in part_buttons: part_button.show_condition(health)
+	health_summary.text = "Health %d / %d     Energy %d     Water %d" % [ceili(health.total_health()),int(health.total_max()),ceili(health.energy),ceili(health.hydration)]
+	var status: Array[String] = []
+	if health.is_downed(): status.append("DOWNED")
+	if not health.bleeding_parts(true).is_empty(): status.append("Heavy bleeding")
+	if not health.bleeding_parts(false).is_empty(): status.append("Bleeding")
+	if not health.tourniquet_parts().is_empty(): status.append("Tourniquet")
+	if not health.fractured_parts().is_empty(): status.append("Fracture")
+	if health.has_fever(): status.append("Infection, fever")
+	elif not health.open_wound_parts().is_empty(): status.append("Open wound")
+	if health.in_pain(): status.append("Pain")
+	if health.in_shock(): status.append("Shock")
+	if health.painkiller_left > 0.0: status.append("Morphine %d:%02d" % [int(health.painkiller_left)/60,int(health.painkiller_left)%60])
+	if health.hungry(): status.append("Hungry")
+	if health.dehydrated(): status.append("Thirsty")
+	if not health.treatment.is_empty(): status.append("Treating: %s %d%%" % [SupplyCatalog.get_def(health.treatment.supply_id).name,roundi(health.treatment_progress()*100)])
+	health_status.text = " · ".join(status) if not status.is_empty() else "No injuries · drag a supply onto a body part to treat it"
+
+## Starts treating with a carried supply; an empty part means the most urgent one.
+func _treat(id: StringName, part: StringName) -> void:
+	if health == null: return
+	if weapon_state.busy != &"":
+		weapon_state.reject("Finish or cancel the current action first")
+		return
+	var problem: String = health.start_treatment(weapon_state.inventory,id,part)
+	weapon_state.message = problem if problem != "" else "Treating"
+	weapon_state.revision += 1
+	_refresh()
+
+func can_treat_part(id: StringName, part: StringName) -> bool:
+	if health == null or not health.treatment.is_empty() or weapon_state.busy != &"": return false
+	var item = weapon_state.inventory.items.get(id)
+	if not item is Inventory.SupplyInstance or not weapon_state.inventory.carried(item): return false
+	var def := SupplyCatalog.get_def(item.supply_id)
+	return def.get("targets_part",false) and health.treatment_problem(def,part,item.uses) == ""
+
+## Right-click a body part: every carried supply that can treat it.
+func _part_input(event: InputEvent, part_button: Button) -> void:
+	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT): return
+	part_button.accept_event()
+	var choices: Array = []
+	for item in weapon_state.inventory.items.values():
+		if can_treat_part(item.id,part_button.part):
+			choices.append({"id":StringName("treatwith:%s:%s" % [item.id,part_button.part]),"caption":"%s · %s" % [SupplyCatalog.get_def(item.supply_id).name,PlayerHealth.LABELS[part_button.part].to_lower()]})
+	if choices.is_empty(): choices.append({"id":&"back","caption":"No carried supply helps here"})
+	item_menu.clear()
+	_menu_actions.clear()
+	for choice in choices:
+		item_menu.add_item(choice.caption,_menu_actions.size())
+		_menu_actions.append(choice.id)
+	item_menu.reset_size()
+	item_menu.popup(Rect2i(Vector2i(part_button.get_screen_transform() * event.position),Vector2i.ZERO))
+
+func _describe_supply(item) -> Dictionary:
+	var def := SupplyCatalog.get_def(item.supply_id)
+	var choices: Array = []
+	if health != null:
+		if health.treatment.get("item_id",&"") == item.id: choices.append({"id":&"cancel_treatment","caption":"Stop treatment"})
+		elif not health.treatment.is_empty(): pass
+		elif def.get("targets_part",false):
+			for part in health.ZONES:
+				if health.treatment_problem(def,part,item.uses) == "": choices.append({"id":StringName("treat:" + part),"caption":"Treat " + PlayerHealth.LABELS[part].to_lower()})
+		elif health.treatment_problem(def,&"",item.uses) == "": choices.append({"id":&"use_supply","caption":SupplyCatalog.verb(def)})
+	choices.append({"id":&"drop","caption":"Drop"})
+	var left := (" · %d of %d left" % [item.uses,int(def.uses)]) if int(def.uses) > 1 else ""
+	return {"heading":def.name,"description":def.description + left,"choices":choices}
+
+func _mark_health_dirty() -> void:
+	_health_dirty = true
+
+func _exit_tree() -> void:
+	if health != null and health.changed.is_connected(_mark_health_dirty): health.changed.disconnect(_mark_health_dirty)
+
+func _refresh_loot() -> void:
+	if loot == null: return
+	var rifles: Array = []
+	var pockets: Array = []
+	for item in loot.visible_items():
+		var record := Snapshot.record(item,loot.inventory)
+		if item.location.kind == &"equipped":
+			record.slot = 0
+			record.quantity = ""
+			rifles.append(record)
+		elif item.location.kind == &"pocket" or (_is_storage() and item.location.kind == &"pack"): pockets.append(record)
+	body_rifle_grid.show_items(rifles)
+	body_pocket_grid.show_items(pockets)
+	_refresh_loot_heading()
+
+func _refresh_loot_heading() -> void:
+	if loot == null: return
+	if _is_storage():
+		loot_heading.text = "05  /  %s  ·  %s" % [loot.title, "empty" if loot.visible_items().is_empty() else "drag in or out"]
+		return
+	if loot.searching(): loot_heading.text = "05  /  BODY  ·  searching %d of %d…" % [loot.revealed+1,loot.order.size()]
+	else: loot_heading.text = "05  /  BODY  ·  searched" + ("" if not loot.visible_items().is_empty() else " · nothing left")
+
+## The open container takes items in (the camp cash chest), unlike a body.
+func _is_storage() -> bool:
+	return loot != null and loot.get("storage") == true
+
+## Preview: a carried item may go into a storage container's grid.
+func _can_store(id: StringName, slot: int, target_id: StringName, rotated: bool, split: bool) -> bool:
+	if not _is_storage() or split or weapon_state.busy != &"": return false
+	# Money dropped on the same money in the chest combines into that stack.
+	if loot.inventory.items.has(id): return loot.inventory.can_merge_money_into(id,loot.inventory,target_id)
+	if weapon_state.inventory.can_merge_money_into(id,loot.inventory,target_id): return true
+	var item = weapon_state.inventory.items.get(id)
+	if item == null or not loot.accepts(item): return false
+	return loot.inventory.can_receive(item,loot.inventory.slot_location(&"pack",slot,rotated))
+
+func _store(id: StringName, slot: int, target_id: StringName = &"", rotated := false, split := false) -> void:
+	if not _can_store(id,slot,target_id,rotated,split):
+		if _is_storage(): weapon_state.reject("That does not go in the " + String(loot.title).to_lower())
+		return
+	var holder = loot.inventory if loot.inventory.items.has(id) else weapon_state.inventory
+	if holder.can_merge_money_into(id,loot.inventory,target_id):
+		holder.merge_money_into(id,loot.inventory,target_id)
+		weapon_state.revision += 1
+		_refresh()
+		return
+	_put_in_storage(id,loot.inventory.slot_location(&"pack",slot,rotated))
+
+## Moves a carried item into the storage container; a null destination takes the first space.
+func _put_in_storage(id: StringName, destination = null) -> void:
+	if weapon_state.inventory.transfer_to(id,loot.inventory,destination):
+		weapon_state.message = "Put in the " + String(loot.title).to_lower()
+		weapon_state.revision += 1
+	else: weapon_state.reject(weapon_state.inventory.error)
+	_refresh()
+
+func _inventory_of(id: StringName):
+	return loot.inventory if loot != null and loot.inventory.items.has(id) else weapon_state.inventory
+
+## Taking from a body moves the item, with everything inside it, into the player's custody.
+func _take(id: StringName, destination = null) -> void:
+	if weapon_state.busy != &"": weapon_state.reject("Finish or cancel the current action first")
+	elif loot == null or not loot.is_revealed(id): weapon_state.reject("Still searching")
+	elif loot.inventory.transfer_to(id,weapon_state.inventory,destination):
+		weapon_state.message = "Taken from the body"
+		weapon_state.revision += 1
+	else: weapon_state.reject(loot.inventory.error)
+	_refresh()
 
 func _select_weapon() -> void:
 	_select(weapon_state.inventory.active_weapon_id)
@@ -265,6 +500,8 @@ func _select(id: StringName) -> void:
 	selected_id = id
 	pocket_grid.select(id)
 	pack_grid.select(id)
+	body_rifle_grid.select(id)
+	body_pocket_grid.select(id)
 	var entry := _describe(id)
 	if not entry.is_empty(): detail.text = "%s  /  %s  ·  right-click for actions" % [entry.heading,entry.description]
 
@@ -293,8 +530,13 @@ func _open_menu_for(id: StringName, at: Vector2) -> void:
 	item_menu.popup(Rect2i(Vector2i(at),Vector2i.ZERO))
 
 func _describe(id: StringName) -> Dictionary:
+	if loot != null and loot.inventory.items.has(id):
+		if not loot.is_revealed(id): return {}
+		var record := Snapshot.record(loot.inventory.items[id],loot.inventory)
+		return {"heading":record.title,"description":"On the body","choices":[{"id":&"take","caption":"Take"}]}
 	var item = weapon_state.inventory.items.get(id)
 	if item == null: return {}
+	if item is Inventory.SupplyInstance: return _describe_supply(item)
 	var choices: Array = []
 	var heading := "Rifle"
 	var gun = weapon_state.inventory.weapon()
@@ -350,7 +592,20 @@ func _inventory_action(action: StringName) -> void:
 	context.dismiss()
 	if action == &"back": return
 	if action == &"cancel_action": weapon_state.cancel_action()
+	elif action == &"take": _take(selected_id)
+	elif action == &"cancel_treatment":
+		if health != null: health.cancel_treatment()
+	elif String(action).begins_with("treatwith:"):
+		var parts := String(action).split(":")
+		_treat(StringName(parts[1]),StringName(parts[2]))
+		return
 	elif weapon_state.busy != &"": weapon_state.reject("Finish or cancel the current action first")
+	elif action == &"use_supply":
+		_treat(selected_id,&"")
+		return
+	elif String(action).begins_with("treat:"):
+		_treat(selected_id,StringName(String(action).trim_prefix("treat:")))
+		return
 	elif action == &"split_prompt":
 		_show_split_dialog()
 		return
@@ -385,7 +640,8 @@ func _equip(id: StringName) -> void:
 
 ## Facts the carrier can see by looking: never an exact magazine count, only earned knowledge.
 func _show_inspect(id: StringName) -> void:
-	var inventory = weapon_state.inventory
+	var inventory = _inventory_of(id)
+	var on_body: bool = inventory != weapon_state.inventory
 	var item = inventory.items.get(id)
 	for child in inspect_icon.get_children(): child.queue_free()
 	if item == null or not inventory.carried(item):
@@ -413,12 +669,21 @@ func _show_inspect(id: StringName) -> void:
 		lines.append("Chamber: " + ("loaded" if item.chambered_round != null else "empty"))
 		lines.append("Magazine: " + (inventory.knowledge(item.inserted_magazine_id) if item.inserted_magazine_id != &"" else "none inserted"))
 		lines.append("Condition %d%%%s" % [roundi(item.condition*100)," · jammed" if item.jammed else ""])
+	elif item is Inventory.SupplyInstance:
+		var def := SupplyCatalog.get_def(item.supply_id)
+		inspect_title.text = def.name
+		lines.append(def.description)
+		if def.get("money",false): lines.append("%d %s · deposit at the camp quartermaster" % [item.uses,def.name.to_lower()])
+		elif int(def.uses) > 1: lines.append("%d of %d left" % [item.uses,int(def.uses)])
+		if def.get("money",false): pass
+		elif def.get("objective",false): lines.append("Mission objective: leave the area carrying it.")
+		else: lines.append("%s · %d s" % ["Drag onto a body part, or right-click to treat" if def.get("targets_part",false) else "Right-click or alt-click to " + SupplyCatalog.verb(def).to_lower(),int(def.seconds)])
 	elif item is Inventory.BackpackInstance:
 		inspect_title.text = item.label
 		lines.append("%d × %d pack · %d items inside" % [inventory.pack_columns,ceili(float(inventory.pack_capacity)/inventory.pack_columns),inventory.contents_tree(item).size()-1])
 		lines.append("Everything inside stays in it when dropped.")
-	lines.append(where.get(item.location.kind,""))
-	lines.append("Belongs to the group; you are carrying it.")
+	lines.append(("In the " + String(loot.title).to_lower() if _is_storage() else "On the body") if on_body else where.get(item.location.kind,""))
+	lines.append("Belongs to the group; take it to carry it." if on_body else "Belongs to the group; you are carrying it.")
 	inspect_body.text = "\n".join(lines)
 	var record := Snapshot.record(item,inventory)
 	record.rotated = false
@@ -427,6 +692,11 @@ func _show_inspect(id: StringName) -> void:
 ## Ctrl-click: pockets <-> pack. Alt-click: insert a carried magazine into the rifle.
 func _quick(item: Dictionary, kind: StringName) -> void:
 	var id := StringName(item.id)
+	if loot != null and loot.inventory.items.has(id):
+		_select(id)
+		if kind == &"inspect": _show_inspect(id)
+		else: _take(id)
+		return
 	var inventory = weapon_state.inventory
 	var source = inventory.items.get(id)
 	if source == null: return
@@ -434,7 +704,13 @@ func _quick(item: Dictionary, kind: StringName) -> void:
 	if kind == &"inspect":
 		_show_inspect(id)
 		return
+	if kind == &"move" and _is_storage() and loot.accepts(source) and weapon_state.busy == &"":
+		_put_in_storage(id)
+		return
 	if weapon_state.busy != &"": weapon_state.reject("Finish or cancel the current action first")
+	elif kind == &"use" and source is Inventory.SupplyInstance:
+		_treat(id,&"")
+		return
 	elif kind == &"use" and source is Inventory.MagazineInstance: weapon_state.request_action(&"reload",id)
 	elif kind == &"use" and source is Inventory.WeaponInstance and source.location.kind != &"equipped": _equip(id)
 	elif kind == &"move" and source.location.kind in [&"pocket",&"pack",&"equipped"]:
@@ -450,6 +726,10 @@ func _can_drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated
 	if weapon_state.busy != &"": return false
 	var inventory = weapon_state.inventory
 	var destination = inventory.slot_location(container,slot,rotated)
+	if loot != null and loot.inventory.items.has(id):
+		if not split and loot.is_revealed(id) and loot.inventory.can_merge_money_into(id,inventory,target_id): return true
+		return not split and loot.is_revealed(id) and inventory.can_receive(loot.inventory.items[id],destination)
+	if not split and inventory.can_merge_money_into(id,inventory,target_id): return true
 	if destination == null: return false
 	if split: return inventory.can_split_stack(id,destination)
 	var source = inventory.items.get(id)
@@ -461,6 +741,18 @@ func _can_drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated
 func _drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated: bool, split: bool, container: StringName) -> void:
 	if weapon_state.busy != &"":
 		weapon_state.reject("Finish or cancel the current action first")
+		return
+	if loot != null and loot.inventory.items.has(id):
+		if not split and loot.is_revealed(id) and loot.inventory.can_merge_money_into(id,weapon_state.inventory,target_id):
+			loot.inventory.merge_money_into(id,weapon_state.inventory,target_id)
+			weapon_state.revision += 1
+			_refresh()
+			return
+		_take(id,weapon_state.inventory.slot_location(container,slot,rotated))
+		return
+	if not split and weapon_state.inventory.can_merge_money_into(id,weapon_state.inventory,target_id):
+		weapon_state.inventory.merge_money_into(id,weapon_state.inventory,target_id)
+		_refresh()
 		return
 	if split:
 		selected_id = id

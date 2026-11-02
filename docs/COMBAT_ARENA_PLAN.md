@@ -47,14 +47,29 @@ Each chunk has a headless check under `tests/`. Headless checks do not establish
 | 8 | Finite magazines (10 rounds, 3 spares, 3 s reload). Reload lowers the rifle and plays a positional clatter. Partial magazines are retained; empty enemies stop firing; rounds are conserved. | `enemy_reload_smoke` |
 | 9 | Blockout arena `scenes/combat/combat_arena.tscn` (grey boxes: screening wall, farmhouse shell with doorway, crate cover) with a navigation map baked at load. Two enemies, active by default. Searching enemies follow navigation paths and face their route; scenes without a navigation map (the camp annex) keep straight-line movement. Launch directly: `<godot> --path . res://scenes/combat/combat_arena.tscn`. No menu or route entry yet (open question 9). | `combat_arena_smoke` |
 | 10 | Searching: noise, local alerts and losing sight start a walk to the last known position (1.4 m/s, along navigation where available). On arrival, or when blocked or after 30 s, the enemy sweeps its view for 6 s, then gives up, walks back to its post at 1.0 m/s and resumes its watch direction. Hidden players are not tracked. | `enemy_search_smoke` |
-| 11 | Cover: when hit, or when reloading while engaged, an enemy runs (2.6 m/s, no firing) to the nearest reachable spot within 12 m of path where walls hide its chest and head from the threat with a 0.5 m margin. It holds 2.5 s facing the threat (until the reload finishes), then leaves toward where it last saw the threat. Cover that proves exposed is abandoned once the rifle is ready. Crates do not count yet because enemies do not crouch. Scenes without navigation (camp annex) keep the old behaviour. | `enemy_cover_smoke` |
+| 11 | Cover: when hit, or when reloading while engaged, an enemy runs (2.6 m/s, no firing) to the nearest reachable spot within 12 m of path where walls hide its chest and head from the threat with a 0.5 m margin. It holds 2.5 s facing the threat (until the reload finishes), then leaves toward where it last saw the threat. Cover that proves exposed is abandoned once the rifle is ready. Crates count once enemies crouch (chunk 18). Scenes without navigation (camp annex) keep the old behaviour. | `enemy_cover_smoke` |
 | 12 | Arena HUD (stance/stamina instrument, crosshair, prompts) and a finite 120-round ammo crate handing out 10 loose cartridges per use. | `combat_arena_smoke` |
-| 13 | Loot: in the arena, a dead (not downed) enemy drops each magazine it still carried, with exact round counts, as existing ground-equipment pickups (F to recover). Rounds are conserved; the rifle stays with the body; arena reset clears leftover loot. Off in the camp annex. | `enemy_loot_smoke` |
+| 13 | Loot: a dead (not downed) enemy keeps its rifle (with its inserted magazine) and spare magazines on the body. **F** on the body opens the player's inventory with a Body panel; a short search reveals one item at a time (0.8 s each, placeholder) only while open; drag or ctrl-click to take. Take-only for now. Magazines beyond four pockets lie beside the body as ground pickups. Rounds are conserved; arena reset clears bodies and loot. Off in the camp annex. Practice set (owner request): a staged body beside the ammunition crate (rifle with 3 rounds, magazines of 10 and 7, 12 loose cartridges) and seven labelled ground supplies near the spawn (a worn rifle, magazines of 10/4/0 rounds, stacks of 32/14/5); reset restages them. | `enemy_loot_smoke`, `arena_supplies_smoke` |
 | 14 | Flanking: an enemy alerted by an engaging ally heads (2 m/s) for a reachable spot 7–13 m from the target, roughly square to the ally's line of fire, with a clear view of the target; on arrival it faces the target and scans. Plain noise alerts and scenes without navigation walk straight in as before. | `enemy_flank_smoke` |
 
+| 16 | Peeking: after holding cover, an enemy sidesteps (1.6 m/s) to the nearest spot 0.7–2 m to either side of its cover point (random side first) that sees the threat from its own eye height, even 0.35 m short. It stops early once the threat is in view, reacquires (0.45 s, wide first-shot spread again), fires while it sees the threat, and steps back into cover after 2.5 s or when its magazine runs dry (reloading there). Two peeks per cover, then it leaves toward the threat as before. A hit during a peek sends it to cover again. | `enemy_peek_smoke`, `enemy_cover_smoke` |
+| 17 | Blood trails and temperaments. Bleeding players (light, heavy, downed) and wounded enemies (any non-lethal hit; 120 s) leave small dark drops on the ground: 1.6 m apart when light, 0.7 m when heavy, a small pool after 4 s standing still; drops fade after 10 min (`blood_trail.gd`, `blood_dripper.gd`). A searching or idle enemy that sees a target's drop within 7 m, newer than the last one it followed, walks to it and carries on along the trail. Temperament shows once an enemy has taken 30 damage: timid runs (3.2 m/s) to a reachable spot 18-35 m off that gains 8+ m on the threat (hidden spots preferred), calls out, then hides and ignores alerts, fighting only if it sees the threat; steady keeps cover and peeks; aggressive stops taking cover, closes to 6 m at 1.8 m/s while firing (+2 degrees spread on the move) and reloads in the open. The arena rolls a temperament per enemy at each reset. | `blood_trail_smoke` |
+| 18 | Crouching behind low cover. Cover search also accepts spots where a crate hides a crouched body (0.45 and 0.85 m) but not a standing one; such low cover must be 1.5 m shorter by path than full cover to win, and the search now also probes 1.5 m away. Shelter is measured from the enemy's floor (navigation points float 0.5 m up, which had raised the old checks to 1.5/2.05 m). The enemy runs upright, crouches while holding (0.9 m body, hit zones, 0.8 m eye, lower shoulder), peeks by standing up in place to fire over the crate, then crouches again. No crouch art yet: the sprite is drawn at 0.9 m, so behind a crate it hides exactly as the hit zones do. | `enemy_crouch_smoke` |
+| 19 | Arena outing on the shared mission framework (`scripts/missions/`, see MISSION_STRUCTURE.md): find the sealed dispatch (an objective item that cannot be used) at one of four tagged spots and leave by the west exit (5 s; stepping out resets). Carrying it out is success, leaving without it an early return, death leaves it on the body. Every end shows the shared summary screen; the objective HUD is shared too. Definition `missions/arena_dispatch.tres`. | `arena_mission_smoke`, `mission_run_smoke` |
 Placeholder values: zone maximums head 35, torso 80, arms 60, legs 65; rifle and enemy damage 40; enemy bleed-out 30 s; player bleed-out 60 s. Arms and legs are each one zone (left/right still open).
 
-Not yet built: revival, limb effects, lean-following player zones, crouching and peeking, archetypes, rifle and non-ammunition loot, real sprites.
+Not yet built: lean-following player zones, crouching and peeking, archetypes, non-ammunition loot, real sprites.
+
+## 3b. Known placeholders and workarounds
+
+Deliberate stand-ins that look or behave wrong on purpose until proper work replaces them. Fix each one properly before treating the area as finished.
+
+| Workaround | Where | Why it exists | Proper fix |
+|---|---|---|---|
+| Crouched enemies use the standing sprite drawn at 0.9 m (a shrunken standing figure, not a crouch pose) | `enemy_actor.gd` `_update_sprite_views` / `set_crouched` | No crouch art; the shrink keeps what the player sees matching the crouched hit zones behind a crate | Crouch and stand-up peek frames per direction (owner to direct the sprite route) |
+| Enemy sprite has no reload, flinch, fall, crawl or death frames; downed and dead bodies rotate the standing sprite flat | `enemy_actor.gd` `_go_down`, `_play_death_visual` | Art freeze | Sprite follow-up chunks |
+| Treatment shows a HUD ring loader instead of an animation, and the rifle stays raised while treating | `ui/components/treatment_progress_hud.gd` | No treatment animations | Treatment animations; remove the loader |
+| Teammate revival and treatment only work between players in one local scene | `first_person_player.gd` (`care_for`, `mission_players` group) | No networking yet | Two-instance authority checkpoint |
 
 ## 4. What makes the fight feel like Tarkov (proposed)
 
@@ -116,9 +131,9 @@ Proposed details still open: enemies finish a downed player only when no active 
 |---|---|---|
 | 0. Decide | Plan reviewed; open questions answered | `DECISIONS.md` records the choices |
 | 1. A real fight | You can be hurt, downed and killed; zone damage both sides; directional hit feedback and gunfire; imperfect enemy aim; enemies face visibly | Largely built (chunks 1–8); owner playtest pending |
-| 2. Smart enemies | Cover, peeking, reloading, flanking, searching around walls, local alerts, retreating, crawling when downed | Enemies reach a last-known position around cover; lose a hidden player; reload creates a usable opening |
+| 2. Smart enemies | Cover, peeking (built, chunk 16), reloading, flanking, searching around walls, local alerts, retreating (timid, chunk 17), pushing when hurt (aggressive), blood tracking, crawling when downed | Enemies reach a last-known position around cover; lose a hidden player; reload creates a usable opening |
 | 3. Archetypes | Scav groups, patrols, a boss compound with guards | Each type recognizable by behavior alone |
-| 4. Loot and objective | Bodies drop recoverable gear; supply-recovery goal; debrief | Loot counts once; goal winnable by avoidance; reset leaves no duplicates |
+| 4. Loot and objective | Bodies drop recoverable gear (built); recover-the-dispatch goal and debrief (built, chunk 19; owner chose a document instead of supplies) | Loot counts once; goal winnable by avoidance; reset leaves no duplicates |
 | 5. Real sprites | Directional animated enemy art | Enemies read clearly at distance; owner approval |
 
 Follow with the existing two-instance combat authority checkpoint before expanding enemy types, medicine or maps ([ROADMAP.md](ROADMAP.md)). Do not mark roadmap milestones complete from these phases.
@@ -145,9 +160,9 @@ Production routes (decision open): **A** generate painted sprites per angle (ide
 
 1. Sprite route A or B, and whether to lift the art freeze for B.
 2. Zone health values, damage multipliers, and rifle lethality per zone.
-3. Separate left and right limbs, and whether to add a stomach zone.
-4. Effects of a disabled arm or leg, and overflow damage to a disabled limb.
-5. Bleed-out duration and revival requirements.
+3. Separate left and right limbs, and whether to add a stomach zone. Player: answered (seven Tarkov-style parts, 2026-11-02 in DECISIONS.md); enemies still use four zones.
+4. Effects of a disabled arm or leg, and overflow damage to a disabled limb. Player: answered (limping/no sprint, aim sway, 70% spread to other parts); enemies open.
+5. Bleed-out duration and revival requirements. Placeholder answer: 60 s; a bandage or dressing and 8 s (DECISIONS.md, 2026-11-02).
 6. Whether a downed enemy may fire while crawling (default no).
 7. Opponent identities, names and historical grounding, with sources.
 8. Audio sources and licensing beyond the synthesized placeholders.

@@ -1,0 +1,108 @@
+# Claude progress log
+
+## 2026-11-02 — unattended-work setup
+
+Done:
+- Found Godot 4.7.2 console executable in Downloads (not on PATH); headless project load succeeds.
+- Created branch `claude/work`.
+- Added `tools/run_checks.sh` (runs project load + all 41 headless smoke/check scripts in ~1 min).
+- Added `.claude/settings.json` permissions, `CLAUDE.md` notes and this log.
+- Did not install GUT: the project already has 41 headless check scripts and AGENTS.md requires
+  checking new dependencies with the owner.
+
+Baseline results: 40/41 pass on first run.
+- `environment_proof_check` fails consistently: "Existing controller runs along clear trail".
+  Belongs to the environment agent's work; left untouched.
+- `enemy_encounter_smoke` failed once ("Armed enemy rays reach player hit zones"), passed on rerun — flaky.
+
+Next:
+- Waiting for the owner to name the feature task (and approve the combat chunk, per AGENTS.md).
+
+Open questions for the owner:
+1. What should be built next?
+2. Should the environment_proof_check failure be investigated, or left to the environment agent?
+3. Other contributors' uncommitted changes (docs, `assets/props/`, `project.godot`) are in the working
+   tree; they are left uncommitted. OK?
+
+## 2026-11-02 — health work and branches combined on `claude/work`
+
+Done:
+- Player health (seven parts, bleeds, fractures, pain, energy/water, eight supplies), body looting,
+  arm-injury aim sway, tourniquet, surgical kit, infection + sulfa powder, teammate treatment and
+  revival (60 s bleed-out, bandage/dressing, 8 s), and a HUD treatment loader. See DECISIONS.md.
+- Combined everything on `claude/work` (fast-forward to the merged `health/tarkov-condition`, which
+  contains `inventory/body-looting`). The menu, body-zones and enemy-sprite branches were already in
+  `main`. Other contributors' uncommitted changes were stashed and re-applied without conflicts.
+- The HUD agent's uncommitted `tests/condition_hud_smoke.gd` assumed the old four-zone health; one
+  check line now uses `body_part_at(&"arms", ...)`. Their other files are untouched.
+
+Checks: all pass except the known `environment_proof_check`; `enemy_encounter_smoke` still flaky.
+
+Next / open:
+- Merge `claude/work` into `main` by pull request when the owner wants.
+- Choosing a specific supply/part for a teammate in the inventory; show `care_message` on the HUD;
+  lower the rifle during treatment until animations exist; balance numbers; period provenance.
+- Old worktrees (`forest-brothers-health`, `-loot`, `-inventory`) can be removed once the owner agrees.
+
+## 2026-11-02 — smarter enemies (owner approved: peek, retreat when hurt, crouch behind crates)
+
+Done:
+- Chunk 16, peeking from cover (`enemy_peek_smoke`). `enemy_encounter_smoke` now waits for the solo
+  death instead of a fixed 6 s (seven-part health needs a varying number of hits); its 4 s
+  "rays reach player" step is still occasionally flaky.
+
+- Chunk 17, blood trails and temperaments (`blood_trail_smoke`): timid flees and hides, steady covers
+  and peeks, aggressive pushes while hurt; players and wounded enemies drip blood; enemies follow a
+  player's fresh blood. `enemy_encounter_smoke` now waits for the first hit instead of a fixed 4 s.
+
+- Chunk 18, crouching behind crates (`enemy_crouch_smoke`). Cover is now measured from the floor
+  (navigation points float 0.5 m up). Crouch sprite is the standing art drawn at 0.9 m (placeholder).
+
+Smarter-enemy chunks done. Enemy wounds now drain torso health (owner: yes). Crouch sprite shrink is
+listed in COMBAT_ARENA_PLAN 3b "Known placeholders and workarounds" (owner: address later).
+
+## 2026-11-02 — arena outing: recover the dispatch
+
+Done: chunk 19 (`arena_mission_smoke`): find the sealed dispatch at one of four spots, leave by the
+west exit (5 s), debrief on complete / early return / death, Go again.
+
+Then (owner): the game IS a co-op PvE extraction shooter (AGENTS.md, GAME_CONCEPT, DECISIONS
+updated) and missions must share one framework. Built `scripts/missions/` (definition .tres, objective
+spots, exits, per-participant MissionRun, MissionReport, MissionController) and `ui/missions/` (shared
+HUD and summary screen); the arena now hosts `missions/arena_dispatch.tres` through it
+(`mission_run_smoke`, `arena_mission_smoke`).
+
+## 2026-11-02 — mission map and first mission world (owner away)
+
+Done: `scenes/missions/mission_board.tscn` (mission map, pins, briefing, deploy, results) and
+`scenes/missions/mission_world.tscn` (blockout district with objective spots, exits and enemy spawns)
+playing three catalog missions (`missions/*.tres`). Checks: `mission_board_smoke`, `mission_world_smoke`.
+`enemy_peek_smoke` was made robust to timing (it failed ~1 in 3 under full-sweep load).
+
+Then (owner): use only environment-library assets. The mission world now uses library trees,
+deadwood, boulders, ferns, ground cover, crates and moss ground; walls use the library wood texture.
+Gaps for the environment work: buildings, sandbags, roads.
+
+Then (owner): regions, Tarkov-style. The mission map now offers regions (`MissionRegion`); pick one,
+tick any open missions (or none: scavenging), deploy. Second region: Deep forest
+(`scenes/missions/forest_world.tscn`, forester's hut, bunker, bog). World scenes share
+`scripts/missions/region_world.gd`. Missions complete separately and drop off the map.
+
+Then (owner): connect from the camp, no menu edits. The camp HQ station opens the mission map and
+the combat arena; map, outing summaries and arena return to camp (`camp_mission_flow_smoke`).
+`enemy_crouch_smoke` fixed: a shot that killed the player ended the arena outing and froze the enemy.
+
+Then (owner): characters and worlds, Valheim-style. Main menu Play -> character select/create ->
+world select/create/join -> camp. Character files keep carried gear (travels between worlds); world
+files keep the camp and mission results (`scripts/state/`, `ui/session/play_menu.gd`,
+`session_persistence_smoke`). Training saves nothing.
+
+Then: mission rewards into camp stores; rubles and lats (carried items, quartermaster deposit,
+fixed-price contact station, money in regions/on enemies/in rewards; `money_smoke`).
+Then: camp cash chest, a two-way money container in the inventory view (`cash_chest_smoke`).
+Then (owner): new forest camp for Play (`scenes/camp/forest_camp.tscn`): fire, old man trader, tent,
+cash and goods chests, map barrel to the mission map (`forest_camp_smoke`). Training is a sandbox again.
+Then (owner): old man trade window (buy, and sell items cheaply); goods chest 1,000 squares, scrolling.
+
+Open for the owner: playtest; bribes; delete/rename characters and worlds; save character health;
+network joining (two-instance check); camp issue of weapons after a death.

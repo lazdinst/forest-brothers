@@ -4,6 +4,7 @@ const Registry = preload("res://startup/scene_registry.gd")
 const MenuModal = preload("res://ui/components/menu_modal.gd")
 const TrainingUIBridge = preload("res://ui/training_ui_bridge.gd")
 const InventoryHost = preload("res://ui/inventory/inventory_host.gd")
+const GameSession = preload("res://scripts/state/game_session.gd")
 
 var content: Node
 var navigation: CanvasLayer
@@ -30,7 +31,10 @@ func _ready() -> void:
 	navigation_panel.action_selected.connect(_navigation_action)
 	navigation_panel.canceled.connect(_cancel_navigation)
 	var route := Registry.resolve_route(OS.get_cmdline_user_args(), OS.get_environment("FOREST_BROTHERS_START"))
-	if route == "training":
+	# Coming back from the mission map or an outing: the camp when a world is being played.
+	if route == "training" and GameSession.active():
+		launch_camp()
+	elif route == "training":
 		launch_training()
 	else:
 		show_menu()
@@ -44,11 +48,34 @@ func show_menu() -> void:
 	navigation_open = false
 	confirming_leave = false
 	training_active = false
+	# Leaving the camp above saved the character and world; the session ends here.
 	_replace_content(Registry.MENU)
+	GameSession.end()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if content != null:
-		content.training_requested.connect(launch_training)
+		content.play_requested.connect(show_play)
+		content.training_requested.connect(_launch_sandbox)
 		content.quit_requested.connect(func(): get_tree().quit())
+
+## Training is a sandbox: it never plays a saved character or world.
+func _launch_sandbox() -> void:
+	GameSession.end()
+	launch_training()
+
+## Character and world selection; joining a world opens its camp.
+func show_play() -> void:
+	if not _replace_content(Registry.PLAY):
+		show_menu()
+		return
+	content.back_requested.connect(show_menu)
+	content.start_requested.connect(_join_world)
+
+func _join_world(character_id: String, world_id: String) -> void:
+	if GameSession.begin(character_id, world_id):
+		launch_camp()
+	else:
+		show_menu()
+		content.show_message("World unavailable", "The character or world save could not be read.")
 
 func launch_training() -> void:
 	if training_active:
@@ -66,6 +93,22 @@ func launch_training() -> void:
 	else:
 		show_menu()
 		content.show_message("Training unavailable", "Could not load the training scene. See the Godot output for details.")
+
+## The world's camp: playable like training (pause, Tab inventory) without the training panels.
+func launch_camp() -> void:
+	if training_active:
+		return
+	if not _replace_content(Registry.CAMP):
+		show_menu()
+		content.show_message("Camp unavailable", "Could not load the camp scene. See the Godot output for details.")
+		return
+	training_active = true
+	training_ui = null
+	inventory_host = InventoryHost.new()
+	inventory_host.handle_tab = false
+	inventory_host.world = content
+	inventory_host.player = content.get_node("Player")
+	add_child(inventory_host)
 
 func _replace_content(path: String) -> bool:
 	var packed := load(path) as PackedScene
@@ -115,6 +158,13 @@ func open_navigation() -> void:
 
 func _present_pause() -> void:
 	confirming_leave = false
+	if GameSession.active():
+		navigation_panel.present("Paused", "%s in %s. The camp and your equipment are saved when you leave." % [GameSession.character.name, GameSession.world.name], [
+			{"id": &"resume", "caption": "Resume"},
+			{"id": &"leave", "caption": "Save and return to main menu"},
+			{"id": &"inventory", "caption": "Equipment & inventory"},
+		])
+		return
 	navigation_panel.present("Training paused", "Leaving discards this training session.", [
 		{"id": &"resume", "caption": "Resume training"},
 		{"id": &"leave", "caption": "Return to main menu"},
@@ -128,10 +178,16 @@ func _navigation_action(action_id: StringName) -> void:
 		&"leave":
 			confirming_leave = true
 			# Replace the existing surface rather than opening a second dialog over it.
-			navigation_panel.present("Leave training?", "Return to the menu and discard this training session?", [
-				{"id": &"cancel", "caption": "Keep training"},
-				{"id": &"confirm_leave", "caption": "Return to main menu"},
-			])
+			if GameSession.active():
+				navigation_panel.present("Leave the camp?", "Save the camp and your equipment and return to the menu?", [
+					{"id": &"cancel", "caption": "Stay"},
+					{"id": &"confirm_leave", "caption": "Save and return to main menu"},
+				])
+			else:
+				navigation_panel.present("Leave training?", "Return to the menu and discard this training session?", [
+					{"id": &"cancel", "caption": "Keep training"},
+					{"id": &"confirm_leave", "caption": "Return to main menu"},
+				])
 		&"cancel": _present_pause()
 		&"confirm_leave": show_menu()
 

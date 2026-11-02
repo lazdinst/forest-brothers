@@ -4,6 +4,22 @@ signal changed
 var can_complete: Callable
 var can_player_work: Callable
 const Stock = preload("res://scripts/state/camp_stock.gd")
+const SupplyCatalog = preload("res://scripts/health/supply_catalog.gd")
+## The contact's fixed prices per lot, in rubles or in lats. Lats buy more: they are scarce
+## pre-war savings the contact values highly. Placeholder amounts, not balance.
+const PRICES = {
+	&"medicine": {"label":"Medicine","amount":1,"rubles":40,"lats":2},
+	&"rounds": {"label":"Cartridges","amount":20,"rubles":30,"lats":1},
+	&"parts": {"label":"Weapon parts","amount":1,"rubles":25,"lats":1},
+	&"cloth": {"label":"Cloth","amount":2,"rubles":10,"lats":1},
+	&"food": {"label":"Food","amount":3,"rubles":15,"lats":1},
+}
+## What the trader pays for a full supply item, in rubles; partly used items pay in proportion.
+## Placeholder amounts, kept well under buying prices.
+const SELL_SUPPLIES = {&"cloth_bandage":3,&"field_dressing":5,&"tourniquet":6,&"splint":5,&"morphine":15,
+	&"medical_satchel":20,&"sulfa_powder":8,&"surgical_kit":25,&"canteen":4,&"rye_bread":2,&"tinned_meat":4}
+const SELL_WEAPON := 60
+const SELL_MAGAZINE := 5
 const RECIPES = {
 	&"water": {"label":"Draw water", "cost":{}, "output":{&"water":2}, "seconds":2.0, "role":&""},
 	&"cook": {"label":"Cook communal meal", "cost":{&"food":1,&"water":1}, "output":{&"meals":1}, "seconds":4.0, "role":&"cook"},
@@ -193,6 +209,68 @@ func deposit_ammo(weapon_state, amount: int = 10) -> bool:
 	changed.emit()
 	return true
 
+## Moves every carried rubles and lats item into the camp treasury.
+func deposit_money(weapon_state) -> bool:
+	if weapon_state == null:
+		return _fail("Nothing carried to deposit")
+	var inventory = weapon_state.inventory
+	var amounts := {}
+	for item in inventory.items.values().duplicate():
+		if item.kind == &"supply" and SupplyCatalog.is_money(item.supply_id) and inventory.carried(item):
+			amounts[item.supply_id] = amounts.get(item.supply_id, 0) + item.uses
+			inventory.items.erase(item.id)
+	if amounts.is_empty():
+		return _fail("You carry no rubles or lats")
+	inventory._notify_changed()
+	stock.try_exchange({}, amounts)
+	message = "Deposited %d rubles and %d lats into the camp treasury" % [amounts.get(&"rubles", 0), amounts.get(&"lats", 0)]
+	changed.emit()
+	return true
+
+## Buys one lot of a good from the contact, paying from the treasury in rubles or lats.
+func buy(good: StringName, currency: StringName) -> bool:
+	if not PRICES.has(good) or not currency in [&"rubles", &"lats"]:
+		return _fail("The contact does not sell that")
+	var offer: Dictionary = PRICES[good]
+	if not stock.try_exchange({currency: int(offer[currency])}, {good: int(offer.amount)}):
+		return _fail("The treasury is short of %s" % currency)
+	message = "Bought %d %s for %d %s" % [offer.amount, good, offer[currency], currency]
+	changed.emit()
+	return true
+
+## What the trader pays, in rubles, for an item with everything inside it (a rifle with its
+## magazine, a magazine with its rounds). Cheap: well under what buying costs. 0 means he will
+## not take it (money, mission items, a worn backpack, the equipped rifle).
+func sell_value(inventory, item) -> int:
+	if item == null or not inventory.carried(item): return 0
+	if item.kind == &"backpack" or item.location.kind in [&"equipped", &"worn"]: return 0
+	var total := 0
+	for member in inventory.contents_tree(item):
+		match member.kind:
+			&"weapon": total += SELL_WEAPON
+			&"magazine": total += SELL_MAGAZINE + int(member.rounds.size() / 2.0)
+			&"ammo_stack": total += maxi(1, int(member.quantity / 2.0))
+			&"supply":
+				if SupplyCatalog.is_money(member.supply_id) or SupplyCatalog.is_objective(member.supply_id): return 0
+				var full := int(SupplyCatalog.get_def(member.supply_id).uses)
+				total += maxi(1, int(float(SELL_SUPPLIES.get(member.supply_id, 2)) * member.uses / maxi(1, full)))
+	return total
+
+## Sells an item (with everything inside it) to the trader; the rubles go to the treasury.
+func sell(inventory, id: StringName) -> bool:
+	var item = inventory.items.get(id)
+	var value := sell_value(inventory, item)
+	if value <= 0:
+		return _fail("The old man will not take that")
+	for member in inventory.contents_tree(item):
+		inventory.items.erase(member.id)
+		if inventory.active_weapon_id == member.id: inventory.active_weapon_id = &""
+	inventory._notify_changed()
+	stock.try_exchange({}, {&"rubles": value})
+	message = "Sold for %d rubles" % value
+	changed.emit()
+	return true
+
 func place_plan(id: StringName, at: Vector2) -> bool:
 	if plans.has(id) or at.x < -13.2 or at.x > -5.8 or at.y < -1.6 or at.y > 9.6:
 		return _fail("Place racks in the marked west planning plot")
@@ -253,3 +331,47 @@ func feed_resident(id: StringName) -> bool:
 	message = "Resident provisioned from communal food storage"
 	changed.emit()
 	return true
+
+## Persistent camp state for a world save (JSON-safe). Jobs in progress are not saved: their
+## reserved supplies count back into the stores and their workers are free again on load.
+func encode() -> Dictionary:
+	var stores := {}
+	for id in stock.quantities:
+		stores[str(id)] = stock.quantities[id]
+	for job in jobs.values():
+		for id in job.cost:
+			stores[str(id)] = stores.get(str(id), 0) + int(job.cost[id])
+	var people := {}
+	for id in residents:
+		people[str(id)] = {"role":str(residents[id].role),"fed":residents[id].fed}
+	var plan_records := {}
+	for id in plans:
+		var status: StringName = plans[id].status
+		plan_records[str(id)] = {"at":[plans[id].at.x, plans[id].at.y],"status":str(&"planned" if status == &"building" else status)}
+	return {"stores":stores,"residents":people,"plans":plan_records,"shelter_tier":shelter_tier,"trench_complete":trench_complete,
+		"patient":patient.duplicate(),"cache_claimed":cache_claimed,"quests_completed":quests_completed}
+
+## Replaces the camp with a saved state; unknown store entries are ignored.
+func restore(state: Dictionary) -> void:
+	jobs.clear()
+	for id in stock.quantities.keys():
+		stock.quantities[id] = int(state.get("stores", {}).get(str(id), 0))
+	residents.clear()
+	for id in state.get("residents", {}):
+		var record: Dictionary = state.residents[id]
+		residents[StringName(id)] = {"role":StringName(record.get("role", "unassigned")),"busy":"","fed":bool(record.get("fed", false))}
+	plans.clear()
+	for id in state.get("plans", {}):
+		var record: Dictionary = state.plans[id]
+		plans[StringName(id)] = {"at":Vector2(record.at[0], record.at[1]),"status":StringName(record.status)}
+	shelter_tier = int(state.get("shelter_tier", 0))
+	trench_complete = bool(state.get("trench_complete", false))
+	if state.get("patient") is Dictionary:
+		patient = {"bleeding":bool(state.patient.bleeding),"fracture":bool(state.patient.fracture),"recovery":float(state.patient.recovery)}
+	cache_claimed = bool(state.get("cache_claimed", false))
+	quests_completed = int(state.get("quests_completed", 0))
+	pending_recruits.clear()
+	exercise_active = false
+	message = "Camp restored from the world save."
+	stock.changed.emit()
+	changed.emit()

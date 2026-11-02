@@ -3,7 +3,7 @@ extends Node3D
 const CampStock = preload("res://scripts/state/camp_stock.gd")
 const ResourceStrip = preload("res://ui/components/resource_strip.gd")
 # Generous reset-on-run training supplies, not campaign starting balance.
-const TRAINING_STOCK = {&"food":100,&"water":100,&"medicine":30,&"meals":30,&"timber":200,&"parts":60,&"cloth":80,&"rounds":500}
+const TRAINING_STOCK = {&"food":100,&"water":100,&"medicine":30,&"meals":30,&"timber":200,&"parts":60,&"cloth":80,&"rounds":500,&"rubles":120,&"lats":3}
 var stock = CampStock.new()
 var resource_strip
 var debug_overlay

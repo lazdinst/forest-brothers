@@ -19,7 +19,7 @@ The owner initially considered a mercenary role, then proposed a Forest Brothers
 - Build familiarity with a small place and its people over repeated outings; develop a hands-on camp with structures, trenches, water, food storage, cooking, and weapon maintenance.
 - Share that experience in co-op with a maximum of four players; solo play remains important.
 
-Tarkov is a reference for immersion, tension, and consequences. This game is not an extraction shooter: the proposed campaign revolves around the needs of a continuing resistance camp, local relationships, and lasting world state. Mission outings from camp and individual return to camp after death are confirmed; detailed map transitions remain undecided. Surviving teammates continue their mission.
+Tarkov is a reference for immersion, tension, and consequences, and the outings are extraction-shooter outings: deploy, recover what you can, and get out alive to keep it (owner direction, 2026-11-02). What sets the game apart is the purpose around them: the proposed campaign revolves around the needs of a continuing resistance camp, local relationships, and lasting world state. There is no competitive PvP. Mission outings from camp and individual return to camp after death are confirmed; detailed map transitions remain undecided. Surviving teammates continue their mission.
 
 ## Core loop — proposed
 

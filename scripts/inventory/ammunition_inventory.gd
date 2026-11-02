@@ -1,5 +1,6 @@
 extends RefCounted
 ## Scene-owned physical item rules. No UI, animation, save-file or network authority.
+const SupplyCatalog = preload("res://scripts/health/supply_catalog.gd")
 signal changed
 
 class AmmoDefinition extends RefCounted:
@@ -68,6 +69,12 @@ class WeaponInstance extends Item:
 class BackpackInstance extends Item:
 	var label := "Rucksack"
 	func _init() -> void: kind = &"backpack"
+
+## A medical or food supply. Its definition lives in SupplyCatalog; uses is what remains.
+class SupplyInstance extends Item:
+	var supply_id: StringName
+	var uses := 1
+	func _init() -> void: kind = &"supply"
 
 const POCKET_CAPACITY := 4
 ## Owner-approved starting footprints (2026-11-02), placeholders rather than final balance.
@@ -183,7 +190,7 @@ func total_rounds() -> int:
 	return count
 
 func footprint(item: Item, rotated := false) -> Vector2i:
-	var base: Vector2i = FOOTPRINTS.get(item.kind,Vector2i.ONE)
+	var base: Vector2i = SupplyCatalog.get_def(item.supply_id).get("size",Vector2i.ONE) if item is SupplyInstance else FOOTPRINTS.get(item.kind,Vector2i.ONE)
 	return Vector2i(base.y,base.x) if rotated else base
 
 ## Cells covered by an item of this size at a pocket/pack location.
@@ -239,6 +246,27 @@ func can_merge_stacks(source_id: StringName, target_id: StringName) -> bool:
 	var source := items.get(source_id) as AmmoStack
 	var target := items.get(target_id) as AmmoStack
 	return source != null and target != null and source != target and carried(source) and carried(target) and source.ammo_type_id == target.ammo_type_id and target.quantity < 32
+
+## Money of one currency combines into one stack, up to a full item's worth (rubles with
+## rubles, lats with lats), within one carrier or across two (a chest and its user).
+func can_merge_money_into(source_id: StringName, recipient, target_id: StringName) -> bool:
+	var source := items.get(source_id) as SupplyInstance
+	var target := recipient.items.get(target_id) as SupplyInstance if recipient != null else null
+	if source == null or target == null or source == target or not carried(source) or not recipient.carried(target): return false
+	return SupplyCatalog.is_money(source.supply_id) and source.supply_id == target.supply_id and target.uses < int(SupplyCatalog.get_def(target.supply_id).uses)
+
+## Moves as much of a money stack onto another as fits; what does not fit stays where it was.
+func merge_money_into(source_id: StringName, recipient, target_id: StringName) -> bool:
+	if not can_merge_money_into(source_id, recipient, target_id): return fail("Only the same money combines, up to a full stack")
+	var source: SupplyInstance = items[source_id]
+	var target: SupplyInstance = recipient.items[target_id]
+	var amount := mini(source.uses, int(SupplyCatalog.get_def(target.supply_id).uses) - target.uses)
+	target.uses += amount
+	source.uses -= amount
+	if source.uses == 0: items.erase(source.id)
+	_notify_changed()
+	if recipient != self: recipient._notify_changed()
+	return true
 
 func can_load_round(magazine_id: StringName, stack_id: StringName) -> bool:
 	var mag := magazine(magazine_id)
@@ -452,17 +480,44 @@ func pickup(id: StringName) -> bool:
 	return true
 
 func transfer_ground_item_to(id: StringName, recipient) -> bool:
-	# Communal equipment can change custody. Preflight the complete weapon subtree
-	# before removing anything from the source; no ID or chamber round is copied.
 	var item: Item = items.get(id)
 	if recipient == self: return pickup(id)
-	if item == null or item.location.kind != &"ground" or recipient.weapon_type_id != weapon_type_id: return fail("Equipment cannot be recovered by this inventory")
-	var destination: Location
-	if item is BackpackInstance:
-		if recipient.backpack() != null: return fail("Recipient already wears a backpack")
-		destination = Location.new(&"worn",recipient.owner_id,0)
-	else: destination = recipient.empty_location(&"",recipient.footprint(item))
-	if item is WeaponInstance and not recipient.equipped(): destination = Location.new(&"equipped",recipient.owner_id,0)
+	if item == null or item.location.kind != &"ground": return fail("Equipment cannot be recovered by this inventory")
+	return _hand_over(item,recipient,null)
+
+## Take a carried item (with everything inside it) from this carrier, e.g. a searched body.
+## A null destination picks the recipient's first suitable place.
+func transfer_to(id: StringName, recipient, destination: Location = null) -> bool:
+	var item: Item = items.get(id)
+	if recipient == self or item == null or not carried(item) or item.location.kind == &"magwell": return fail("Nothing to take")
+	return _hand_over(item,recipient,destination)
+
+## Where this carrier would put an incoming item: a backpack on the back, a rifle in the
+## empty rifle slot, anything else in the first free pocket or pack space.
+func auto_destination(item: Item) -> Location:
+	if item is BackpackInstance: return Location.new(&"worn",owner_id,0) if backpack() == null else null
+	if item is WeaponInstance and not equipped(): return Location.new(&"equipped",owner_id,0)
+	return empty_location(&"",footprint(item))
+
+## Side-effect-free check for an item arriving from another carrier.
+func can_receive(item: Item, destination: Location) -> bool:
+	if item == null or destination == null or items.has(item.id): return false
+	match destination.kind:
+		&"pocket", &"pack":
+			if item is BackpackInstance: return false
+			if destination.kind == &"pack" and (not items.get(destination.owner_id) is BackpackInstance or not carried(items[destination.owner_id])): return false
+			var size := footprint(item,destination.rotated)
+			return valid_slot(destination,size) and occupant(destination,&"",size) == null
+		&"equipped": return item is WeaponInstance and not equipped() and destination.owner_id == owner_id and destination.slot == 0
+		&"worn": return item is BackpackInstance and backpack() == null and destination.owner_id == owner_id and destination.slot == 0
+	return false
+
+# Communal equipment can change custody. Preflight the complete subtree before removing
+# anything from the source; no ID or chamber round is copied.
+func _hand_over(item: Item, recipient, destination: Location) -> bool:
+	if recipient.weapon_type_id != weapon_type_id: return fail("Equipment cannot be recovered by this inventory")
+	if destination == null: destination = recipient.auto_destination(item)
+	elif not recipient.can_receive(item,destination): return fail("That slot is unavailable")
 	if destination == null: return fail("Recipient inventory is full")
 	var subtree := contents_tree(item)
 	if item is WeaponInstance and item.inserted_magazine_id != &"" and magazine(item.inserted_magazine_id) not in subtree: subtree.append(null)
@@ -496,6 +551,27 @@ func equip_weapon(id: StringName) -> bool:
 	_notify_changed()
 	return true
 
+## A new supply item at the given location (not yet placed anywhere when null).
+func create_supply(supply_id: StringName, location: Location = null, uses := -1) -> SupplyInstance:
+	if not SupplyCatalog.has(supply_id): return null
+	var supply := SupplyInstance.new()
+	supply.id = new_id("supply")
+	supply.supply_id = supply_id
+	supply.uses = uses if uses > 0 else int(SupplyCatalog.get_def(supply_id).uses)
+	supply.location = location if location != null else Location.new(&"ground",&"world")
+	items[supply.id] = supply
+	_notify_changed()
+	return supply
+
+## Spend uses (or supply points) of a supply; an empty one is gone.
+func consume_supply(id: StringName, amount := 1) -> bool:
+	var supply := items.get(id) as SupplyInstance
+	if supply == null or amount <= 0 or amount > supply.uses: return fail("Not enough supply left")
+	supply.uses -= amount
+	if supply.uses == 0: items.erase(id)
+	_notify_changed()
+	return true
+
 func fail(text: String) -> bool:
 	error = text
 	return false
@@ -510,6 +586,7 @@ func encode() -> Dictionary:
 			for round in item.rounds: rounds.append(str(round.ammo_type_id))
 			record.merge({"magazine_type_id":str(item.magazine_type_id),"capacity":item.capacity,"rounds":rounds,"condition":item.condition,"label":item.label,"inspected":item.inspected,"estimate":item.estimate})
 		elif item is BackpackInstance: record.merge({"label":item.label})
+		elif item is SupplyInstance: record.merge({"supply_id":str(item.supply_id),"uses":item.uses})
 		elif item is WeaponInstance: record.merge({"weapon_type_id":str(item.weapon_type_id),"inserted_magazine_id":str(item.inserted_magazine_id),"chambered_round":str(item.chambered_round.ammo_type_id) if item.chambered_round != null else "","condition":item.condition,"jammed":item.jammed})
 		records.append(record)
 	return {"version":1,"owner_id":str(owner_id),"active_weapon_id":str(active_weapon_id),"pack_capacity":pack_capacity,"initial_magazine_ids":initial_magazine_ids.duplicate(),"items":records}
@@ -571,6 +648,13 @@ func restore(snapshot: Dictionary) -> bool:
 				gun.jammed = record.get("jammed",false)
 				if not is_finite(gun.condition) or gun.condition < 0 or gun.condition > 1: return fail("Invalid weapon condition")
 				item = gun
+			"supply":
+				var supply := SupplyInstance.new()
+				if not record.get("supply_id") is String or not SupplyCatalog.has(StringName(record.supply_id)): return fail("Unknown supply")
+				supply.supply_id = StringName(record.supply_id)
+				if not integral(record.get("uses")) or int(record.uses) < 1 or int(record.uses) > int(SupplyCatalog.get_def(supply.supply_id).uses): return fail("Invalid supply uses")
+				supply.uses = int(record.uses)
+				item = supply
 			"backpack":
 				var pack := BackpackInstance.new()
 				if not record.get("label","Rucksack") is String: return fail("Invalid backpack label")

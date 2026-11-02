@@ -28,6 +28,8 @@ func _run() -> void:
 	_check(point != Vector3.INF, "Enemy finds cover near it")
 	_check(point == Vector3.INF or enemy.hidden_from(space, eye, point), "Chosen cover hides chest and head from the threat")
 	_check(_flat(point, enemy.global_position) <= enemy.max_cover_path, "Cover is close by")
+	# Peeking has its own check (enemy_peek_smoke); here the enemy leaves cover straight away.
+	enemy.max_peeks = 0
 	# A hit from the player sends the enemy to cover instead of standing in the open.
 	var shots := {"n": 0}
 	enemy.fired.connect(func(_e, _a, _h): shots.n += 1)

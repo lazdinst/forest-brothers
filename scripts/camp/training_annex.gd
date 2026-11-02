@@ -7,6 +7,10 @@ const PLAYER_WORKER_ID: StringName = &"training_player"
 const ForestLayout = preload("res://scripts/environment/forest_layout.gd")
 const Station = preload("res://scripts/camp/camp_station.gd")
 const Enemy = preload("res://scripts/combat/enemy_actor.gd")
+const MissionLaunch = preload("res://scripts/missions/mission_launch.gd")
+const CashChest = preload("res://scripts/camp/cash_chest.gd")
+const MISSION_MAP := "res://scenes/missions/mission_board.tscn"
+const COMBAT_ARENA := "res://scenes/combat/combat_arena.tscn"
 const Civilian = preload("res://scenes/characters/starting_civilian.tscn")
 const ResidentScript = preload("res://scripts/camp/camp_resident.gd")
 # Rig fixtures only; the owner rejected this blockout as character art.
@@ -44,6 +48,7 @@ var _planner_hint: Label
 var _map_labels: Array[Label] = []
 var _bout_active: bool = false
 var blood_enabled: bool = true
+var cash_chest
 
 func _ready() -> void:
 	world = get_parent()
@@ -76,6 +81,13 @@ func _ready() -> void:
 	_station(&"planning",&"planning","Build planning table",Vector3(-3,0,6))
 	_station(&"hq",&"hq","Headquarters / rescue exercise",Vector3(3,0,6))
 	_station(&"combat",&"combat","Enemy test controls",Vector3(0,0,-1))
+	_station(&"contact",&"contact","Contact (buys and sells at fixed prices)",Vector3(-12,0,-6))
+	# The treasury as a chest beside the quartermaster.
+	cash_chest = CashChest.new(world.stock)
+	cash_chest.name = "CashChest"
+	cash_chest.position = Vector3(-2.2,0,13)
+	add_child(cash_chest)
+	_label(self,"CASH CHEST\nF to open: rubles and lats",Vector3(-2.2,1.5,13))
 	_box(self,"LeftCover",Vector3(-3,1,-5),Vector3(6,2,0.35),Color(0.3,0.32,0.29),true)
 	_box(self,"RightCover",Vector3(7,1,-8),Vector3(0.5,2,5),Color(0.3,0.32,0.29),true)
 	_label(self,"ENEMY TEST LANE\nArm the bout at the control table\n3 rifle hits / non-graphic blood / collapse",Vector3(0,3,-10))
@@ -215,6 +227,7 @@ func reset_enemies() -> void:
 	for effect in get_tree().get_nodes_in_group("training_blood"):
 		if effect.get_parent() == self:
 			effect.queue_free()
+	load("res://scripts/combat/blood_trail.gd").clear_in(get_tree())
 	for index in range(2):
 		var enemy = Enemy.new()
 		enemy.name = "TrainingEnemy%d" % index
@@ -354,7 +367,7 @@ func _ui() -> void:
 	_planner.look_at(global_position+Vector3(-0.5,0,5),Vector3.FORWARD)
 	for id in stations:
 		var label := Label.new()
-		label.text = {&"depot":"Quartermaster",&"well":"Well",&"cook":"Cooking",&"food":"Food store",&"armourer":"Armourer",&"ammo":"Ammo store",&"medical":"Medical post",&"shelter":"Shelter upgrade",&"trench":"Trench",&"planning":"Build table",&"hq":"HQ / Rescue",&"combat":"Enemy controls"}.get(id,stations[id].title)
+		label.text = {&"depot":"Quartermaster",&"well":"Well",&"cook":"Cooking",&"food":"Food store",&"armourer":"Armourer",&"ammo":"Ammo store",&"medical":"Medical post",&"shelter":"Shelter upgrade",&"trench":"Trench",&"planning":"Build table",&"hq":"HQ / Rescue",&"combat":"Enemy controls",&"contact":"Contact"}.get(id,stations[id].title)
 		label.custom_minimum_size.x = 130
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -415,7 +428,16 @@ func refresh_panel() -> void:
 	var station = stations[_panel_station]
 	_heading.text = station.title
 	match station.kind:
-		&"depot": _button("Claim training cache (once this session)",runtime.claim_cache)
+		&"depot":
+			_button("Claim training cache (once this session)",runtime.claim_cache)
+			_details.text += "\nTreasury: %d rubles, %d lats." % [runtime.stock.count(&"rubles"),runtime.stock.count(&"lats")]
+			_button("Deposit carried rubles and lats into the treasury",runtime.deposit_money.bind(player.weapon.state))
+		&"contact":
+			_details.text += "\nTreasury: %d rubles, %d lats. Fixed prices; goods go to the communal stores." % [runtime.stock.count(&"rubles"),runtime.stock.count(&"lats")]
+			for good in runtime.PRICES:
+				var offer: Dictionary = runtime.PRICES[good]
+				_button("Buy %d %s for %d rubles" % [offer.amount,offer.label.to_lower(),offer.rubles],runtime.buy.bind(good,&"rubles"))
+				_button("Buy %d %s for %d lats" % [offer.amount,offer.label.to_lower(),offer.lats],runtime.buy.bind(good,&"lats"))
 		&"well": _recipe_button(&"water",_panel_station)
 		&"cook": _recipe_button(&"cook",_panel_station)
 		&"food":
@@ -449,6 +471,10 @@ func refresh_panel() -> void:
 			_button("Begin rescue exercise / reset enemies",_begin_exercise)
 			_button("Safe return (secures pending civilians)",runtime.resolve_exercise.bind(true))
 			_button("Group-death result (lose pending civilians)",runtime.resolve_exercise.bind(false))
+			_details.text += "
+MISSION-PLANNING TABLE: choose a region and missions; the outing returns here. Camp work in this session does not carry over yet."
+			_button("Open the mission map",_leave_camp.bind(MISSION_MAP))
+			_button("Combat arena (training outing)",_leave_camp.bind(COMBAT_ARENA))
 		&"combat":
 			_details.text += "\nBody %s. Enemies fire only while the bout is armed.\nEnemy weapons are flash proxies. Sprite default; MPFB comparison has frozen pose/clothing issues." % _body_text()
 			_button("Arm enemies / start exposure test",arm_bout)
@@ -460,6 +486,11 @@ func refresh_panel() -> void:
 		if runtime.jobs[_panel_station].worker != &"":
 			_button("Foreman assistance (once per civilian job)",runtime.assist.bind(_panel_station))
 		_button("Cancel job / refund reserved supplies",runtime.cancel_job.bind(_panel_station))
+
+## Leaves for the mission map or the combat arena; MissionLaunch remembers the way back.
+func _leave_camp(path: String) -> void:
+	close_panel()
+	MissionLaunch.leave_camp(get_tree(), path)
 
 func _recipe_button(recipe: StringName, station: StringName) -> void:
 	var data: Dictionary = runtime.RECIPES[recipe]

@@ -18,7 +18,7 @@ The owner requested directional enemy sprites and action animations, rejected fu
 - Repository: `lazdinst/forest-brothers`. The owner requires private visibility; creation/access settings have not been independently verified in these documents.
 - Intended platform/distribution: a PC game for Steam.
 - First-person experience, immersive and punishing; Tarkov is an experiential reference.
-- The game is not intended to be an extraction shooter.
+- The game is not intended to be an extraction shooter. *(Superseded 2026-11-02: it is a cooperative PvE extraction shooter; see below.)*
 - Setting direction: Latvia around 1946, inspired by the Forest Brothers. This is the working year; the region and exact historical framing remain open.
 - Activities include supporting a forest group/hideout, obtaining supplies, helping Latvian locals, and conflict with occupying forces.
 - Art direction: gritty illustrated sprites, with painted characters and a low-resolution finish. The owner expects agent-generated sprite production; pipeline feasibility and consistency must be tested early.
@@ -348,3 +348,97 @@ Status: owner-confirmed direction; sizes are placeholders.
 The owner clarified that one square per item was only an easy start. Items may occupy several pack squares and can be rotated, as in Escape from Tarkov. This supersedes the one-square rule in "Personal inventory scope and pocket capacity"; pockets stay four single squares in one row, so only 1 × 1 items fit there. Approved starting sizes: rifle 5 × 2 (pack only), magazine 1 × 1, cartridge stack 1 × 1. Right-click context menus replace the full-screen per-item action list, and drag-and-drop shows whether a drop is accepted before release. Secure containers, insurance, traders/prices, found-in-raid status, a private stash, remote camp access and weight remain out. Work proceeds in owner-approved chunks; see INVENTORY_UI_DESIGN.md.
 
 Later the same day the owner asked for a larger pack (now 9 × 6, placeholder) and said the pack should be an item itself, like a Tarkov backpack. Owner answers: the training kit starts wearing one 9 × 6 backpack in the Backpack slot; a removed or dropped backpack keeps its contents inside (a teammate recovers it whole); one backpack size for now. Implemented: pack cells belong to the backpack item, so contents travel with it; a carrier wears at most one and backpacks are never stored inside one another (reversible simplification). Off the back a backpack takes 4 × 4 (placeholder).
+
+## Looting bodies — 2026-11-02
+
+Status: owner-confirmed direction; timings are placeholders.
+
+The owner asked to loot dead enemies instead of having their items fall to the ground. Chosen: F on a body opens the player's inventory with the body's gear beside it (Tarkov-style); the enemy's rifle is lootable, keeping its inserted magazine; searching takes a short time, revealing one item at a time while the body is open (0.8 s per item, placeholder). This is a deliberate exception to "the personal screen shows only what is on the person": a searched body appears beside it, camp stores still do not. Take-only for now; putting items onto bodies, search interruption rules and multiplayer authority remain open.
+
+## Tarkov-style player health, injuries, energy and water — 2026-11-02
+
+Status: owner-directed ("lean towards how Escape from Tarkov works"); implemented while the owner was away. All numbers are placeholders.
+
+The owner asked for a detailed Tarkov-like health and pain system, light and heavy bleeds, fractures, medical supplies, energy and water, and per-body-part health in the inventory. Another agent owns HUD effects and medical sprites; this work provides the rules and inventory side only.
+
+- Seven parts: head 35, thorax 85, stomach 70, arms 60, legs 65 (Tarkov's 440). Combat hit zones map by side and height (torso above 60% of standing height is thorax).
+- Confirmed rules kept: head at zero kills; thorax at zero downs (solo down is death); any hit on a downed body kills. A destroyed limb or stomach spreads further damage to the remaining parts at 70%.
+- Hits can cause light bleeding, heavy bleeding and (limbs) fractures. Bleeds drain their part; energy and water drain over about an hour, faster when sprinting, and when empty slowly damage thorax and stomach.
+- Pain (fracture, destroyed limb, recent heavy hit), shock (heavy hit or under 30% health), suppression (near misses), hungry and dehydrated are exposed via `PlayerHealth.effects()` for the HUD.
+- Broken or destroyed legs stop sprinting and slow movement unless morphine is active. Broken, destroyed or tourniqueted arms, pain, fever and post-revival weakness make the aim sway (wired into the camera sway while aiming).
+- Supplies are physical inventory items with uses: cloth bandage (light bleed), field dressing (light or heavy bleed), splint (fracture), morphine (pain, 5 min), medical satchel (300-point pool: bleeds and health, not destroyed parts), canteen (3 drinks), rye bread, tinned meat. Treatment is timed, can be interrupted, and spends nothing if the supply leaves the person. Period provenance of each item still needs research (MISSIONS_AND_MEDICINE.md).
+- Enemies keep the simpler four-zone health.
+
+## Tourniquet, field surgery, infection, teammate care and revival — 2026-11-02
+
+Status: owner-approved scope ("continue with the parts we are missing"; the owner chose all four of tourniquet, field surgery, infection, and teammate care with revival, and "dressing + 8 s hold" for revival). This approves building them as placeholders; it supersedes the earlier "avoid implementing infection" caution in MISSIONS_AND_MEDICINE.md. All numbers remain placeholders, and period provenance of the items is still unresearched.
+
+- Rubber tourniquet (2 s): stops a heavy bleed on an arm or leg only. The limb then hurts, counts as impaired (leg: no sprint and slower; arm: unsteady aim) and loses 0.3 health/s until a field dressing or the satchel replaces it. A cloth bandage cannot. The drain can destroy the limb but does not spread.
+- Surgical kit (2 uses, 20 s): only for a destroyed arm, leg or stomach. Returns it to 30% of a maximum that shrinks by 20% for the rest of the mission and clears its bleeding and tourniquet; fractures stay.
+- Infection: a hit of 8+ leaves an open wound; after 8 minutes untreated it turns infected with 50% chance. An infected limb or stomach drains 0.05 health/s (head and thorax only bring fever). Any infection is a fever: energy and water drain 1.5× faster and aim is less steady. Sulfa powder (3 uses, 4 s) cleans a wound or cures the infection.
+- Revival: a downed player has 60 s (`bleed_out_seconds`; timer now lives in the rules). A teammate looks at them, presses F and spends one carried cloth bandage or field dressing (bandage first) over 8 s. The revived player gets thorax 20, the thorax bleed stopped, pain, and 5 minutes of weakness (no sprint, 0.8× speed, less steady aim). Every other injury stays.
+- Teammate care: F on a standing teammate puts the medic's most suitable carried supply on the teammate's most urgent injury (plainest supply first). F again stops it. Moving more than 2.5 m away cancels and spends nothing. The treatment belongs to the medic; supplies come from the medic's carried inventory.
+- Mission players join the `mission_players` group. A down becomes death unless another mission player is standing (or the dev "simulated teammate" toggle is on). When the last standing player goes down, every downed player dies (all-incapacitated mission death). This is a local stand-in until a mission session owns casualty resolution and network authority.
+- New `effects()` keys for the HUD: `tourniquets`, `infections`, `open_wounds`, `fever`, `reviving`, `bleed_out_seconds`, `revived_seconds`.
+- Not built: choosing a specific supply and part for a teammate through the inventory (quick care only), two medics on one casualty, a HUD prompt for `care_message`, network authority, camp recovery.
+
+## Enemies peek from cover — 2026-11-02
+
+Status: owner approved the "smarter enemies" combat chunks (peeking, retreating when hurt, crouching behind crates), to be built one at a time. Peeking is the first. Numbers are placeholders.
+
+Instead of walking straight out after holding cover, an enemy sidesteps to a short spot beside its cover that sees the threat, reacts, fires while it sees the threat, and steps back after 2.5 s or when empty. Two peeks per cover, then the old behaviour (move toward the last known position). The reaction pause and reset first-shot spread keep each exposure readable and fair. Details in COMBAT_ARENA_PLAN.md chunk 16.
+
+## Enemy temperaments and blood trails — 2026-11-02
+
+Status: owner direction ("different aggression levels, sometimes they fully retreat and run away but also we need enemies who push hard while hurt"; hurt or bleeding enemies leave a blood trail to track them, and enemies can track players the same way). Numbers are placeholders.
+
+- Three temperaments, shown once an enemy is hurt (30 damage): timid flees far and hides, steady keeps to cover and peeks, aggressive leaves cover and pushes while firing. The arena draws one at random per enemy each reset; archetypes may later fix them per enemy type.
+- Wounded enemies and bleeding (or downed) players leave visible blood drops that fade after 10 minutes. Players follow an enemy's trail by eye; enemies follow a player's trail drop by drop when they see fresh blood within 7 m. Stopping a player's bleed stops their trail. Enemy wounds bleed for 120 s; owner confirmed they drain health over time: 0.2/s (light) or 0.45/s (heavy, hits of 30+) from the torso as blood loss, which can down a fleeing enemy where it hides.
+- Not built: enemies following each other's blood, scent or dogs, weather or ground type affecting trails.
+
+## Enemies crouch behind low cover — 2026-11-02
+
+Status: owner approved ("Yes" to crouching enemies so crates count as cover). Third of the smarter-enemy chunks. Numbers are placeholders.
+
+Enemies may take a crate as cover when it hides a crouched body; full-height cover is preferred unless low cover is clearly closer. They crouch while holding and stand up in place to peek and fire over it. There is no crouch art: the standing sprite is drawn at crouched height as a stand-in, chosen so what the player sees matches what can be hit. Real crouch frames remain a sprite follow-up needing owner direction.
+
+## Arena outing: recover a document — 2026-11-02
+
+Status: owner direction ("It should be to locate a document and leave the mission with it"). Numbers and spots are placeholders.
+
+The arena's goal is to find a sealed dispatch (fictional; no historical document is implied) and leave through the west exit carrying it. It is a normal carried item, so death leaves it on the body like other gear, consistent with the confirmed equipment rule. Leaving without it is allowed as an early safe return. A debrief summarises each outing. Not built: the one-hour timeout, randomised supplies beyond the dispatch spot, camp-side rewards, co-op rules for who may carry it out, and any persistence beyond the arena.
+
+## Extraction shooter; one mission framework — 2026-11-02
+
+Status: owner direction ("We have this concept that it's not an extraction shooter but it really is, we need to update that clause"; "we need the same kinds of screens for any mission"). This supersedes "The game is not intended to be an extraction shooter" (2026-11-01) and the later note that Tarkov-style stakes fit that earlier direction.
+
+- Forest Brothers is a cooperative PvE extraction shooter: deploy from the camp, recover what you can, get out alive to keep it. The camp, locals and lasting world state remain the purpose. Competitive PvP, a player-trading or market-driven loot economy, and live-service remain unapproved.
+- All missions share one framework: definition resources, map markers (objective spots, exits), per-participant rules, one report shape and one summary screen. See MISSION_STRUCTURE.md.
+
+## Mission map and first mission world — 2026-11-02
+
+Status: owner direction while away ("We need to start with a basic mission scene world. A map to choose missions."). Choices made without the owner, all reversible: a blockout district rather than environment-agent art; three fictional missions (farmstead dispatch, village medicine, checkpoint codebook) with placeholder time limits and enemy counts; the mission map is opened directly, not yet from the main menu or the camp planning table; results are kept only for the current run of the game. Mission handoff between scenes uses a static holder (`MissionLaunch`), not an autoload.
+
+## Maps use only the environment library — 2026-11-02
+
+Status: owner direction ("We should only be using these assets. Not recreating new ones"), after the first mission world used stand-in trees and props. The mission world now uses only `assets/environment/` scenes, meshes and materials. Missing library pieces (buildings, sandbags, roads, wells, carts) are gaps for the environment work; meanwhile walls, fences and the barrier are plain shapes with the library's weathered wood, and those props are left out.
+
+## Regions on the mission map — 2026-11-02
+
+Status: owner direction ("selecting different regions and doing missions. Kind of like how tarkov works"), with owner choices: several missions per outing, and a second region. The mission map offers regions; each region owns its world scene, time limit, exits and standing enemies, and lists its missions. Players tick any open missions before deploying, or none for a scavenging outing; each mission is completed separately and is then no longer offered. Choices made without the owner, all reversible: open missions start ticked; completed missions drop out for the rest of the game run (no campaign save yet); mission-added enemies stack on the region's; region time limits (60 and 40 minutes) and the Deep forest region's layout and missions are placeholders.
+
+## Missions reached from the camp — 2026-11-02
+
+Status: owner direction ("not really connected into a single grouping from the camp or menu"), choosing camp-only wiring with no main-menu or startup changes, and the combat arena reachable alongside. The camp HQ station opens the mission map and the combat arena; the map, every outing summary and the arena lead back to the camp (through startup's existing `training` route when the game was started from the menu). Known limit: the camp reloads on return, so session-only camp work is lost until a campaign save exists. The main menu's New Game stays disabled (menu agent's area).
+
+## Characters and worlds, saved locally — 2026-11-02
+
+Status: owner direction ("you are selecting a character ... a server you are joining. Kind of like how valheim works. What's on your character is persisted. The camp is also persisted"), with owner choices: carried gear travels with the character between worlds; the main menu changes (Play replaces the disabled Continue/New Game); worlds are local first, network joining later. Saves are JSON files under `user://saves` (characters and worlds separate). Choices made without the owner, all reversible: mission death returns the character with the standard kit; objective items are handed in at extraction; the camp autosaves every 30 s and when left; jobs in progress are not saved (reserved supplies refunded); new worlds start with the training stores; the character's health is not saved; there is no delete for characters or worlds yet; appearance is a placeholder silhouette. Open: whether gear moving between worlds conflicts with the communal-ownership rule in multiplayer, and who owns a joining character's gear when the host saves.
+
+## Rubles and lats — 2026-11-02
+
+Status: owner direction ("We need currency, rubles and lats"), with owner choices: money is used at a fixed-price camp contact and paid by missions (bribes later); it is carried as items and deposited into a communal camp treasury; lats are scarce and worth more to locals. No player-to-player trading and no fluctuating market. Prices, rewards and found amounts are placeholders. History: the ruble became the only legal tender in Latvia on 25 March 1941, when the lats was withdrawn (Bank of Latvia); treating lats as hidden savings that locals value is a game premise and should be reviewed before narrative use.
+
+## The world's camp is a clearing in the woods — 2026-11-02
+
+Status: owner direction ("the training area is the camp now. We need it to be a placeholder camp in the woods with a fire in the middle, the old man, a chest to store gold and a chest to store other materials and goods. A small tent and a barrel with a map on it to be the mission map entry point"). Play opens a new forest camp; Training stays a sandbox. Choices made without the owner, all reversible: the old man is also the fixed-price trader (so money stays useful in the new camp); the gold chest is the existing cash chest (rubles and lats); the goods chest holds carried items, while camp materials (timber, food, etc.) stay counted in the stores shown at the top of the screen; the camp's workshops, building and civilian stations are not in the new camp yet; the fire, tent and barrel are plain-shape placeholders.

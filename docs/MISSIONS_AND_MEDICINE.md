@@ -16,6 +16,17 @@ Status: confirmed mission rules with proposed medical mechanics. This is game de
 
 These are mission-level death rules, not a confirmed permanent character-death system. Returning to camp is a gameplay rule; its narrative explanation is unresolved.
 
+## Implemented prototype (2026-11-02)
+
+A Tarkov-style local prototype now exists: `scripts/health/player_health.gd` (rules),
+`scripts/health/supply_catalog.gd` (supply definitions) and the inventory health figure. See
+the 2026-11-02 decision entry for parts, injuries, supplies and placeholder numbers. In the
+inventory: right-click a supply to choose a body part, drag it onto a body part, right-click a
+body part to pick a supply, or alt-click food, water and morphine. Tourniquet, field surgery,
+wound infection, quick teammate treatment and revival (F on a teammate, a bandage or dressing,
+8 s, 60 s bleed-out) were added on owner approval; see the second 2026-11-02 decision entry.
+Camp recovery and network authority are not implemented.
+
 ## Proposed player flow
 
 `At camp -> On mission -> Incapacitated -> Revived on mission OR Dead for this mission -> At camp`
@@ -48,7 +59,7 @@ All effects below are proposed gameplay abstractions. Specific item origins and 
 | Broken limb | Leg mobility or arm/weapon-handling penalties | Splint and securing bandages | Stabilizes function; does not instantly heal the bone |
 | Pain | Impaired movement, steadiness, or perception | Morphine, presented in a researched period format | Temporary symptom relief; not a bleed cure, fracture repair, or automatic revival item |
 | Blood loss / severe trauma | Reduced capability after bleeding is controlled | Camp rest/care; advanced supplies only if researched and approved | Revival does not automatically restore full condition |
-| Infection risk, if later approved | A reason for ongoing care rather than an immediate combat status | Period antiseptic or sulfonamide candidate | Deferred; these are not instant healing or revival resources |
+| Infection risk (placeholder prototype approved 2026-11-02) | A reason for ongoing care rather than an immediate combat status | Period antiseptic or sulfonamide candidate | Deferred; these are not instant healing or revival resources |
 
 The owner wants varied treatment resources; the final inventory, classifications, durations, side effects, and resource costs have not been approved. Avoid implementing infection, transfusion, detailed physiology, or a full medical simulation merely because a historical item exists.
 
@@ -71,7 +82,7 @@ No specific tourniquet design, antibiotic access, or field blood-replacement sys
 - Dying returns only the affected player to camp. Survivors keep their current state and objectives.
 - If the host's character dies, the network session continues. Host process disconnection is a separate technical problem.
 - Two or more simultaneous casualties must resolve per player. Do not use one global dead/downed flag.
-- Test treatment interrupted by movement, damage, disconnect, target death, and resource loss. Decide which events actually cancel it before implementing that behavior.
+- Test treatment interrupted by movement, damage, disconnect, target death, and resource loss. Prototype: moving beyond 2.5 m, the medic going down, the patient dying, or the patient's downed state changing cancels it; the supply is only spent on completion. Disconnect is not handled yet.
 - Test four participants, including one at camp while others remain on mission, and two rescuers attempting to treat the same casualty.
 - Preserve carried equipment on a recoverable body under the starting rule; keep camp storage safe. Resolve solo/all-incapacitated players as mission deaths. Group rewards, body lifetime, physical retrieval/deposit, and recovery timing still need explicit rules; recovered equipment is communal. Do not invent transfers or rewards.
 

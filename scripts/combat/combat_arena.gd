@@ -6,16 +6,32 @@ const Enemy = preload("res://scripts/combat/enemy_actor.gd")
 const AmmoCrate = preload("res://scripts/combat/ammo_crate.gd")
 const MovementHud = preload("res://ui/components/tactical_movement_hud.gd")
 const InventoryHost = preload("res://ui/inventory/inventory_host.gd")
+const ArenaSupplies = preload("res://scripts/combat/arena_supplies.gd")
+const BloodTrail = preload("res://scripts/combat/blood_trail.gd")
+const MissionController = preload("res://scripts/missions/mission_controller.gd")
+const MissionLaunch = preload("res://scripts/missions/mission_launch.gd")
+const ObjectiveSpot = preload("res://scripts/missions/objective_spot.gd")
+const MissionExit = preload("res://scripts/missions/mission_exit.gd")
+## The mission this arena plays; any definition whose spot tags this map provides works.
+const MISSION = preload("res://missions/arena_dispatch.tres")
+## Places where a "dispatch" objective may lie.
+const DISPATCH_SPOTS: Array[Vector3] = [Vector3(21.5, 0.06, -8.5), Vector3(-2, 0.06, -25.1), Vector3(-16.4, 0.06, -6), Vector3(28, 0.06, -28)]
+## The way out: a forest path at the west edge.
+const EXIT_AT := Vector3(-32, 0, -4)
 const SIZE := 70.0
 const PLAYER_SPAWN := Vector3(0, 0.02, 28)
 const ENEMY_SPAWNS: Array[Vector3] = [Vector3(-6, 0, -12), Vector3(8, 0, -20)]
 var player
 var enemies: Array = []
+## Temperaments to draw from at each reset, so a hurt enemy may run, hold or push. Tests can
+## pin them by setting this to a single value.
+var temperament_pool: Array[StringName] = [Enemy.TIMID, Enemy.STEADY, Enemy.AGGRESSIVE]
 var navigation: NavigationRegion3D
 var ammo_crate: StaticBody3D
 var inventory
 var _prompt: Label
 var _crosshair: Label
+var mission: Node
 
 func _ready() -> void:
 	_lighting()
@@ -49,16 +65,32 @@ func _ready() -> void:
 	inventory.world = self
 	inventory.player = player
 	add_child(inventory)
+	_mission_markers()
 	_hud()
 	reset_enemies()
+	mission = MissionController.new()
+	mission.name = "Mission"
+	mission.definition = MISSION
+	mission.mission_over.connect(_mission_over)
+	# Opened from the camp: the summary leads back there; opened directly: go again.
+	if MissionLaunch.camp_scene != "":
+		mission.continue_text = "Return to camp"
+		mission.continue_requested.connect(_return_to_camp)
+	else:
+		mission.continue_requested.connect(restart)
+	add_child(mission)
+	mission.start([player], player)
 
 func reset_enemies() -> void:
 	for enemy in enemies:
 		if is_instance_valid(enemy):
 			enemy.queue_free()
 	enemies.clear()
-	for pickup in get_tree().get_nodes_in_group(&"combat_loot"):
+	for pickup in get_tree().get_nodes_in_group(&"combat_loot") + get_tree().get_nodes_in_group(ArenaSupplies.GROUP):
 		pickup.queue_free()
+	BloodTrail.clear_in(get_tree())
+	# A lootable body by the ammunition crate and loose supplies to practise with.
+	ArenaSupplies.stage(self)
 	for index in range(ENEMY_SPAWNS.size()):
 		var enemy = Enemy.new()
 		enemy.name = "ArenaEnemy%d" % index
@@ -66,10 +98,51 @@ func reset_enemies() -> void:
 		add_child(enemy)
 		enemy.targets.assign([player])
 		enemy.spotted.connect(_enemy_spotted)
+		enemy.defeated.connect(_enemy_defeated)
 		# Active by default: the arena is a fight, not a passive exhibit.
 		enemy.active = true
 		enemy.loot_enabled = true
+		enemy.temperament = temperament_pool.pick_random()
 		enemies.append(enemy)
+
+func _enemy_defeated(_enemy) -> void:
+	if mission != null and mission.run != null and not mission.run.is_over():
+		mission.run.count("Enemies killed")
+
+## Nobody is left in the area: enemies stand down.
+func _mission_over(_run) -> void:
+	for enemy in enemies:
+		if is_instance_valid(enemy):
+			enemy.active = false
+
+## Opened from the camp: the summary leads back there.
+func _return_to_camp() -> void:
+	if get_tree().current_scene == self:
+		MissionLaunch.return_to_camp(get_tree())
+
+## Go again: a fresh copy of the arena when it is the running scene; otherwise (tests) restage.
+func restart() -> void:
+	if get_tree().current_scene == self:
+		get_tree().reload_current_scene()
+		return
+	player.restore_for_drill()
+	player.global_position = PLAYER_SPAWN
+	reset_enemies()
+	mission.start([player], player)
+
+## Map markers any mission can use: objective spots and the exit.
+func _mission_markers() -> void:
+	for spot in DISPATCH_SPOTS:
+		var marker := ObjectiveSpot.new()
+		marker.tag = &"dispatch"
+		marker.position = spot
+		add_child(marker)
+	var exit := MissionExit.new()
+	exit.name = "WestExit"
+	exit.id = &"west_path"
+	exit.label = "forest path"
+	exit.position = EXIT_AT
+	add_child(exit)
 
 func _enemy_spotted(source, at: Vector3) -> void:
 	for enemy in enemies:
@@ -158,4 +231,6 @@ func _process(_delta: float) -> void:
 		return
 	var mouse_free := Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and DisplayServer.get_name() != "headless"
 	_prompt.text = "Click to look around" if mouse_free else player.get_interaction_prompt()
-	_crosshair.visible = not player.is_aiming and player.weapon.aim_fraction < 0.05
+	var summary_open: bool = mission != null and mission.summary_screen != null and mission.summary_screen.visible
+	if summary_open: _prompt.text = ""
+	_crosshair.visible = not player.is_aiming and player.weapon.aim_fraction < 0.05 and not summary_open

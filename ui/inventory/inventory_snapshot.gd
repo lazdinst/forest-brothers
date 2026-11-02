@@ -2,6 +2,7 @@ extends RefCounted
 ## Sanitized UI projection: exact magazine contents never enter labels or tooltips.
 const WeaponState = preload("res://scripts/weapons/prototype_weapon_state.gd")
 const Inventory = preload("res://scripts/inventory/ammunition_inventory.gd")
+const SupplyCatalog = preload("res://scripts/health/supply_catalog.gd")
 
 static func record(item, inventory) -> Dictionary:
 	var result := {"id":str(item.id),"slot":item.location.slot,"title":"Item","quantity":"","kind":"parts","size":inventory.footprint(item,item.location.rotated),"rotated":item.location.rotated}
@@ -11,6 +12,9 @@ static func record(item, inventory) -> Dictionary:
 		result.merge({"title":inventory.ammo_definitions[item.ammo_type_id].display_name,"quantity":str(item.quantity),"kind":"rounds"},true)
 	elif item is Inventory.BackpackInstance:
 		result.merge({"title":item.label,"quantity":"Worn" if item.location.kind==&"worn" else "","kind":"backpack"},true)
+	elif item is Inventory.SupplyInstance:
+		var def := SupplyCatalog.get_def(item.supply_id)
+		result.merge({"title":def.name,"quantity":str(item.uses) if int(def.uses) > 1 else "","kind":def.icon},true)
 	elif item is Inventory.WeaponInstance:
 		result.merge({"title":"Rifle","quantity":"Equipped" if item.location.kind==&"equipped" else "Carried","kind":"rifle"},true)
 	return result

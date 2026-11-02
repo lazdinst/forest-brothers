@@ -1,0 +1,23 @@
+[gd_resource type="Resource" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_definition.gd" id="1_definition"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_objective"]
+
+[sub_resource type="Resource" id="objective"]
+script = ExtResource("2_objective")
+kind = &"carry_out"
+item_id = &"medicine_bundle"
+label = "the bundle of medicine"
+spot_tag = &"medicine"
+required = true
+
+[resource]
+script = ExtResource("1_definition")
+id = &"medicine_run"
+title = "Medicine for the camp"
+briefing = "A villager has set aside dressings and medicine for the camp in one of the cottages. Patrols pass through the village. Collect the bundle and get out."
+objectives = Array[Resource]([SubResource("objective")])
+exit_seconds = 5.0
+enemy_groups = {"village": 2, "patrol": 1}
+rewards = {"cloth": 2, "medicine": 4}
+area_name = "Village"

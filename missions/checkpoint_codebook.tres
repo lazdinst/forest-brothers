@@ -1,0 +1,23 @@
+[gd_resource type="Resource" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_definition.gd" id="1_definition"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_objective"]
+
+[sub_resource type="Resource" id="objective"]
+script = ExtResource("2_objective")
+kind = &"carry_out"
+item_id = &"codebook"
+label = "the codebook"
+spot_tag = &"codebook"
+required = true
+
+[resource]
+script = ExtResource("1_definition")
+id = &"checkpoint_codebook"
+title = "The checkpoint codebook"
+briefing = "The road checkpoint keeps a codebook of call signs. It is guarded closely. Take the codebook and leave before the alarm brings more men."
+objectives = Array[Resource]([SubResource("objective")])
+exit_seconds = 5.0
+enemy_groups = {"checkpoint": 3, "farm": 1}
+rewards = {"parts": 3, "rounds": 40, "rubles": 100}
+area_name = "Road checkpoint"

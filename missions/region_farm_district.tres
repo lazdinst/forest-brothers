@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_region.gd" id="1_region"]
+[ext_resource type="Resource" path="res://missions/courier_dispatch.tres" id="2_courier_dispatch"]
+[ext_resource type="Resource" path="res://missions/medicine_run.tres" id="3_medicine_run"]
+[ext_resource type="Resource" path="res://missions/checkpoint_codebook.tres" id="4_checkpoint_codebook"]
+
+[resource]
+script = ExtResource("1_region")
+id = &"farm_district"
+title = "Farm district"
+description = "Farmland along the road at the forest edge: a farmstead, a village of cottages and a road checkpoint. Soldiers hold the farm and the checkpoint; a patrol walks the forest edge."
+scene_path = "res://scenes/missions/mission_world.tscn"
+time_limit_seconds = 3600.0
+exit_seconds = 5.0
+enemy_groups = {"patrol": 1}
+exit_names = PackedStringArray("forest path", "south road")
+board_position = Vector2(0.74, 0.46)
+missions = Array[Resource]([ExtResource("2_courier_dispatch"), ExtResource("3_medicine_run"), ExtResource("4_checkpoint_codebook")])
