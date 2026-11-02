@@ -43,3 +43,12 @@ Next / open:
 - Choosing a specific supply/part for a teammate in the inventory; show `care_message` on the HUD;
   lower the rifle during treatment until animations exist; balance numbers; period provenance.
 - Old worktrees (`forest-brothers-health`, `-loot`, `-inventory`) can be removed once the owner agrees.
+
+## 2026-11-02 — smarter enemies (owner approved: peek, retreat when hurt, crouch behind crates)
+
+Done:
+- Chunk 16, peeking from cover (`enemy_peek_smoke`). `enemy_encounter_smoke` now waits for the solo
+  death instead of a fixed 6 s (seven-part health needs a varying number of hits); its 4 s
+  "rays reach player" step is still occasionally flaky.
+
+Next: retreat when hurt, then crouching enemies so crates count as cover.

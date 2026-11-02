@@ -84,10 +84,19 @@ var _returning: bool = false
 var cover_speed: float = 2.6
 var cover_hold_seconds: float = 2.5
 var max_cover_path: float = 12.0
-## &"move" while running to cover, &"hold" while sheltering, &"" otherwise.
+## &"move" while running to cover, &"hold" while sheltering, &"peek_out" / &"peek" /
+## &"peek_back" while stepping out to fire and back, &"" otherwise.
 var cover_phase: StringName = &""
 var cover_point := Vector3.INF
 var _cover_left: float = 0.0
+# Peeking from cover, placeholders pending owner tuning.
+var max_peeks: int = 2
+var peek_speed: float = 1.6
+var peek_seconds: float = 2.5
+var peek_reaction: float = 0.45
+## Sidestep beside the cover point that sees the threat; INF when not peeking.
+var peek_point := Vector3.INF
+var _peeks_left: int = 0
 # Flanking, placeholders pending owner tuning. Only scenes with a navigation map use it.
 var flank_speed: float = 2.0
 var max_flank_path: float = 35.0
@@ -182,7 +191,7 @@ func _physics_process(delta: float) -> void:
 			if cover_phase == &"hold" and not is_reloading():
 				cover_phase = &""
 		if cover_phase != &"":
-			_update_cover(delta)
+			_update_cover(delta, seen)
 	elif seen != null:
 		var stance_factor: float = lerpf(0.4, 1.0, seen.locomotion.height_fraction(seen.body_shape.shape.height))
 		stance_factor *= 1.0 + minf(Vector2(seen.velocity.x, seen.velocity.z).length() / 10.0, 0.5)
@@ -527,7 +536,7 @@ func _update_sprite_views() -> void:
 	facing.y = 0
 	if facing.length_squared() > 0.001:
 		visual.global_basis = Basis.looking_at(-facing)
-	var pose: StringName = &"aiming" if state == &"engage" and not is_reloading() and cover_phase != &"move" else &"holding"
+	var pose: StringName = &"aiming" if (state == &"engage" or cover_phase == &"peek") and not is_reloading() and cover_phase != &"move" else &"holding"
 	if pose == &"holding" and not is_reloading() and standing_views.walking:
 		pose = &"walking"
 	standing_views.update(self, viewer, sprite, FIGURE_HEIGHT, pose)
@@ -557,7 +566,7 @@ func _update_rifle(delta: float) -> void:
 	var pitch := LOWERED_PITCH
 	if is_reloading():
 		pitch = RELOAD_PITCH
-	elif state == &"engage":
+	elif state == &"engage" or cover_phase == &"peek":
 		var muzzle_height := global_position.y + SHOULDER.y
 		var flat := Vector2(last_known.x - global_position.x, last_known.z - global_position.z).length()
 		pitch = -atan2(last_known.y + 1.0 - muzzle_height, maxf(flat, 0.5))
@@ -704,6 +713,8 @@ func try_take_cover(threat: Vector3) -> bool:
 	cover_point = point
 	cover_phase = &"move"
 	_cover_left = 6.0
+	_peeks_left = max_peeks
+	peek_point = Vector3.INF
 	_path_goal = Vector3.INF
 	return true
 
@@ -749,7 +760,13 @@ func hidden_from(space: PhysicsDirectSpaceState3D, eye: Vector3, spot: Vector3) 
 			return false
 	return true
 
-func _update_cover(delta: float) -> void:
+func _update_cover(delta: float, seen: Node3D = null) -> void:
+	if cover_phase == &"peek_out" or cover_phase == &"peek_back":
+		_step_for_peek(delta, seen)
+		return
+	if cover_phase == &"peek":
+		_peek(delta, seen)
+		return
 	if cover_phase == &"move":
 		_cover_left -= delta
 		var remaining := cover_point - global_position
@@ -771,9 +788,107 @@ func _update_cover(delta: float) -> void:
 		rotation.y = rotate_toward(rotation.y, atan2(toward.x, toward.z), delta * 4.0)
 	_cover_left -= delta
 	if _cover_left <= 0.0 and not is_reloading():
+		if _peeks_left > 0:
+			peek_point = find_peek_point(last_known)
+			if peek_point != Vector3.INF:
+				cover_phase = &"peek_out"
+				_cover_left = 4.0
+				return
 		cover_phase = &""
+		peek_point = Vector3.INF
 		# Leave cover by moving to where the threat was last seen, which re-exposes this enemy.
 		begin_search(last_known)
+
+## Sidestepping out to the peek point (stopping early once the threat is in view) or back into
+## cover, facing the threat throughout. Gives up on the step after a few seconds.
+func _step_for_peek(delta: float, seen: Node3D) -> void:
+	var out := cover_phase == &"peek_out"
+	if out and seen != null:
+		_begin_peek()
+		return
+	var goal := peek_point if out else cover_point
+	var remaining := goal - global_position
+	remaining.y = 0.0
+	var direction := route_toward(goal, delta)
+	_cover_left -= delta
+	if remaining.length() < 0.3 or direction.length_squared() <= 0.0001 or _cover_left <= 0.0:
+		if out:
+			_begin_peek()
+		else:
+			cover_phase = &"hold"
+			_cover_left = cover_hold_seconds
+		return
+	direction = direction.normalized()
+	velocity.x = direction.x * peek_speed
+	velocity.z = direction.z * peek_speed
+	_face(last_known, delta)
+
+## Exposed at the peek point: reacquire, fire while the threat is in view, then step back when
+## the peek time is up or the magazine runs dry.
+func _peek(delta: float, seen: Node3D) -> void:
+	_face(last_known, delta)
+	if seen != null:
+		last_known = seen.global_position
+		reaction_left -= delta
+		aim_time += delta
+		if rounds_in_magazine <= 0 and not is_reloading():
+			start_reload()
+			_end_peek()
+			return
+		if reaction_left <= 0.0 and shot_cooldown <= 0.0 and rounds_in_magazine > 0 and not is_reloading():
+			_shoot(seen)
+	_cover_left -= delta
+	if _cover_left <= 0.0:
+		_end_peek()
+
+func _begin_peek() -> void:
+	cover_phase = &"peek"
+	_cover_left = peek_seconds
+	# A fresh exposure: a short reaction and the wide first-shot spread again.
+	reaction_left = peek_reaction
+	aim_time = 0.0
+
+func _end_peek() -> void:
+	cover_phase = &"peek_back"
+	_cover_left = 4.0
+	_peeks_left -= 1
+
+func _face(point: Vector3, delta: float) -> void:
+	var toward := point - global_position
+	toward.y = 0.0
+	if toward.length_squared() > 0.01:
+		rotation.y = rotate_toward(rotation.y, atan2(toward.x, toward.z), delta * 6.0)
+
+## A short sidestep from the cover point, to either side across the threat's line, that is on
+## the navigation map and sees the threat's chest past the cover. The smallest step wins; the
+## side tried first is random so peeks are less predictable. INF when none exists.
+func find_peek_point(threat: Vector3) -> Vector3:
+	var map := get_world_3d().navigation_map
+	if cover_point == Vector3.INF or NavigationServer3D.map_get_regions(map).is_empty():
+		return Vector3.INF
+	var across := (threat - cover_point).cross(Vector3.UP)
+	across.y = 0.0
+	if across.length_squared() < 0.01:
+		return Vector3.INF
+	across = across.normalized()
+	var space := get_world_3d().direct_space_state
+	var aim := threat + Vector3.UP * 1.0
+	var first := 1.0 if rng.randf() < 0.5 else -1.0
+	for distance in [0.7, 1.1, 1.5, 2.0]:
+		for side in [first, -first]:
+			var probe: Vector3 = cover_point + across * distance * side
+			var spot := NavigationServer3D.map_get_closest_point(map, probe)
+			if Vector2(spot.x - probe.x, spot.z - probe.z).length() > 0.3:
+				continue
+			# Navigation points float above the floor; look from this enemy's own eye height. The
+			# view must also hold a little nearer the cover, since steps stop slightly short.
+			var foot := Vector3(spot.x, global_position.y, spot.z)
+			if _clear_view(space, foot, aim) and _clear_view(space, foot - across * side * 0.35, aim):
+				return foot
+	return Vector3.INF
+
+func _clear_view(space: PhysicsDirectSpaceState3D, foot: Vector3, aim: Vector3) -> bool:
+	return space.intersect_ray(PhysicsRayQueryParameters3D.create(foot + Vector3.UP * 1.55, aim, 1, [get_rid()])).is_empty()
 
 ## A reachable spot beside the target, roughly square to the reporting ally's line, with a clear
 ## view of the target, so the two enemies catch it from different sides. INF when none exists.

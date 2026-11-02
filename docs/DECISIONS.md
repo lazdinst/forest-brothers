@@ -381,3 +381,9 @@ Status: owner-approved scope ("continue with the parts we are missing"; the owne
 - Mission players join the `mission_players` group. A down becomes death unless another mission player is standing (or the dev "simulated teammate" toggle is on). When the last standing player goes down, every downed player dies (all-incapacitated mission death). This is a local stand-in until a mission session owns casualty resolution and network authority.
 - New `effects()` keys for the HUD: `tourniquets`, `infections`, `open_wounds`, `fever`, `reviving`, `bleed_out_seconds`, `revived_seconds`.
 - Not built: choosing a specific supply and part for a teammate through the inventory (quick care only), two medics on one casualty, a HUD prompt for `care_message`, network authority, camp recovery.
+
+## Enemies peek from cover — 2026-11-02
+
+Status: owner approved the "smarter enemies" combat chunks (peeking, retreating when hurt, crouching behind crates), to be built one at a time. Peeking is the first. Numbers are placeholders.
+
+Instead of walking straight out after holding cover, an enemy sidesteps to a short spot beside its cover that sees the threat, reacts, fires while it sees the threat, and steps back after 2.5 s or when empty. Two peeks per cover, then the old behaviour (move toward the last known position). The reaction pause and reset first-shot spread keep each exposure readable and fair. Details in COMBAT_ARENA_PLAN.md chunk 16.

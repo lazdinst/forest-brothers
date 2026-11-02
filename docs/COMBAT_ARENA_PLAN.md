@@ -52,6 +52,7 @@ Each chunk has a headless check under `tests/`. Headless checks do not establish
 | 13 | Loot: a dead (not downed) enemy keeps its rifle (with its inserted magazine) and spare magazines on the body. **F** on the body opens the player's inventory with a Body panel; a short search reveals one item at a time (0.8 s each, placeholder) only while open; drag or ctrl-click to take. Take-only for now. Magazines beyond four pockets lie beside the body as ground pickups. Rounds are conserved; arena reset clears bodies and loot. Off in the camp annex. Practice set (owner request): a staged body beside the ammunition crate (rifle with 3 rounds, magazines of 10 and 7, 12 loose cartridges) and seven labelled ground supplies near the spawn (a worn rifle, magazines of 10/4/0 rounds, stacks of 32/14/5); reset restages them. | `enemy_loot_smoke`, `arena_supplies_smoke` |
 | 14 | Flanking: an enemy alerted by an engaging ally heads (2 m/s) for a reachable spot 7–13 m from the target, roughly square to the ally's line of fire, with a clear view of the target; on arrival it faces the target and scans. Plain noise alerts and scenes without navigation walk straight in as before. | `enemy_flank_smoke` |
 
+| 16 | Peeking: after holding cover, an enemy sidesteps (1.6 m/s) to the nearest spot 0.7–2 m to either side of its cover point (random side first) that sees the threat from its own eye height, even 0.35 m short. It stops early once the threat is in view, reacquires (0.45 s, wide first-shot spread again), fires while it sees the threat, and steps back into cover after 2.5 s or when its magazine runs dry (reloading there). Two peeks per cover, then it leaves toward the threat as before. A hit during a peek sends it to cover again. | `enemy_peek_smoke`, `enemy_cover_smoke` |
 Placeholder values: zone maximums head 35, torso 80, arms 60, legs 65; rifle and enemy damage 40; enemy bleed-out 30 s; player bleed-out 60 s. Arms and legs are each one zone (left/right still open).
 
 Not yet built: lean-following player zones, crouching and peeking, archetypes, non-ammunition loot, real sprites.
@@ -116,7 +117,7 @@ Proposed details still open: enemies finish a downed player only when no active 
 |---|---|---|
 | 0. Decide | Plan reviewed; open questions answered | `DECISIONS.md` records the choices |
 | 1. A real fight | You can be hurt, downed and killed; zone damage both sides; directional hit feedback and gunfire; imperfect enemy aim; enemies face visibly | Largely built (chunks 1–8); owner playtest pending |
-| 2. Smart enemies | Cover, peeking, reloading, flanking, searching around walls, local alerts, retreating, crawling when downed | Enemies reach a last-known position around cover; lose a hidden player; reload creates a usable opening |
+| 2. Smart enemies | Cover, peeking (built, chunk 16), reloading, flanking, searching around walls, local alerts, retreating, crawling when downed | Enemies reach a last-known position around cover; lose a hidden player; reload creates a usable opening |
 | 3. Archetypes | Scav groups, patrols, a boss compound with guards | Each type recognizable by behavior alone |
 | 4. Loot and objective | Bodies drop recoverable gear; supply-recovery goal; debrief | Loot counts once; goal winnable by avoidance; reset leaves no duplicates |
 | 5. Real sprites | Directional animated enemy art | Enemies read clearly at distance; owner approval |
@@ -145,9 +146,9 @@ Production routes (decision open): **A** generate painted sprites per angle (ide
 
 1. Sprite route A or B, and whether to lift the art freeze for B.
 2. Zone health values, damage multipliers, and rifle lethality per zone.
-3. Separate left and right limbs, and whether to add a stomach zone.
-4. Effects of a disabled arm or leg, and overflow damage to a disabled limb.
-5. Bleed-out duration and revival requirements.
+3. Separate left and right limbs, and whether to add a stomach zone. Player: answered (seven Tarkov-style parts, 2026-11-02 in DECISIONS.md); enemies still use four zones.
+4. Effects of a disabled arm or leg, and overflow damage to a disabled limb. Player: answered (limping/no sprint, aim sway, 70% spread to other parts); enemies open.
+5. Bleed-out duration and revival requirements. Placeholder answer: 60 s; a bandage or dressing and 8 s (DECISIONS.md, 2026-11-02).
 6. Whether a downed enemy may fire while crawling (default no).
 7. Opponent identities, names and historical grounding, with sources.
 8. Audio sources and licensing beyond the synthesized placeholders.
