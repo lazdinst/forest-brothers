@@ -418,3 +418,7 @@ Status: owner direction ("We have this concept that it's not an extraction shoot
 ## Mission map and first mission world — 2026-11-02
 
 Status: owner direction while away ("We need to start with a basic mission scene world. A map to choose missions."). Choices made without the owner, all reversible: a blockout district rather than environment-agent art; three fictional missions (farmstead dispatch, village medicine, checkpoint codebook) with placeholder time limits and enemy counts; the mission map is opened directly, not yet from the main menu or the camp planning table; results are kept only for the current run of the game. Mission handoff between scenes uses a static holder (`MissionLaunch`), not an autoload.
+
+## Maps use only the environment library — 2026-11-02
+
+Status: owner direction ("We should only be using these assets. Not recreating new ones"), after the first mission world used stand-in trees and props. The mission world now uses only `assets/environment/` scenes, meshes and materials. Missing library pieces (buildings, sandbags, roads, wells, carts) are gaps for the environment work; meanwhile walls, fences and the barrier are plain shapes with the library's weathered wood, and those props are left out.

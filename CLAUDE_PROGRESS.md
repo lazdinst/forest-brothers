@@ -79,5 +79,9 @@ Done: `scenes/missions/mission_board.tscn` (mission map, pins, briefing, deploy,
 playing three catalog missions (`missions/*.tres`). Checks: `mission_board_smoke`, `mission_world_smoke`.
 `enemy_peek_smoke` was made robust to timing (it failed ~1 in 3 under full-sweep load).
 
+Then (owner): use only environment-library assets. The mission world now uses library trees,
+deadwood, boulders, ferns, ground cover, crates and moss ground; walls use the library wood texture.
+Gaps for the environment work: buildings, sandbags, roads.
+
 Open for the owner: link the mission map from the main menu (menu agent) or camp planning table;
-playtest; art for the district (environment agent).
+playtest.
