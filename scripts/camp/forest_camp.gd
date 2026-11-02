@@ -18,6 +18,7 @@ const InventoryHost = preload("res://ui/inventory/inventory_host.gd")
 const MovementHud = preload("res://ui/components/tactical_movement_hud.gd")
 const ResourceStrip = preload("res://ui/components/resource_strip.gd")
 const TraderWindow = preload("res://ui/camp/trader_window.gd")
+const OldManScript = preload("res://scripts/camp/camp_old_man.gd")
 const ENV := "res://assets/environment/"
 const TREES: Array[PackedScene] = [preload(ENV + "scenes/forest_pine_v1.tscn"), preload(ENV + "scenes/forest_spruce_v1.tscn"), preload(ENV + "scenes/forest_birch_v1.tscn")]
 const BOULDER: PackedScene = preload(ENV + "scenes/boulder_v1.tscn")
@@ -333,13 +334,20 @@ func _map_barrel() -> void:
 ## The old man stands by the fire; F talks to him about trading.
 func _old_man() -> void:
 	old_man = CivilianScene.instantiate()
+	# Swapping the script resets its exported sprites, so carry them over.
+	var textures: Array = [old_man.front_texture, old_man.side_texture, old_man.back_texture, old_man.walk_front, old_man.walk_side, old_man.walk_back]
+	old_man.set_script(OldManScript)
+	old_man.front_texture = textures[0]
+	old_man.side_texture = textures[1]
+	old_man.back_texture = textures[2]
+	old_man.walk_front = textures[3]
+	old_man.walk_side = textures[4]
+	old_man.walk_back = textures[5]
 	old_man.name = "OldMan"
 	old_man.position = Vector3(2.4, 0, 1.6)
+	old_man.prompt = "F  Talk to the old man (trade)"
+	old_man.action = open_trade
 	add_child(old_man)
-	var reach: StaticBody3D = old_man.get_node("PlayerClearance")
-	reach.set_script(Interactable)
-	reach.prompt = "F  Talk to the old man (trade)"
-	reach.action = open_trade
 
 # --- Helpers ---------------------------------------------------------------------------------
 

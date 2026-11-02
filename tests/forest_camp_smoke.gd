@@ -34,11 +34,17 @@ func _run() -> void:
 	_check(trees > 100, "Woods surround the clearing (%d trees)" % trees)
 	var player = camp.player
 	# The old man trades.
-	var reach = camp.old_man.get_node("PlayerClearance")
-	_check(reach.get_prompt().contains("old man"), "The old man can be talked to")
+	# Through the real interaction ray: stand before him, look at him, press F.
+	player.global_position = camp.old_man.global_position + Vector3(0, 0.05, 1.6)
+	player.rotation = Vector3.ZERO
+	player.camera.rotation = Vector3.ZERO
+	await _frames(3)
+	player.refresh_interaction_target()
+	var reach = player.interaction_target
+	_check(reach == camp.old_man and player.get_interaction_prompt().contains("old man"), "Looking at the old man offers to talk to him (%s)" % reach)
 	var medicine: int = camp.stock.count(&"medicine")
 	var rubles: int = camp.stock.count(&"rubles")
-	reach.interact(player)
+	player.try_interact()
 	await _frames(1)
 	var window = camp.trade_panel
 	_check(window.visible and window.buy_list.get_child_count() == camp.Runtime.PRICES.size() and player.process_mode == Node.PROCESS_MODE_DISABLED, "His trade window lists what he can get; the player stands still")
