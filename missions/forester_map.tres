@@ -19,4 +19,5 @@ briefing = "The old forester drew the safe paths through the bog on a map and hi
 objectives = Array[Resource]([SubResource("objective")])
 exit_seconds = 5.0
 enemy_groups = {"hut": 2}
+rewards = {"timber": 6}
 area_name = "Forester's hut"

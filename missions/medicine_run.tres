@@ -19,4 +19,5 @@ briefing = "A villager has set aside dressings and medicine for the camp in one 
 objectives = Array[Resource]([SubResource("objective")])
 exit_seconds = 5.0
 enemy_groups = {"village": 2, "patrol": 1}
+rewards = {"cloth": 2, "medicine": 4}
 area_name = "Village"

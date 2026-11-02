@@ -53,6 +53,10 @@ func _restore_camp() -> void:
 	var camp: Dictionary = GameSession.camp_state()
 	if not camp.is_empty() and has_node("SystemsAnnex"):
 		$SystemsAnnex.runtime.restore(camp)
+	var backlog: Dictionary = GameSession.take_reward_backlog()
+	for id in backlog:
+		if stock.quantities.has(StringName(id)):
+			stock.add(StringName(id), int(backlog[id]))
 
 ## Saves the camp into the world and the character's equipment. Safe to call at any time.
 func save_session() -> void:

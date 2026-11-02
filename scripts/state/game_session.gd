@@ -90,6 +90,24 @@ static func save_world(camp: Dictionary = {}) -> bool:
 	world.missions = {"results":results,"completed":MissionLaunch.completed.keys().map(func(id): return str(id))}
 	return SaveStore.write("worlds", world)
 
+## Pays completed missions' rewards into the world's camp stores. A camp never saved yet keeps
+## them as a backlog that the camp adds when it first loads.
+static func award(missions: Array) -> void:
+	if not active() or missions.is_empty(): return
+	var camp: Dictionary = world.get("camp", {})
+	var target: Dictionary = camp.stores if camp.has("stores") else world.get("reward_backlog", {})
+	for mission in missions:
+		for id in mission.rewards:
+			target[str(id)] = int(target.get(str(id), 0)) + int(mission.rewards[id])
+	if not camp.has("stores"):
+		world.reward_backlog = target
+
+## Takes the rewards waiting for a camp that had no save yet.
+static func take_reward_backlog() -> Dictionary:
+	var backlog: Dictionary = world.get("reward_backlog", {}) if active() else {}
+	world.erase("reward_backlog")
+	return backlog
+
 ## Called when the local player's outing ends: mission results always; equipment kept when they
 ## got out, lost when they died or ran out of time.
 static func outing_ended(player: Node, extracted: bool) -> void:

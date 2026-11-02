@@ -119,7 +119,7 @@ func _participant_ended(who, report: Dictionary) -> void:
 
 ## Saves the outing: mission results, and the character's gear kept on extraction, lost on death.
 func _mission_over(run) -> void:
-	MissionLaunch.record_run(run)
+	GameSession.award(MissionLaunch.record_run(run))
 	GameSession.outing_ended(player, _ended_extracted)
 	for enemy in enemies:
 		if is_instance_valid(enemy):

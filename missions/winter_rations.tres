@@ -19,4 +19,5 @@ briefing = "Food for the camp was hidden for the winter in the old bunker or out
 objectives = Array[Resource]([SubResource("objective")])
 exit_seconds = 5.0
 enemy_groups = {"bunker": 2}
+rewards = {"food": 8, "meals": 2}
 area_name = "Old bunker"

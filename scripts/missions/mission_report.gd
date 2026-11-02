@@ -18,7 +18,9 @@ static func build(run, id: StringName) -> Dictionary:
 	if not run.definition.missions.is_empty():
 		var mission_rows: Array = []
 		for mission in run.definition.missions:
-			mission_rows.append([mission.title, "Completed" if run.definition.mission_done(run, mission) else "Not completed"])
+			var done: bool = run.definition.mission_done(run, mission)
+			var reward: String = mission.reward_text()
+			mission_rows.append([mission.title, ("Completed: camp receives " + reward if reward != "" else "Completed") if done else "Not completed"])
 		sections.append({"heading":"Missions","rows":mission_rows})
 	# Objectives.
 	var objective_rows: Array = []

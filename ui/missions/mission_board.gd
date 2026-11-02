@@ -124,7 +124,9 @@ func select(id: StringName) -> void:
 		var note := _label(15, Color(JournalTheme.INK, 0.8))
 		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var lines: Array[String] = []
-		if not done: lines.append(mission.briefing)
+		if not done:
+			lines.append(mission.briefing)
+			if mission.reward_text() != "": lines.append("Reward to camp: " + mission.reward_text())
 		if MissionLaunch.results.has(mission.id):
 			lines.append("Last outing: " + RESULT_TEXT.get(MissionLaunch.results[mission.id], "unknown"))
 		note.text = "\n".join(lines)

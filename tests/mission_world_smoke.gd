@@ -61,6 +61,7 @@ func _run() -> void:
 		var text: String = summary.text() if summary.visible else ""
 		_check(world.mission.run.outcome() == MissionRun.RETURNED and summary.visible and summary.continue_button.text == "Return to the mission map", "%s: leaving with one of two items is an early return with the summary and a way back" % name)
 		_check(text.contains(first.title) and text.contains(region.missions[1].title) and text.contains("Not completed"), "%s: the summary lists each mission taken" % name)
+		_check(first.reward_text() != "" and text.contains("camp receives " + first.reward_text()), "%s: the summary names the completed mission's reward" % name)
 		_check(MissionLaunch.results.get(first.id) == MissionRun.SUCCESS and MissionLaunch.completed.has(first.id), "%s: the carried-out mission is completed" % name)
 		_check(MissionLaunch.results.get(region.missions[1].id) == MissionRun.RETURNED and not MissionLaunch.completed.has(region.missions[1].id), "%s: the other mission stays open" % name)
 		world.queue_free()

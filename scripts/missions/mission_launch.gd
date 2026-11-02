@@ -40,15 +40,20 @@ static func after_outing(tree: SceneTree) -> void:
 		return_to_board(tree)
 
 ## Records each mission of a finished outing: completed if its objectives were carried out,
-## otherwise returned early (someone got out) or failed.
-static func record_run(run) -> void:
+## otherwise returned early (someone got out) or failed. Returns the missions completed for the
+## first time, whose rewards the camp receives.
+static func record_run(run) -> Array:
+	var first_time: Array = []
 	var definition: Resource = run.definition
 	var missions: Array = definition.missions if not definition.missions.is_empty() else ([definition] if not definition.objectives.is_empty() else [])
 	var outcome: StringName = run.outcome()
 	for mission in missions:
 		var done: bool = definition.mission_done(run, mission) if mission != definition else outcome == MissionRun.SUCCESS
 		results[mission.id] = MissionRun.SUCCESS if done else (MissionRun.FAILED if outcome == MissionRun.FAILED else MissionRun.RETURNED)
+		if done and not completed.has(mission.id):
+			first_time.append(mission)
 		if done: completed[mission.id] = true
+	return first_time
 
 static func return_to_board(tree: SceneTree) -> void:
 	tree.change_scene_to_file(BOARD_SCENE)

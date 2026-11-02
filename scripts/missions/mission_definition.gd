@@ -23,6 +23,16 @@ extends Resource
 @export var board_position: Vector2 = Vector2(0.5, 0.5)
 ## Place within the region shown in the briefing (fictional unless researched).
 @export var area_name: String
+## Paid into the camp stores the first time the mission is completed: stock id -> amount
+## (food, water, medicine, meals, timber, parts, cloth, rounds). Placeholder amounts.
+@export var rewards: Dictionary = {}
+
+## The rewards as text, e.g. "4 timber, 2 parts"; empty when there are none.
+func reward_text() -> String:
+	var parts: Array[String] = []
+	for id in rewards:
+		parts.append("%d %s" % [int(rewards[id]), str(id)])
+	return ", ".join(parts)
 ## Set on a composed outing: the region it plays in and the missions it combines.
 var region: Resource
 var missions: Array[Resource] = []
