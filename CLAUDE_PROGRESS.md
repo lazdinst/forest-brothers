@@ -111,3 +111,19 @@ pressing the number; bar along the bottom; supplies treat the most urgent wound 
 
 Open for the owner: playtest; bribes; delete/rename characters and worlds; save character health;
 network joining (two-instance check); camp issue of weapons after a death.
+
+## 2026-11-02 — Escape backs out of menus
+
+Done:
+- Play screens: Escape steps back (worlds → characters → main menu), like Back.
+- Mission map: Escape returns to camp when the map was opened from camp.
+- Mission worlds (`region_world.gd`): Escape opens a pause menu (Resume, Equipment & inventory)
+  that suspends the world like the inventory does; Escape again resumes. Previously Escape only
+  freed the mouse and there was no menu at all.
+- Already worked and unchanged: camp/training pause, inventory, trader, NPC menu, dialogue, modals.
+- `tests/menu_escape_smoke.gd` covers the new behaviour.
+
+Open questions for the owner:
+1. Should the mission pause menu offer a way to abandon the outing (e.g. as mission death, losing
+   carried gear and pending recruits)? Not added: leaving mid-outing is a design decision.
+2. Should Escape on the bare main menu do anything (e.g. ask to exit)? Currently nothing.

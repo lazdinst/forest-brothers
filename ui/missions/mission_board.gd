@@ -170,6 +170,12 @@ func back_to_camp() -> void:
 	if get_tree().current_scene == self:
 		MissionLaunch.return_to_camp(get_tree())
 
+## Escape goes back to camp, like the Back button, when the map was opened from there.
+func _input(event: InputEvent) -> void:
+	if back_button.visible and event.is_action_pressed("ui_cancel") and not event.is_echo():
+		get_viewport().set_input_as_handled()
+		back_to_camp()
+
 func _refresh_pins() -> void:
 	for region in catalog.regions:
 		var open: int = region.missions.filter(func(mission): return not MissionLaunch.completed.has(mission.id)).size()

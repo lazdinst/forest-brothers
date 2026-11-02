@@ -15,6 +15,7 @@ const MissionRun = preload("res://scripts/missions/mission_run.gd")
 const ObjectiveSpot = preload("res://scripts/missions/objective_spot.gd")
 const MissionExit = preload("res://scripts/missions/mission_exit.gd")
 const EnemySpawn = preload("res://scripts/missions/enemy_spawn.gd")
+const MenuModal = preload("res://ui/components/menu_modal.gd")
 const ENV := "res://assets/environment/"
 const TREES: Array[PackedScene] = [preload(ENV + "scenes/forest_pine_v1.tscn"), preload(ENV + "scenes/forest_spruce_v1.tscn"), preload(ENV + "scenes/forest_birch_v1.tscn")]
 const BIRCH: PackedScene = preload(ENV + "scenes/forest_birch_v1.tscn")
@@ -47,6 +48,11 @@ var _crosshair: Label
 var _wall_material: StandardMaterial3D
 var _rng := RandomNumberGenerator.new()
 var _ended_extracted := false
+## Escape's pause menu. Pausing suspends this world like the inventory does; the menu itself
+## always processes so Escape can close it.
+var pause_menu
+var _pause_mouse_mode := Input.MOUSE_MODE_VISIBLE
+var _pause_process_mode := Node.PROCESS_MODE_INHERIT
 
 func _ready() -> void:
 	definition = MissionLaunch.pending if MissionLaunch.pending != null else default_region.compose(default_region.missions)
@@ -72,6 +78,7 @@ func _ready() -> void:
 	inventory.player = player
 	add_child(inventory)
 	_hud()
+	_pause_ui()
 	mission = MissionController.new()
 	mission.name = "Mission"
 	mission.definition = definition
@@ -352,6 +359,48 @@ func _hud() -> void:
 	_prompt.add_theme_color_override("font_outline_color", Color.BLACK)
 	_prompt.add_theme_constant_override("outline_size", 4)
 	layer.add_child(_prompt)
+
+func _pause_ui() -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "Pause"
+	layer.layer = 100
+	layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(layer)
+	pause_menu = MenuModal.new()
+	layer.add_child(pause_menu)
+	pause_menu.action_selected.connect(_pause_action)
+	pause_menu.canceled.connect(resume)
+
+## Opens the pause menu, unless the summary or the inventory has the screen.
+func pause() -> bool:
+	if pause_menu.visible or inventory.is_open: return false
+	if mission.summary_screen != null and mission.summary_screen.visible: return false
+	_pause_mouse_mode = Input.mouse_mode
+	_pause_process_mode = process_mode
+	process_mode = Node.PROCESS_MODE_DISABLED
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	pause_menu.present("Paused", "%s. Leave through a marked exit to keep what you carry." % definition.title, [
+		{"id": &"resume", "caption": "Resume"},
+		{"id": &"inventory", "caption": "Equipment & inventory"},
+	])
+	return true
+
+func resume() -> void:
+	if not pause_menu.visible: return
+	pause_menu.dismiss()
+	process_mode = _pause_process_mode
+	Input.mouse_mode = _pause_mouse_mode
+
+func _pause_action(action_id: StringName) -> void:
+	match action_id:
+		&"resume": resume()
+		&"inventory":
+			resume()
+			inventory.open()
+
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") and not event.is_echo() and pause():
+		get_viewport().set_input_as_handled()
 
 func _process(_delta: float) -> void:
 	if player == null or _prompt == null:

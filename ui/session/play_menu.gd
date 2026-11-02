@@ -176,6 +176,12 @@ func back() -> void:
 	if page == &"worlds": show_characters()
 	else: back_requested.emit()
 
+## Escape steps back a page, like the Back button.
+func _input(event: InputEvent) -> void:
+	if is_visible_in_tree() and event.is_action_pressed("ui_cancel") and not event.is_echo():
+		get_viewport().set_input_as_handled()
+		back()
+
 func _refresh_buttons() -> void:
 	create_button.disabled = name_edit.text.strip_edges().is_empty()
 	continue_button.disabled = (selected_character if page == &"characters" else selected_world) == ""
