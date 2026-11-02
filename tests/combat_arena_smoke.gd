@@ -25,10 +25,9 @@ func _run() -> void:
 	var straight: Vector3 = goal - walker.global_position
 	straight.y = 0
 	_check(first_leg.length() > 0.1 and first_leg.normalized().dot(straight.normalized()) < 0.95, "Route bends away from the straight line through the wall")
-	walker.last_known = goal
-	walker.search_left = 60.0
 	walker.search_speed = 3.0
-	walker.state = &"search"
+	walker.max_search_seconds = 60.0
+	walker.begin_search(goal)
 	var crossed_wall := false
 	var previous_z: float = walker.global_position.z
 	for i in range(1200):

@@ -49,7 +49,18 @@ var spare_magazines: Array[int] = [10, 10, 10]
 var reload_seconds: float = 3.0
 var reload_left: float = 0.0
 var fire_interval: float = 1.1
-var search_speed: float = 0.8
+var search_speed: float = 1.4
+var return_speed: float = 1.0
+# Search, placeholders pending owner tuning: walk to the last known position (giving up after
+# max_search_seconds or when blocked), look around there, then return to patrol.
+var max_search_seconds: float = 30.0
+var look_seconds: float = 6.0
+## &"travel" while walking to last_known, &"look" while scanning there, &"" otherwise.
+var search_phase: StringName = &""
+var look_left: float = 0.0
+var _look_yaw: float = 0.0
+var _stuck_left: float = 0.0
+var _stuck_from := Vector3.ZERO
 var _path := PackedVector3Array()
 var _path_index: int = 0
 var _path_goal := Vector3.INF
@@ -61,12 +72,16 @@ var rifle: Node3D
 var hit_zones
 var last_hit_zone: StringName = &""
 var _home := Vector3.ZERO
+## Watch direction at the post, restored after returning from a search.
+var _home_yaw: float = 0.0
+var _returning: bool = false
 var _patrol_sign: float = 1.0
 var _alert_cooldown: float = 0.0
 var _hit_tint: float = 0.0
 
 func _ready() -> void:
 	_home = global_position
+	_home_yaw = rotation.y
 	bleed_left = bleed_out_seconds
 	collision_layer = 1
 	collision_mask = 1 | 2
@@ -152,7 +167,8 @@ func _physics_process(delta: float) -> void:
 		last_known = seen.global_position
 		var facing := last_known-global_position
 		rotation.y = atan2(facing.x,facing.z)
-		search_left = 6.0
+		# Losing sight later starts a search from the last place this enemy saw the target.
+		_reset_search()
 		if recognition >= 1.0:
 			if state != &"engage":
 				reaction_left = 0.65
@@ -177,20 +193,32 @@ func _physics_process(delta: float) -> void:
 		if search_left > 0.0:
 			state = &"search"
 			search_left -= delta
-			var remaining := last_known - global_position
-			remaining.y = 0
-			var direction := route_toward(last_known, delta)
-			if remaining.length() > 1.0 and direction.length_squared() > 0.0001:
-				direction = direction.normalized()
-				velocity.x = direction.x * search_speed
-				velocity.z = direction.z * search_speed
-				rotation.y = atan2(direction.x, direction.z)
+			if search_phase == &"look":
+				_look_around(delta)
+			else:
+				_search_travel(delta)
+			if search_left <= 0.0:
+				search_phase = &""
 		else:
 			state = &"patrol"
-			var destination := _home + Vector3(_patrol_sign * 1.7,0,0)
-			if global_position.distance_to(destination) < 0.2:
-				_patrol_sign *= -1
-			velocity.x = signf(destination.x - global_position.x) * 0.55
+			var away := _home - global_position
+			away.y = 0.0
+			if _returning and away.length() < 0.4:
+				_returning = false
+			if _returning:
+				# Walk back to the post after a search before resuming the patrol shuffle.
+				var back := route_toward(_home, delta)
+				if back.length_squared() > 0.0001:
+					back = back.normalized()
+					velocity.x = back.x * return_speed
+					velocity.z = back.z * return_speed
+					rotation.y = atan2(back.x, back.z)
+			else:
+				rotation.y = rotate_toward(rotation.y, _home_yaw, delta * 2.5)
+				var destination := _home + Vector3(_patrol_sign * 1.7,0,0)
+				if global_position.distance_to(destination) < 0.2:
+					_patrol_sign *= -1
+				velocity.x = signf(destination.x - global_position.x) * 0.55
 	if not is_on_floor():
 		velocity.y -= delta * 20
 	move_and_slide()
@@ -213,14 +241,12 @@ func can_see(actor: Node3D) -> bool:
 func hear_noise(at: Vector3, loudness: float = 1.0) -> void:
 	if not active or state == &"dead" or state == &"downed" or global_position.distance_to(at) > 22*loudness or state == &"engage":
 		return
-	last_known = Vector3(snappedf(at.x,2), global_position.y, snappedf(at.z,2))
-	search_left = 6.0
+	begin_search(Vector3(snappedf(at.x,2), global_position.y, snappedf(at.z,2)))
 	state = &"search"
 
 func receive_alert(at: Vector3) -> void:
-	if active and state != &"dead" and state != &"downed":
-		last_known = at
-		search_left = 6.0
+	if active and state != &"dead" and state != &"downed" and state != &"engage":
+		begin_search(at)
 
 func _shoot(actor: Node3D) -> void:
 	shot_cooldown = fire_interval
@@ -539,3 +565,47 @@ func route_toward(goal: Vector3, delta: float) -> Vector3:
 		_path_index += 1
 	# Path finished; the goal itself may be off the walkable area (inside a wall), so stop here.
 	return Vector3.ZERO
+
+## Starts (or restarts) a search toward a heard, reported or last-seen position.
+func begin_search(at: Vector3) -> void:
+	last_known = at
+	_reset_search()
+
+func _reset_search() -> void:
+	search_left = max_search_seconds + look_seconds
+	search_phase = &"travel"
+	look_left = look_seconds
+	_returning = true
+	_stuck_left = 1.5
+	_stuck_from = global_position
+
+func _search_travel(delta: float) -> void:
+	var remaining := last_known - global_position
+	remaining.y = 0
+	var direction := route_toward(last_known, delta)
+	_stuck_left -= delta
+	if _stuck_left <= 0.0:
+		# Barely moved for a while: blocked or at the end of the walkable area.
+		if global_position.distance_to(_stuck_from) < 0.3:
+			_start_looking()
+			return
+		_stuck_left = 1.5
+		_stuck_from = global_position
+	if remaining.length() <= 1.2 or direction.length_squared() <= 0.0001 or search_left <= look_seconds:
+		_start_looking()
+		return
+	direction = direction.normalized()
+	velocity.x = direction.x * search_speed
+	velocity.z = direction.z * search_speed
+	rotation.y = atan2(direction.x, direction.z)
+
+func _start_looking() -> void:
+	search_phase = &"look"
+	look_left = look_seconds
+	search_left = minf(search_left, look_seconds)
+	_look_yaw = rotation.y
+
+## Sweeps the body (and so the rifle and sight cone) left and right around the arrival heading.
+func _look_around(delta: float) -> void:
+	look_left -= delta
+	rotation.y = _look_yaw + sin((look_seconds - look_left) * 1.3) * 1.2

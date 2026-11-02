@@ -43,8 +43,13 @@ func _run() -> void:
 	_check(not observer.can_see(player) and counts.shots==0,"Solid cover blocks recognition and shots")
 	observer.hear_noise(player.global_position)
 	var last: Vector3 = observer.last_known
-	await _frames(420)
+	# Search walks toward the noise, looks around, gives up and walks home.
+	for i in range(2400):
+		await _frames(1)
+		if observer.state==&"patrol" and not observer._returning:
+			break
 	_check(observer.last_known==last and observer.state==&"patrol","Unseen player is not tracked; sound search decays")
+	await _frames(120)
 	player.global_position = annex.global_position+Vector3(-4,0.02,-8)
 	player.velocity = Vector3.ZERO
 	await _frames(3)

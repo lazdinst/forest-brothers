@@ -46,6 +46,7 @@ Each chunk has a headless check under `tests/`. Headless checks do not establish
 | 7 | Placeholder rifle proxy on the true facing: lowered while calm, raised while engaging. Shots leave from a facing-relative shoulder; flash at the muzzle. Sprite dims when the body faces away. | `enemy_readability_smoke` |
 | 8 | Finite magazines (10 rounds, 3 spares, 3 s reload). Reload lowers the rifle and plays a positional clatter. Partial magazines are retained; empty enemies stop firing; rounds are conserved. | `enemy_reload_smoke` |
 | 9 | Blockout arena `scenes/combat/combat_arena.tscn` (grey boxes: screening wall, farmhouse shell with doorway, crate cover) with a navigation map baked at load. Two enemies, active by default. Searching enemies follow navigation paths and face their route; scenes without a navigation map (the camp annex) keep straight-line movement. Launch directly: `<godot> --path . res://scenes/combat/combat_arena.tscn`. No menu or route entry yet (open question 9). | `combat_arena_smoke` |
+| 10 | Searching: noise, local alerts and losing sight start a walk to the last known position (1.4 m/s, along navigation where available). On arrival, or when blocked or after 30 s, the enemy sweeps its view for 6 s, then gives up, walks back to its post at 1.0 m/s and resumes its watch direction. Hidden players are not tracked. | `enemy_search_smoke` |
 
 Placeholder values: zone maximums head 35, torso 80, arms 60, legs 65; rifle and enemy damage 40; enemy bleed-out 30 s; player bleed-out 60 s. Arms and legs are each one zone (left/right still open).
 
