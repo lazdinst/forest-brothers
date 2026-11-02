@@ -452,17 +452,44 @@ func pickup(id: StringName) -> bool:
 	return true
 
 func transfer_ground_item_to(id: StringName, recipient) -> bool:
-	# Communal equipment can change custody. Preflight the complete weapon subtree
-	# before removing anything from the source; no ID or chamber round is copied.
 	var item: Item = items.get(id)
 	if recipient == self: return pickup(id)
-	if item == null or item.location.kind != &"ground" or recipient.weapon_type_id != weapon_type_id: return fail("Equipment cannot be recovered by this inventory")
-	var destination: Location
-	if item is BackpackInstance:
-		if recipient.backpack() != null: return fail("Recipient already wears a backpack")
-		destination = Location.new(&"worn",recipient.owner_id,0)
-	else: destination = recipient.empty_location(&"",recipient.footprint(item))
-	if item is WeaponInstance and not recipient.equipped(): destination = Location.new(&"equipped",recipient.owner_id,0)
+	if item == null or item.location.kind != &"ground": return fail("Equipment cannot be recovered by this inventory")
+	return _hand_over(item,recipient,null)
+
+## Take a carried item (with everything inside it) from this carrier, e.g. a searched body.
+## A null destination picks the recipient's first suitable place.
+func transfer_to(id: StringName, recipient, destination: Location = null) -> bool:
+	var item: Item = items.get(id)
+	if recipient == self or item == null or not carried(item) or item.location.kind == &"magwell": return fail("Nothing to take")
+	return _hand_over(item,recipient,destination)
+
+## Where this carrier would put an incoming item: a backpack on the back, a rifle in the
+## empty rifle slot, anything else in the first free pocket or pack space.
+func auto_destination(item: Item) -> Location:
+	if item is BackpackInstance: return Location.new(&"worn",owner_id,0) if backpack() == null else null
+	if item is WeaponInstance and not equipped(): return Location.new(&"equipped",owner_id,0)
+	return empty_location(&"",footprint(item))
+
+## Side-effect-free check for an item arriving from another carrier.
+func can_receive(item: Item, destination: Location) -> bool:
+	if item == null or destination == null or items.has(item.id): return false
+	match destination.kind:
+		&"pocket", &"pack":
+			if item is BackpackInstance: return false
+			if destination.kind == &"pack" and (not items.get(destination.owner_id) is BackpackInstance or not carried(items[destination.owner_id])): return false
+			var size := footprint(item,destination.rotated)
+			return valid_slot(destination,size) and occupant(destination,&"",size) == null
+		&"equipped": return item is WeaponInstance and not equipped() and destination.owner_id == owner_id and destination.slot == 0
+		&"worn": return item is BackpackInstance and backpack() == null and destination.owner_id == owner_id and destination.slot == 0
+	return false
+
+# Communal equipment can change custody. Preflight the complete subtree before removing
+# anything from the source; no ID or chamber round is copied.
+func _hand_over(item: Item, recipient, destination: Location) -> bool:
+	if recipient.weapon_type_id != weapon_type_id: return fail("Equipment cannot be recovered by this inventory")
+	if destination == null: destination = recipient.auto_destination(item)
+	elif not recipient.can_receive(item,destination): return fail("That slot is unavailable")
 	if destination == null: return fail("Recipient inventory is full")
 	var subtree := contents_tree(item)
 	if item is WeaponInstance and item.inserted_magazine_id != &"" and magazine(item.inserted_magazine_id) not in subtree: subtree.append(null)

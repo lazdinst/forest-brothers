@@ -178,6 +178,12 @@ Planned chunks, each with a headless check and owner approval before starting:
    adds one, so Tab works there too. New scenes with a player add a host the same way.
    Check: `tests/inventory_host_smoke.gd`.
 
+8. Done: body looting (owner request, 2026-11-02). Dead enemies keep their gear on
+   the body (`scripts/inventory/body_container.gd`). F opens the inventory with a
+   Body panel in the top-right corner: the body's rifle slot and pockets. Searching
+   reveals one item at a time while open; drag into pockets/pack, or ctrl-click /
+   right-click Take. Rules: `transfer_to`, `can_receive`, `auto_destination`.
+
 All planned Tarkov-style chunks are done. Open: final pack and item sizes, more
 backpack sizes, a nearby-loot panel (needs owner approval) and network authority.
 4. Loading progress on the magazine cell; double-click inspect panel.

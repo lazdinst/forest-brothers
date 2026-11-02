@@ -22,8 +22,11 @@ var _previous_mouse_mode := Input.MOUSE_MODE_VISIBLE
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# Bodies find the host serving the player who searches them.
+	add_to_group(&"inventory_host")
 
-func open() -> bool:
+## loot: an optional searched body shown beside the player's own gear.
+func open(loot = null) -> bool:
 	if is_open or not is_instance_valid(player) or not is_instance_valid(world): return false
 	if can_open.is_valid() and not can_open.call(): return false
 	player.weapon.prepare_inventory()
@@ -36,6 +39,7 @@ func open() -> bool:
 	add_child(_layer)
 	view = InventoryScene.instantiate()
 	view.data = InventorySnapshot.from_training(player)
+	view.loot = loot
 	view.drop_requested.connect(player.weapon.drop_inventory_item)
 	_layer.add_child(view)
 	view.closed.connect(close)

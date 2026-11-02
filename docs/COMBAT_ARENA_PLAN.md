@@ -49,12 +49,12 @@ Each chunk has a headless check under `tests/`. Headless checks do not establish
 | 10 | Searching: noise, local alerts and losing sight start a walk to the last known position (1.4 m/s, along navigation where available). On arrival, or when blocked or after 30 s, the enemy sweeps its view for 6 s, then gives up, walks back to its post at 1.0 m/s and resumes its watch direction. Hidden players are not tracked. | `enemy_search_smoke` |
 | 11 | Cover: when hit, or when reloading while engaged, an enemy runs (2.6 m/s, no firing) to the nearest reachable spot within 12 m of path where walls hide its chest and head from the threat with a 0.5 m margin. It holds 2.5 s facing the threat (until the reload finishes), then leaves toward where it last saw the threat. Cover that proves exposed is abandoned once the rifle is ready. Crates do not count yet because enemies do not crouch. Scenes without navigation (camp annex) keep the old behaviour. | `enemy_cover_smoke` |
 | 12 | Arena HUD (stance/stamina instrument, crosshair, prompts) and a finite 120-round ammo crate handing out 10 loose cartridges per use. | `combat_arena_smoke` |
-| 13 | Loot: in the arena, a dead (not downed) enemy drops each magazine it still carried, with exact round counts, as existing ground-equipment pickups (F to recover). Rounds are conserved; the rifle stays with the body; arena reset clears leftover loot. Off in the camp annex. | `enemy_loot_smoke` |
+| 13 | Loot: a dead (not downed) enemy keeps its rifle (with its inserted magazine) and spare magazines on the body. **F** on the body opens the player's inventory with a Body panel; a short search reveals one item at a time (0.8 s each, placeholder) only while open; drag or ctrl-click to take. Take-only for now. Magazines beyond four pockets lie beside the body as ground pickups. Rounds are conserved; arena reset clears bodies and loot. Off in the camp annex. | `enemy_loot_smoke` |
 | 14 | Flanking: an enemy alerted by an engaging ally heads (2 m/s) for a reachable spot 7–13 m from the target, roughly square to the ally's line of fire, with a clear view of the target; on arrival it faces the target and scans. Plain noise alerts and scenes without navigation walk straight in as before. | `enemy_flank_smoke` |
 
 Placeholder values: zone maximums head 35, torso 80, arms 60, legs 65; rifle and enemy damage 40; enemy bleed-out 30 s; player bleed-out 60 s. Arms and legs are each one zone (left/right still open).
 
-Not yet built: revival, limb effects, lean-following player zones, crouching and peeking, archetypes, rifle and non-ammunition loot, real sprites.
+Not yet built: revival, limb effects, lean-following player zones, crouching and peeking, archetypes, non-ammunition loot, real sprites.
 
 ## 4. What makes the fight feel like Tarkov (proposed)
 

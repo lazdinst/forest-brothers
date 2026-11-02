@@ -37,6 +37,12 @@ var inspect_title: Label
 var inspect_body: Label
 var inspect_icon: Control
 var inspected_id: StringName
+## A searched body opened with F, or null. Its gear is shown beside the player's.
+var loot
+var loot_heading: Label
+var body_rifle_grid
+var body_pocket_grid
+var rifle_heading: Label
 var no_pack_label: Label
 var _menu_actions: Array[StringName] = []
 var _split_destination
@@ -60,6 +66,9 @@ func _physics_process(delta: float) -> void:
 	weapon_state.advance(delta)
 	if _seen_revision != weapon_state.revision: _refresh()
 	_show_action_progress()
+	if loot != null:
+		loot.advance_search(delta)
+		_refresh_loot_heading()
 
 ## The busy magazine's cell shows how far the timed action is; rifle actions show on the rifle slot.
 func _show_action_progress() -> void:
@@ -178,8 +187,30 @@ func _build() -> void:
 	pocket_grid.item_quick.connect(_quick)
 	pocket_grid.drop_validator = _can_drop_in_grid.bind(&"pocket")
 	pocket_grid.item_dropped.connect(_drop_in_grid.bind(&"pocket"))
-	_label(carried,"RIFLE & AMMUNITION",Vector2(455,45),470,20)
+	rifle_heading = _label(carried,"RIFLE & AMMUNITION",Vector2(455,45),470,20)
 	ammunition_status = _label(carried,"",Vector2(455,87),470,18)
+	# A searched body takes this corner: its rifle slot and pockets, revealed as searched.
+	loot_heading = _label(carried,"",Vector2(455,45),500,20)
+	body_rifle_grid = Grid.new()
+	body_rifle_grid.position = Vector2(455,80)
+	body_rifle_grid.configure(5,2,64)
+	body_pocket_grid = Grid.new()
+	body_pocket_grid.position = Vector2(787,80)
+	body_pocket_grid.configure(2,2,64)
+	for grid in [body_rifle_grid,body_pocket_grid]:
+		carried.add_child(grid)
+		grid.item_selected.connect(_select_item)
+		grid.item_menu_requested.connect(_open_item_menu)
+		grid.item_quick.connect(_quick)
+		# Take-only for now: nothing is put back onto a body.
+		grid.drop_validator = func(_id, _slot, _target, _rotated, _split): return false
+	var looting: bool = loot != null
+	loot_heading.visible = looting
+	body_rifle_grid.visible = looting
+	body_pocket_grid.visible = looting
+	rifle_heading.visible = not looting
+	ammunition_status.visible = not looting
+	if looting: loot.search_progressed.connect(_refresh_loot)
 	_label(carried,"03  /  PACK SPACE",Vector2(0,200),920,20)
 	_label(carried,"Pack space · total capacity under review",Vector2(0,231),920,16)
 	pack_grid = Grid.new()
@@ -244,6 +275,7 @@ func _refresh() -> void:
 	no_pack_label.visible = not pack_grid.visible
 	backpack_button.text = "Backpack\n" + (data.backpack if data.backpack_id != "" else "None worn")
 	if inspected_id != &"": _show_inspect(inspected_id)
+	_refresh_loot()
 	rifle_name.text = data.rifle
 	rifle_button.disabled = not data.equipped
 	rifle_art.visible = data.equipped
@@ -253,6 +285,39 @@ func _refresh() -> void:
 	ammunition_status.text = "Inserted: %s\nChamber: %s\nLoose cartridges: %d\n%s" % [data.magazine_knowledge,"loaded" if data.chamber else "empty",data.loose,"K chamber · R swap · I inspect"]
 	detail.text = weapon_state.message + (" · " + String(weapon_state.busy) if weapon_state.busy != &"" else "")
 	_seen_revision = weapon_state.revision
+
+func _refresh_loot() -> void:
+	if loot == null: return
+	var rifles: Array = []
+	var pockets: Array = []
+	for item in loot.visible_items():
+		var record := Snapshot.record(item,loot.inventory)
+		if item.location.kind == &"equipped":
+			record.slot = 0
+			record.quantity = ""
+			rifles.append(record)
+		elif item.location.kind == &"pocket": pockets.append(record)
+	body_rifle_grid.show_items(rifles)
+	body_pocket_grid.show_items(pockets)
+	_refresh_loot_heading()
+
+func _refresh_loot_heading() -> void:
+	if loot == null: return
+	if loot.searching(): loot_heading.text = "05  /  BODY  ·  searching %d of %d…" % [loot.revealed+1,loot.order.size()]
+	else: loot_heading.text = "05  /  BODY  ·  searched" + ("" if not loot.visible_items().is_empty() else " · nothing left")
+
+func _inventory_of(id: StringName):
+	return loot.inventory if loot != null and loot.inventory.items.has(id) else weapon_state.inventory
+
+## Taking from a body moves the item, with everything inside it, into the player's custody.
+func _take(id: StringName, destination = null) -> void:
+	if weapon_state.busy != &"": weapon_state.reject("Finish or cancel the current action first")
+	elif loot == null or not loot.is_revealed(id): weapon_state.reject("Still searching")
+	elif loot.inventory.transfer_to(id,weapon_state.inventory,destination):
+		weapon_state.message = "Taken from the body"
+		weapon_state.revision += 1
+	else: weapon_state.reject(loot.inventory.error)
+	_refresh()
 
 func _select_weapon() -> void:
 	_select(weapon_state.inventory.active_weapon_id)
@@ -265,6 +330,8 @@ func _select(id: StringName) -> void:
 	selected_id = id
 	pocket_grid.select(id)
 	pack_grid.select(id)
+	body_rifle_grid.select(id)
+	body_pocket_grid.select(id)
 	var entry := _describe(id)
 	if not entry.is_empty(): detail.text = "%s  /  %s  ·  right-click for actions" % [entry.heading,entry.description]
 
@@ -293,6 +360,10 @@ func _open_menu_for(id: StringName, at: Vector2) -> void:
 	item_menu.popup(Rect2i(Vector2i(at),Vector2i.ZERO))
 
 func _describe(id: StringName) -> Dictionary:
+	if loot != null and loot.inventory.items.has(id):
+		if not loot.is_revealed(id): return {}
+		var record := Snapshot.record(loot.inventory.items[id],loot.inventory)
+		return {"heading":record.title,"description":"On the body","choices":[{"id":&"take","caption":"Take"}]}
 	var item = weapon_state.inventory.items.get(id)
 	if item == null: return {}
 	var choices: Array = []
@@ -350,6 +421,7 @@ func _inventory_action(action: StringName) -> void:
 	context.dismiss()
 	if action == &"back": return
 	if action == &"cancel_action": weapon_state.cancel_action()
+	elif action == &"take": _take(selected_id)
 	elif weapon_state.busy != &"": weapon_state.reject("Finish or cancel the current action first")
 	elif action == &"split_prompt":
 		_show_split_dialog()
@@ -385,7 +457,8 @@ func _equip(id: StringName) -> void:
 
 ## Facts the carrier can see by looking: never an exact magazine count, only earned knowledge.
 func _show_inspect(id: StringName) -> void:
-	var inventory = weapon_state.inventory
+	var inventory = _inventory_of(id)
+	var on_body: bool = inventory != weapon_state.inventory
 	var item = inventory.items.get(id)
 	for child in inspect_icon.get_children(): child.queue_free()
 	if item == null or not inventory.carried(item):
@@ -417,8 +490,8 @@ func _show_inspect(id: StringName) -> void:
 		inspect_title.text = item.label
 		lines.append("%d × %d pack · %d items inside" % [inventory.pack_columns,ceili(float(inventory.pack_capacity)/inventory.pack_columns),inventory.contents_tree(item).size()-1])
 		lines.append("Everything inside stays in it when dropped.")
-	lines.append(where.get(item.location.kind,""))
-	lines.append("Belongs to the group; you are carrying it.")
+	lines.append("On the body" if on_body else where.get(item.location.kind,""))
+	lines.append("Belongs to the group; take it to carry it." if on_body else "Belongs to the group; you are carrying it.")
 	inspect_body.text = "\n".join(lines)
 	var record := Snapshot.record(item,inventory)
 	record.rotated = false
@@ -427,6 +500,11 @@ func _show_inspect(id: StringName) -> void:
 ## Ctrl-click: pockets <-> pack. Alt-click: insert a carried magazine into the rifle.
 func _quick(item: Dictionary, kind: StringName) -> void:
 	var id := StringName(item.id)
+	if loot != null and loot.inventory.items.has(id):
+		_select(id)
+		if kind == &"inspect": _show_inspect(id)
+		else: _take(id)
+		return
 	var inventory = weapon_state.inventory
 	var source = inventory.items.get(id)
 	if source == null: return
@@ -450,6 +528,8 @@ func _can_drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated
 	if weapon_state.busy != &"": return false
 	var inventory = weapon_state.inventory
 	var destination = inventory.slot_location(container,slot,rotated)
+	if loot != null and loot.inventory.items.has(id):
+		return not split and loot.is_revealed(id) and inventory.can_receive(loot.inventory.items[id],destination)
 	if destination == null: return false
 	if split: return inventory.can_split_stack(id,destination)
 	var source = inventory.items.get(id)
@@ -461,6 +541,9 @@ func _can_drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated
 func _drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated: bool, split: bool, container: StringName) -> void:
 	if weapon_state.busy != &"":
 		weapon_state.reject("Finish or cancel the current action first")
+		return
+	if loot != null and loot.inventory.items.has(id):
+		_take(id,weapon_state.inventory.slot_location(container,slot,rotated))
 		return
 	if split:
 		selected_id = id
