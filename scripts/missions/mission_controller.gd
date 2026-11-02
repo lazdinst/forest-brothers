@@ -108,6 +108,13 @@ func _casualty(player, outcome: StringName) -> void:
 	run.participant_killed(participant_id(player))
 	_ended(player)
 
+## The player gave up the outing (pause menu): mission death, like being killed.
+func abandon(player) -> bool:
+	if run == null or run.state_of(participant_id(player)) != MissionRun.ACTIVE: return false
+	run.participant_abandoned(participant_id(player))
+	_ended(player)
+	return true
+
 func _ended(player) -> void:
 	var report := MissionReport.build(run, participant_id(player))
 	participant_ended.emit(player, report)

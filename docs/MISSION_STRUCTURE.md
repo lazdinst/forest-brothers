@@ -26,6 +26,7 @@ Optional scavenging outings allow recovery when the group lacks supplies for mai
 | Rescuer dies, teammates safely return | Teammates can still secure the group's pending recruits |
 | Solo/total-group mission death | Pending recruits are lost or die en route; carried gear is not brought home |
 | Mission deadline expires | Fail the outing; players still on the map suffer mission death, losing carried gear and pending civilians |
+| Player abandons the outing (pause menu) | Mission death for that player, as if killed: carried gear stays behind; survivors continue (owner choice, 2026-11-02) |
 | Non-host disconnect | Character remains present and vulnerable; reconnect can restore control if alive |
 | Host crash | End the outing; restore the entire campaign to the pre-mission baseline, as if the outing never happened |
 

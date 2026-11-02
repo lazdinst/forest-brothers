@@ -53,6 +53,7 @@ var _ended_extracted := false
 var pause_menu
 var _pause_mouse_mode := Input.MOUSE_MODE_VISIBLE
 var _pause_process_mode := Node.PROCESS_MODE_INHERIT
+var _confirming_abandon := false
 
 func _ready() -> void:
 	definition = MissionLaunch.pending if MissionLaunch.pending != null else default_region.compose(default_region.missions)
@@ -369,7 +370,7 @@ func _pause_ui() -> void:
 	pause_menu = MenuModal.new()
 	layer.add_child(pause_menu)
 	pause_menu.action_selected.connect(_pause_action)
-	pause_menu.canceled.connect(resume)
+	pause_menu.canceled.connect(_cancel_pause)
 
 ## Opens the pause menu, unless the summary or the inventory has the screen.
 func pause() -> bool:
@@ -379,11 +380,21 @@ func pause() -> bool:
 	_pause_process_mode = process_mode
 	process_mode = Node.PROCESS_MODE_DISABLED
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_present_pause()
+	return true
+
+func _present_pause() -> void:
+	_confirming_abandon = false
 	pause_menu.present("Paused", "%s. Leave through a marked exit to keep what you carry." % definition.title, [
 		{"id": &"resume", "caption": "Resume"},
 		{"id": &"inventory", "caption": "Equipment & inventory"},
+		{"id": &"abandon", "caption": "Abandon outing"},
 	])
-	return true
+
+## Escape in the abandon confirmation goes back to the pause menu, not out of it.
+func _cancel_pause() -> void:
+	if _confirming_abandon: _present_pause()
+	else: resume()
 
 func resume() -> void:
 	if not pause_menu.visible: return
@@ -397,6 +408,21 @@ func _pause_action(action_id: StringName) -> void:
 		&"inventory":
 			resume()
 			inventory.open()
+		&"abandon":
+			_confirming_abandon = true
+			pause_menu.present("Abandon the outing?", "This counts as mission death: everything you carry stays here, and anyone you rescued on this outing is lost. You return to camp.", [
+				{"id": &"keep", "caption": "Keep going"},
+				{"id": &"confirm_abandon", "caption": "Abandon outing"},
+			])
+		&"keep": _present_pause()
+		&"confirm_abandon": abandon()
+
+## Gives up the outing as mission death; the summary then leads back as after any death.
+func abandon() -> void:
+	resume()
+	if mission.abandon(player):
+		# The character is gone from the outing; its body stays where it stood.
+		player.process_mode = Node.PROCESS_MODE_DISABLED
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and not event.is_echo() and pause():

@@ -1,7 +1,8 @@
 extends RefCounted
 ## Runtime rules of one deployment of a MissionDefinition, for every participant (up to four).
 ## Each participant ends on their own: extracted (stood in an exit for exit_seconds), killed, or
-## timed out (still in the area when the time limit runs out: mission death). The run is over
+## timed out (still in the area when the time limit runs out: mission death), or abandoned (gave
+## up from the pause menu: also mission death). The run is over
 ## when nobody is active. A carry_out objective is done when a participant extracts carrying its
 ## item. No scene nodes: the controller feeds time and positions; MissionReport reads the result.
 const SupplyCatalog = preload("res://scripts/health/supply_catalog.gd")
@@ -9,6 +10,7 @@ const ACTIVE := &"active"
 const EXTRACTED := &"extracted"
 const KILLED := &"killed"
 const TIMED_OUT := &"timed_out"
+const ABANDONED := &"abandoned"
 ## Whole-mission outcomes.
 const SUCCESS := &"success" # every required objective carried out
 const RETURNED := &"returned" # someone got out, required objectives not all done
@@ -73,6 +75,10 @@ func advance(delta: float, positions: Dictionary) -> void:
 func participant_killed(id: StringName) -> void:
 	if participants.has(id) and participants[id].state == ACTIVE: _end(id, KILLED)
 
+## Gave up the outing: mission death, as if killed; carried gear stays where they were.
+func participant_abandoned(id: StringName) -> void:
+	if participants.has(id) and participants[id].state == ACTIVE: _end(id, ABANDONED)
+
 func exit_at(at: Vector3) -> Dictionary:
 	for exit in exits:
 		if absf(at.x - exit.center.x) <= exit.half_size.x and absf(at.z - exit.center.z) <= exit.half_size.y: return exit
@@ -98,14 +104,14 @@ func _required_done() -> bool:
 	return true
 
 ## Where an objective stands for the HUD and summary: &"done", &"carried" (by a participant
-## still in the area), &"on_body" (a killed or timed-out participant had it) or &"missing".
+## still in the area), &"on_body" (a killed, timed-out or abandoning participant had it) or &"missing".
 func objective_state(index: int) -> StringName:
 	if objective_done.get(index, false): return &"done"
 	var item_id: StringName = definition.objectives[index].item_id
 	for entry in participants.values():
 		if not carries(entry.inventory, item_id): continue
 		if entry.state == ACTIVE: return &"carried"
-		if entry.state in [KILLED, TIMED_OUT]: return &"on_body"
+		if entry.state in [KILLED, TIMED_OUT, ABANDONED]: return &"on_body"
 	return &"missing"
 
 ## Objective lines for one participant's HUD, including their exit countdown and the time left.

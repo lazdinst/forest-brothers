@@ -124,6 +124,6 @@ Done:
 - `tests/menu_escape_smoke.gd` covers the new behaviour.
 
 Open questions for the owner:
-1. Should the mission pause menu offer a way to abandon the outing (e.g. as mission death, losing
-   carried gear and pending recruits)? Not added: leaving mid-outing is a design decision.
+1. (Answered: yes, as mission death. The pause menu now has Abandon outing, with a confirmation;
+   recorded in `docs/DECISIONS.md` and `docs/MISSION_STRUCTURE.md`.)
 2. Should Escape on the bare main menu do anything (e.g. ask to exit)? Currently nothing.

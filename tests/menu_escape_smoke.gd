@@ -1,8 +1,10 @@
 extends SceneTree
 ## Escape backs out of menus: the Play screens step back a page (worlds to characters, then out
 ## to the main menu), the mission map leaves for camp when opened from there, and a mission world
-## opens a pause menu that suspends the world, which Escape closes again.
+## opens a pause menu that suspends the world, which Escape closes again. Abandoning the outing
+## from it asks first, then is mission death: the summary says so and the gear stays behind.
 const MissionLaunch = preload("res://scripts/missions/mission_launch.gd")
+const MissionRun = preload("res://scripts/missions/mission_run.gd")
 const CATALOG = preload("res://missions/catalog.tres")
 var failures: Array[String] = []
 func _initialize() -> void:
@@ -61,11 +63,28 @@ func _run() -> void:
 	_check(not world.pause_menu.visible and world.inventory.is_open, "The pause menu opens the inventory")
 	await _escape()
 	_check(not world.inventory.is_open and not world.pause_menu.visible, "Escape closes the inventory without opening the pause menu")
+	world.pause()
+	world.pause_menu.action_selected.emit(&"abandon")
+	await _frames(1)
+	_check(world.pause_menu.heading.text.contains("Abandon"), "Abandon asks first")
+	await _escape()
+	_check(world.pause_menu.visible and world.pause_menu.heading.text == "Paused", "Escape in the confirmation goes back to the pause menu")
+	world.pause_menu.action_selected.emit(&"abandon")
+	world.pause_menu.action_selected.emit(&"confirm_abandon")
+	await _frames(2)
+	var id := StringName(str(world.player.name))
+	var summary = world.mission.summary_screen
+	_check(not world.pause_menu.visible and world.mission.run.state_of(id) == MissionRun.ABANDONED and world.mission.run.is_over(), "Abandoning ends the outing for the player")
+	_check(summary.visible and summary.headline.text == "Missing in action: outing abandoned" and summary.text().contains("Left on your body"), "The summary reports mission death with the gear left behind")
+	await _escape()
+	_check(not world.pause_menu.visible, "Escape does not pause over the summary")
 	MissionLaunch.pending = null
+	MissionLaunch.results.clear()
+	MissionLaunch.completed.clear()
 	world.queue_free()
 	await process_frame
 	for failure in failures:
 		push_error(failure)
 	if failures.is_empty():
-		print("PASS: Escape steps back through Play, and pauses and resumes a mission")
+		print("PASS: Escape steps back through Play, pauses and resumes a mission, and abandoning is mission death")
 	quit(0 if failures.is_empty() else 1)

@@ -12,6 +12,7 @@ static func build(run, id: StringName) -> Dictionary:
 		MissionRun.EXTRACTED: headline = "Mission complete" if run.outcome() == MissionRun.SUCCESS and not run.definition.objectives.is_empty() else "Returned to camp"
 		MissionRun.KILLED: headline = "Killed in action"
 		MissionRun.TIMED_OUT: headline = "Missing in action: time ran out"
+		MissionRun.ABANDONED: headline = "Missing in action: outing abandoned"
 		_: headline = "Mission in progress"
 	var sections: Array = []
 	# Missions taken on a region outing.
