@@ -8,6 +8,7 @@ const ForestLayout = preload("res://scripts/environment/forest_layout.gd")
 const Station = preload("res://scripts/camp/camp_station.gd")
 const Enemy = preload("res://scripts/combat/enemy_actor.gd")
 const MissionLaunch = preload("res://scripts/missions/mission_launch.gd")
+const CashChest = preload("res://scripts/camp/cash_chest.gd")
 const MISSION_MAP := "res://scenes/missions/mission_board.tscn"
 const COMBAT_ARENA := "res://scenes/combat/combat_arena.tscn"
 const Civilian = preload("res://scenes/characters/starting_civilian.tscn")
@@ -47,6 +48,7 @@ var _planner_hint: Label
 var _map_labels: Array[Label] = []
 var _bout_active: bool = false
 var blood_enabled: bool = true
+var cash_chest
 
 func _ready() -> void:
 	world = get_parent()
@@ -80,6 +82,12 @@ func _ready() -> void:
 	_station(&"hq",&"hq","Headquarters / rescue exercise",Vector3(3,0,6))
 	_station(&"combat",&"combat","Enemy test controls",Vector3(0,0,-1))
 	_station(&"contact",&"contact","Contact (buys and sells at fixed prices)",Vector3(-12,0,-6))
+	# The treasury as a chest beside the quartermaster.
+	cash_chest = CashChest.new(world.stock)
+	cash_chest.name = "CashChest"
+	cash_chest.position = Vector3(-2.2,0,13)
+	add_child(cash_chest)
+	_label(self,"CASH CHEST\nF to open: rubles and lats",Vector3(-2.2,1.5,13))
 	_box(self,"LeftCover",Vector3(-3,1,-5),Vector3(6,2,0.35),Color(0.3,0.32,0.29),true)
 	_box(self,"RightCover",Vector3(7,1,-8),Vector3(0.5,2,5),Color(0.3,0.32,0.29),true)
 	_label(self,"ENEMY TEST LANE\nArm the bout at the control table\n3 rifle hits / non-graphic blood / collapse",Vector3(0,3,-10))

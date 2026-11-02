@@ -99,6 +99,7 @@ files keep the camp and mission results (`scripts/state/`, `ui/session/play_menu
 
 Then: mission rewards into camp stores; rubles and lats (carried items, quartermaster deposit,
 fixed-price contact station, money in regions/on enemies/in rewards; `money_smoke`).
+Then: camp cash chest, a two-way money container in the inventory view (`cash_chest_smoke`).
 
 Open for the owner: playtest; bribes; delete/rename characters and worlds; save character health;
 network joining (two-instance check); camp issue of weapons after a death.

@@ -243,11 +243,16 @@ func _build() -> void:
 		grid.item_selected.connect(_select_item)
 		grid.item_menu_requested.connect(_open_item_menu)
 		grid.item_quick.connect(_quick)
-		# Take-only for now: nothing is put back onto a body.
-		grid.drop_validator = func(_id, _slot, _target, _rotated, _split): return false
+		# Take-only from a body; a storage container (the camp cash chest) also takes items in.
+		grid.drop_validator = _can_store
+		grid.item_dropped.connect(_store)
 	var looting: bool = loot != null
+	if looting and _is_storage():
+		# A storage container shows one grid laid out like its own pack space.
+		body_pocket_grid.position = Vector2(455,80)
+		body_pocket_grid.configure(loot.inventory.pack_columns,ceili(float(loot.inventory.pack_capacity)/loot.inventory.pack_columns),64)
 	loot_heading.visible = looting
-	body_rifle_grid.visible = looting
+	body_rifle_grid.visible = looting and not _is_storage()
 	body_pocket_grid.visible = looting
 	rifle_heading.visible = not looting
 	ammunition_status.visible = not looting
@@ -413,15 +418,43 @@ func _refresh_loot() -> void:
 			record.slot = 0
 			record.quantity = ""
 			rifles.append(record)
-		elif item.location.kind == &"pocket": pockets.append(record)
+		elif item.location.kind == &"pocket" or (_is_storage() and item.location.kind == &"pack"): pockets.append(record)
 	body_rifle_grid.show_items(rifles)
 	body_pocket_grid.show_items(pockets)
 	_refresh_loot_heading()
 
 func _refresh_loot_heading() -> void:
 	if loot == null: return
+	if _is_storage():
+		loot_heading.text = "05  /  %s  ·  %s" % [loot.TITLE, "empty" if loot.visible_items().is_empty() else "drag money in or out"]
+		return
 	if loot.searching(): loot_heading.text = "05  /  BODY  ·  searching %d of %d…" % [loot.revealed+1,loot.order.size()]
 	else: loot_heading.text = "05  /  BODY  ·  searched" + ("" if not loot.visible_items().is_empty() else " · nothing left")
+
+## The open container takes items in (the camp cash chest), unlike a body.
+func _is_storage() -> bool:
+	return loot != null and loot.get("storage") == true
+
+## Preview: a carried item may go into a storage container's grid.
+func _can_store(id: StringName, slot: int, _target_id: StringName, rotated: bool, split: bool) -> bool:
+	if not _is_storage() or split or weapon_state.busy != &"": return false
+	var item = weapon_state.inventory.items.get(id)
+	if item == null or not loot.accepts(item): return false
+	return loot.inventory.can_receive(item,loot.inventory.slot_location(&"pack",slot,rotated))
+
+func _store(id: StringName, slot: int, target_id: StringName = &"", rotated := false, split := false) -> void:
+	if not _can_store(id,slot,target_id,rotated,split):
+		if _is_storage(): weapon_state.reject("Only rubles and lats go in the cash chest")
+		return
+	_put_in_storage(id,loot.inventory.slot_location(&"pack",slot,rotated))
+
+## Moves a carried item into the storage container; a null destination takes the first space.
+func _put_in_storage(id: StringName, destination = null) -> void:
+	if weapon_state.inventory.transfer_to(id,loot.inventory,destination):
+		weapon_state.message = "Put in the " + String(loot.TITLE).to_lower()
+		weapon_state.revision += 1
+	else: weapon_state.reject(weapon_state.inventory.error)
+	_refresh()
 
 func _inventory_of(id: StringName):
 	return loot.inventory if loot != null and loot.inventory.items.has(id) else weapon_state.inventory
@@ -629,7 +662,7 @@ func _show_inspect(id: StringName) -> void:
 		inspect_title.text = item.label
 		lines.append("%d × %d pack · %d items inside" % [inventory.pack_columns,ceili(float(inventory.pack_capacity)/inventory.pack_columns),inventory.contents_tree(item).size()-1])
 		lines.append("Everything inside stays in it when dropped.")
-	lines.append("On the body" if on_body else where.get(item.location.kind,""))
+	lines.append(("In the " + String(loot.TITLE).to_lower() if _is_storage() else "On the body") if on_body else where.get(item.location.kind,""))
 	lines.append("Belongs to the group; take it to carry it." if on_body else "Belongs to the group; you are carrying it.")
 	inspect_body.text = "\n".join(lines)
 	var record := Snapshot.record(item,inventory)
@@ -650,6 +683,9 @@ func _quick(item: Dictionary, kind: StringName) -> void:
 	_select(id)
 	if kind == &"inspect":
 		_show_inspect(id)
+		return
+	if kind == &"move" and _is_storage() and loot.accepts(source) and weapon_state.busy == &"":
+		_put_in_storage(id)
 		return
 	if weapon_state.busy != &"": weapon_state.reject("Finish or cancel the current action first")
 	elif kind == &"use" and source is Inventory.SupplyInstance:
