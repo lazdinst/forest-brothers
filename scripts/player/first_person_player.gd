@@ -13,15 +13,23 @@ signal casualty(player, outcome: StringName)
 signal hit_taken(zone: StringName, from: Vector3)
 ## Presentation hook: a bullet passed close by at this point.
 signal bullet_passed(at: Vector3)
+## A teammate brought this downed player back.
+signal revived(player)
 ## Tarkov-style condition: seven body parts, bleeds, fractures, pain, energy and water.
 var body = PlayerHealth.new()
 var hit_zones
 var last_hit_zone: StringName = &""
-## Co-op stand-in: solo incapacitation is mission death, so without a nearby teammate a down becomes death.
+## Dev stand-in for a teammate who is not in the scene. Real teammates are the other members
+## of MISSION_GROUP. Solo incapacitation is mission death, so with nobody standing a down becomes death.
 var has_teammate_nearby: bool = false
+const MISSION_GROUP := &"mission_players"
 # Placeholder pending owner tuning (open question 5).
 var bleed_out_seconds: float = 60.0
-var bleed_left: float = 0.0
+## The teammate this player is treating or reviving, if any. Moving out of reach stops it.
+var care_patient: Node = null
+var care_reach: float = 2.5
+## Why the last attempt to care for a teammate did not start, or empty.
+var care_message: String = ""
 @export var movement_tuning: Resource = preload("res://scripts/player/movement_tuning.gd").new()
 var locomotion
 var is_prone: bool = false
@@ -59,6 +67,10 @@ var _head_probe := SphereShape3D.new()
 func _ready() -> void:
 	locomotion = Movement.new(movement_tuning)
 	_spawn_position = global_position
+	add_to_group(MISSION_GROUP)
+	# Teammates (player layer 2) are interaction targets too: treat or revive them.
+	interaction_ray.collision_mask |= 2
+	interaction_ray.add_exception(self)
 	body_shape.shape = body_shape.shape.duplicate()
 	_head_probe.radius = 0.12
 	hit_zones = HitZones.new()
@@ -145,11 +157,6 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	var active := controls_active()
-	if body.is_downed():
-		bleed_left -= delta
-		if bleed_left <= 0.0:
-			body.bleed_out()
-			_resolve_casualty(BodyHealth.KILLED)
 	advance_condition(delta)
 	if not active or not Input.is_action_pressed("stance_adjust"):
 		_stance_pressed = false
@@ -387,7 +394,7 @@ func receive_hit(damage: float, at: Vector3, _normal: Vector3, source = null, zo
 	last_hit_zone = zone if zone != &"" else BodyHealth.TORSO
 	var outcome: StringName = body.apply_damage(body_part_at(last_hit_zone, at), damage)
 	hit_taken.emit(last_hit_zone, source.global_position if source is Node3D else at)
-	if outcome == BodyHealth.DOWNED and not has_teammate_nearby:
+	if outcome == BodyHealth.DOWNED and not has_standing_teammate():
 		body.bleed_out()
 		outcome = BodyHealth.KILLED
 	if outcome == BodyHealth.DOWNED or outcome == BodyHealth.KILLED:
@@ -402,8 +409,19 @@ func body_part_at(zone: StringName, at: Vector3) -> StringName:
 ## Bleeding, hunger, thirst, effect timers and treatment. The inventory host also calls this
 ## while the world is paused, so wounds keep bleeding with the inventory open, as in Tarkov.
 func advance_condition(delta: float) -> void:
+	if care_patient != null:
+		var patient = body.treatment_patient()
+		if patient == null or not is_instance_valid(care_patient) or patient != care_patient.body:
+			care_patient = null
+		elif global_position.distance_to(care_patient.global_position) > care_reach:
+			body.cancel_treatment()
+			care_patient = null
+			care_message = "Moved away; treatment stopped"
 	var outcome: StringName = body.advance(delta, is_sprinting)
-	if outcome == BodyHealth.DOWNED and not has_teammate_nearby:
+	if body.is_alive() and hit_zones.layout == &"downed":
+		hit_zones.set_layout(&"standing")
+		revived.emit(self)
+	if outcome == BodyHealth.DOWNED and not has_standing_teammate():
 		body.bleed_out()
 		outcome = BodyHealth.KILLED
 	if outcome == BodyHealth.DOWNED or outcome == BodyHealth.KILLED:
@@ -416,10 +434,59 @@ func near_miss(at: Vector3) -> void:
 
 func _resolve_casualty(outcome: StringName) -> void:
 	if outcome == BodyHealth.DOWNED:
-		bleed_left = bleed_out_seconds
+		body.downed_left = bleed_out_seconds
 		hit_zones.set_layout(&"downed")
 	velocity = Vector3.ZERO
+	if body.treatment_patient() != null: body.cancel_treatment()
+	care_patient = null
 	casualty.emit(self, outcome)
+	# With every mission player incapacitated nobody can revive anyone: mission death for all.
+	# Stand-in until a mission session owns casualty resolution.
+	if not has_standing_teammate():
+		for teammate in _teammates():
+			if teammate.body.is_downed():
+				teammate.body.bleed_out()
+				teammate._resolve_casualty(BodyHealth.KILLED)
+
+## Another mission player still on their feet, or the dev stand-in.
+func has_standing_teammate() -> bool:
+	if has_teammate_nearby: return true
+	return _teammates().any(func(teammate): return teammate.body.is_alive())
+
+func _teammates() -> Array:
+	if not is_inside_tree(): return []
+	return get_tree().get_nodes_in_group(MISSION_GROUP).filter(func(node): return node != self and node.get("body") != null)
+
+# --- Teammate care: this player is the interaction target of a teammate looking at them. ----
+
+func get_prompt() -> String:
+	if body.is_downed(): return "F  Revive teammate (%d s left)" % ceili(body.downed_left)
+	return "F  Treat teammate" if body.is_alive() else ""
+
+func interact(actor: Node) -> void:
+	if actor != self and actor.has_method("care_for") and not body.is_dead():
+		actor.care_for(self)
+
+## Starts reviving a downed teammate with a carried bandage or dressing, or treating a standing
+## one's most urgent injury with the best carried supply. Again on the same teammate stops it.
+## Returns why it could not start, or empty.
+func care_for(patient: Node) -> String:
+	if care_patient == patient and body.treatment_patient() == patient.body:
+		body.cancel_treatment()
+		care_patient = null
+		care_message = ""
+		return ""
+	var inventory = weapon.state.inventory
+	var problem: String
+	if patient.body.is_downed():
+		var item_id: StringName = PlayerHealth.revive_supply_in(inventory)
+		problem = "Needs a bandage or dressing" if item_id == &"" else body.start_revival(inventory, item_id, patient.body)
+	else:
+		var choice: Dictionary = patient.body.best_supply_in(inventory)
+		problem = "Nothing you carry helps" if choice.is_empty() else body.start_treatment(inventory, choice.item_id, choice.part, patient.body)
+	care_patient = patient if problem == "" else null
+	care_message = problem
+	return problem
 
 ## Drill-only reset after a debrief. Not a medical treatment or a revival.
 func restore_for_drill() -> void:

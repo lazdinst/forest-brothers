@@ -2,7 +2,7 @@ extends RefCounted
 ## Rules-only condition of one player, modelled on Escape from Tarkov: seven body parts with
 ## their own health, light and heavy bleeding, fractures, pain, shock, suppression, energy and
 ## hydration, tourniquets, field surgery, wound infection, and timed treatment with physical
-## supplies. No scene nodes: the player adapter
+## supplies, on oneself or on a teammate, and revival of a downed teammate. No scene nodes: the player adapter
 ## feeds hits and time, presentation reads effects(). Every number is a placeholder, not
 ## approved balance. Confirmed rules kept: head at zero kills, thorax (torso) at zero downs,
 ## any hit on a downed body kills. Enemies keep the simpler BodyHealth.
@@ -15,6 +15,8 @@ const LIMB_DISABLED := &"limb_disabled"
 const DOWNED := &"downed"
 const KILLED := &"killed"
 const OUTCOME_RANK := {NONE:0,LIMB_DISABLED:1,DOWNED:2,KILLED:3}
+## Which supply to reach for first when several would help: the plainest that does the job.
+const CARE_PREFERENCE: Array[StringName] = [&"cloth_bandage", &"field_dressing", &"tourniquet", &"splint", &"sulfa_powder", &"medical_satchel", &"surgical_kit"]
 
 const HEAD := &"head"
 const THORAX := &"thorax"
@@ -52,6 +54,10 @@ var infection_drain := 0.05 # health per second from an infected limb or stomach
 var fever_drain_factor := 1.5 # energy and water drain faster with any infection
 var surgery_restore := 0.3 # fraction of the shrunken maximum a destroyed part returns to
 var surgery_max_loss := 0.2 # fraction of the part's maximum lost for good by each surgery
+var bleed_out_seconds := 60.0 # how long a downed body waits for revival
+var revive_seconds := 8.0
+var revive_thorax := 20.0 # thorax health after revival
+var revived_weakness := 300.0 # seconds of reduced capability after revival
 
 var state: StringName = &"alive"
 var max_health := {}
@@ -69,10 +75,16 @@ var painkiller_left := 0.0
 var pain_left := 0.0
 var shock_left := 0.0
 var suppression := 0.0
+## Seconds left before a downed body bleeds out.
+var downed_left := 0.0
+## Seconds of reduced capability left after a revival; injuries are kept.
+var revived_left := 0.0
 var rng := RandomNumberGenerator.new()
-## In-progress treatment, or empty: {item_id, supply_id, part, duration, left}.
+## In-progress treatment, or empty: {item_id, supply_id, part, duration, left, revive}. It
+## belongs to the one giving it; the patient may be this body or a teammate's.
 var treatment := {}
 var _treatment_inventory
+var _treatment_patient
 
 func _init(max_values: Dictionary = PLACEHOLDER_MAX) -> void:
 	for part in ZONES:
@@ -153,6 +165,7 @@ func _hit(part: StringName, amount: float) -> StringName:
 		return KILLED
 	if part == THORAX:
 		state = &"downed"
+		downed_left = bleed_out_seconds
 		return DOWNED
 	return LIMB_DISABLED
 
@@ -170,6 +183,9 @@ func advance(delta: float, sprinting := false) -> StringName:
 	if state == &"dead" or delta <= 0.0: return NONE
 	var outcome := NONE
 	var flags_before := _flag_signature()
+	if state == &"downed":
+		downed_left -= delta
+		if downed_left <= 0.0: outcome = bleed_out()
 	if state == &"alive":
 		for part in ZONES:
 			var rate := (heavy_bleed_rate if heavy_bleeding[part] else 0.0) + (light_bleed_rate if light_bleeding[part] else 0.0)
@@ -189,8 +205,10 @@ func advance(delta: float, sprinting := false) -> StringName:
 	pain_left = maxf(0.0,pain_left-delta)
 	shock_left = maxf(0.0,shock_left-delta)
 	suppression = maxf(0.0,suppression-suppression_decay*delta)
+	revived_left = maxf(0.0,revived_left-delta)
 	if not treatment.is_empty():
-		if state != &"alive": cancel_treatment()
+		var patient = _treatment_patient
+		if state != &"alive" or patient.is_dead() or patient.is_downed() != treatment.revive: cancel_treatment()
 		else:
 			treatment.left -= delta
 			if treatment.left <= 0.0: _finish_treatment()
@@ -198,7 +216,7 @@ func advance(delta: float, sprinting := false) -> StringName:
 	return outcome
 
 func _flag_signature() -> String:
-	return str([state,light_bleeding.values(),heavy_bleeding.values(),fractured.values(),tourniquet.values(),infected.values(),in_pain(),in_shock(),hungry(),dehydrated(),painkiller_left > 0.0,treatment.get("item_id","")])
+	return str([state,light_bleeding.values(),heavy_bleeding.values(),fractured.values(),tourniquet.values(),infected.values(),in_pain(),in_shock(),hungry(),dehydrated(),painkiller_left > 0.0,revived_left > 0.0,treatment.get("item_id","")])
 
 # --- Effects read by presentation (HUD, inventory) -------------------------------------------
 
@@ -249,6 +267,8 @@ func effects() -> Dictionary:
 		"shock":in_shock(),"suppression":suppression,"energy":energy,"hydration":hydration,
 		"hungry":hungry(),"dehydrated":dehydrated(),"health":total_health(),"max_health":total_max(),
 		"treating":treatment.get("supply_id",&""),"treatment_progress":treatment_progress(),
+		"reviving":treatment.get("revive",false),"bleed_out_seconds":downed_left if state == &"downed" else 0.0,
+		"revived_seconds":revived_left,
 	}
 
 # --- Movement and handling limits ------------------------------------------------------------
@@ -259,12 +279,13 @@ func _leg_impaired() -> bool:
 	return false
 
 func can_sprint() -> bool:
-	return state == &"alive" and hydration > 0.0 and (painkiller_left > 0.0 or not _leg_impaired())
+	return state == &"alive" and hydration > 0.0 and revived_left <= 0.0 and (painkiller_left > 0.0 or not _leg_impaired())
 
 func speed_multiplier() -> float:
 	var multiplier := 1.0
 	if _leg_impaired() and painkiller_left <= 0.0: multiplier *= 0.7
 	if energy <= 0.0 or hydration <= 0.0: multiplier *= 0.85
+	if revived_left > 0.0: multiplier *= 0.8
 	return multiplier
 
 ## For weapon presentation: broken or destroyed arms and pain make aim less steady.
@@ -274,6 +295,7 @@ func aim_sway_multiplier() -> float:
 		if (fractured[part] or tourniquet[part] or destroyed(part)) and painkiller_left <= 0.0: multiplier *= 1.4
 	if in_pain(): multiplier *= 1.2
 	if has_fever(): multiplier *= 1.15
+	if revived_left > 0.0: multiplier *= 1.2
 	return multiplier
 
 # --- Treatment ------------------------------------------------------------------------------
@@ -316,22 +338,73 @@ func best_part_for(def: Dictionary, uses: int) -> StringName:
 	candidates.sort_custom(func(a, b): return _urgency(a) > _urgency(b))
 	return candidates[0]
 
+## The carried supply and part that best treat this body's most urgent injury, as
+## {item_id, part}, or empty when nothing carried helps. Used for quick teammate care.
+func best_supply_in(inventory) -> Dictionary:
+	var best := {}
+	var best_score := -INF
+	for item in inventory.items.values():
+		if item.kind != &"supply" or not inventory.carried(item): continue
+		var part := best_part_for(SupplyCatalog.get_def(item.supply_id),item.uses)
+		if part == &"": continue
+		var rank := CARE_PREFERENCE.find(item.supply_id)
+		var score := _urgency(part) - (rank if rank >= 0 else CARE_PREFERENCE.size())
+		if score > best_score:
+			best_score = score
+			best = {"item_id":item.id,"part":part}
+	return best
+
+## A carried supply that can revive a downed body, plainest first, or empty.
+static func revive_supply_in(inventory) -> StringName:
+	var best: StringName = &""
+	var best_rank := INF
+	for item in inventory.items.values():
+		if item.kind != &"supply" or not inventory.carried(item) or not SupplyCatalog.get_def(item.supply_id).get("revives",false): continue
+		var rank := CARE_PREFERENCE.find(item.supply_id)
+		if rank < best_rank:
+			best_rank = rank
+			best = item.id
+	return best
+
 func _urgency(part: StringName) -> float:
 	return (300.0 if heavy_bleeding[part] else 0.0) + (200.0 if light_bleeding[part] else 0.0) + (150.0 if tourniquet[part] else 0.0) + (120.0 if infected[part] else 0.0) + (100.0 if fractured[part] else 0.0) + (60.0 if wound_left[part] >= 0.0 else 0.0) + (1.0 - health[part]/max_health[part]) * 50.0
 
-## Starts a timed treatment with a carried supply. An empty part picks the most urgent one.
-func start_treatment(inventory, item_id: StringName, part: StringName = &"") -> String:
+## Starts a timed treatment with a supply this body carries. The patient is this body unless a
+## teammate's condition is given; the treatment stays with the giver. An empty part picks the
+## most urgent one. Range and line of sight are the adapters' business.
+func start_treatment(inventory, item_id: StringName, part: StringName = &"", patient = null) -> String:
+	if patient == null: patient = self
 	if not treatment.is_empty(): return "Already treating"
+	if patient != self and state != &"alive": return "Cannot treat while incapacitated"
 	var item = inventory.items.get(item_id)
 	if item == null or item.kind != &"supply" or not inventory.carried(item): return "Not a carried supply"
 	var def := SupplyCatalog.get_def(item.supply_id)
-	if def.get("targets_part",false) and part == &"": part = best_part_for(def,item.uses)
-	var problem := treatment_problem(def,part,item.uses)
+	if def.get("targets_part",false) and part == &"": part = patient.best_part_for(def,item.uses)
+	var problem: String = patient.treatment_problem(def,part,item.uses)
 	if problem != "": return problem
-	treatment = {"item_id":item_id,"supply_id":item.supply_id,"part":part,"duration":float(def.seconds),"left":float(def.seconds)}
-	_treatment_inventory = inventory
-	changed.emit()
+	_begin(inventory,item,part,float(def.seconds),patient,false)
 	return ""
+
+## Starts reviving a downed teammate with a carried bandage or dressing.
+func start_revival(inventory, item_id: StringName, patient) -> String:
+	if not treatment.is_empty(): return "Already treating"
+	if state != &"alive": return "Cannot revive while incapacitated"
+	if patient == null or patient == self or not patient.is_downed(): return "Nobody to revive"
+	var item = inventory.items.get(item_id)
+	if item == null or item.kind != &"supply" or not inventory.carried(item): return "Not a carried supply"
+	if not SupplyCatalog.get_def(item.supply_id).get("revives",false): return "Needs a bandage or dressing"
+	_begin(inventory,item,THORAX,revive_seconds,patient,true)
+	return ""
+
+func _begin(inventory, item, part: StringName, seconds: float, patient, revive: bool) -> void:
+	treatment = {"item_id":item.id,"supply_id":item.supply_id,"part":part,"duration":seconds,"left":seconds,"revive":revive}
+	_treatment_inventory = inventory
+	_treatment_patient = patient
+	changed.emit()
+
+## The condition being treated, or null.
+func treatment_patient():
+	return null if treatment.is_empty() else _treatment_patient
 
 func treatment_progress() -> float:
 	return -1.0 if treatment.is_empty() else clampf(1.0-treatment.left/treatment.duration,0.0,1.0)
@@ -340,19 +413,27 @@ func cancel_treatment() -> void:
 	if treatment.is_empty(): return
 	treatment = {}
 	_treatment_inventory = null
+	_treatment_patient = null
 	changed.emit()
 
 func _finish_treatment() -> void:
 	var inventory = _treatment_inventory
+	var patient = _treatment_patient
 	var record := treatment
 	treatment = {}
 	_treatment_inventory = null
+	_treatment_patient = null
 	var item = inventory.items.get(record.item_id) if inventory != null else null
-	# The supply must still be on the person when the treatment completes.
+	# The supply must still be on the giver when the treatment completes.
 	if item == null or not inventory.carried(item): return
-	var def := SupplyCatalog.get_def(record.supply_id)
-	if treatment_problem(def,record.part,item.uses) != "": return
-	var part: StringName = record.part
+	var cost: int = patient.revive() if record.revive else patient.apply_supply(SupplyCatalog.get_def(record.supply_id),record.part,item.uses)
+	if cost > 0: inventory.consume_supply(record.item_id,cost)
+	changed.emit()
+
+## Applies a completed treatment to this body. Returns the uses spent, or 0 when it no longer
+## applies (the supply is then kept).
+func apply_supply(def: Dictionary, part: StringName, uses: int) -> int:
+	if treatment_problem(def,part,uses) != "": return 0
 	var cost := 1
 	if def.get("fixes_fracture",false): fractured[part] = false
 	elif def.get("applies_tourniquet",false):
@@ -383,11 +464,25 @@ func _finish_treatment() -> void:
 			tourniquet[part] = false
 			cost = int(def.light_cost)
 		else:
-			cost = mini(item.uses,ceili(max_health[part]-health[part]))
+			cost = mini(uses,ceili(max_health[part]-health[part]))
 			health[part] = minf(max_health[part],health[part]+cost)
 	else:
 		if heavy_bleeding[part] and def.get("stops_heavy",false): heavy_bleeding[part] = false
 		elif light_bleeding[part]: light_bleeding[part] = false
 		else: tourniquet[part] = false
-	inventory.consume_supply(record.item_id,cost)
 	changed.emit()
+	return cost
+
+## Brings a downed body back: the thorax wound is dressed and holds a little health, every
+## other injury stays, and capability stays reduced for a while. Returns the uses spent.
+func revive() -> int:
+	if state != &"downed": return 0
+	state = &"alive"
+	downed_left = 0.0
+	health[THORAX] = maxf(health[THORAX],revive_thorax)
+	heavy_bleeding[THORAX] = false
+	light_bleeding[THORAX] = false
+	revived_left = revived_weakness
+	pain_left = maxf(pain_left,pain_after_hit)
+	changed.emit()
+	return 1

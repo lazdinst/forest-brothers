@@ -5,9 +5,9 @@ extends RefCounted
 ## placeholder pending owner balance. "uses" is a count, or a resource pool for the satchel.
 const SUPPLIES := {
 	&"cloth_bandage": {"name":"Cloth bandage","icon":"medicine","size":Vector2i(1,1),"uses":1,"seconds":4.0,"targets_part":true,
-		"stops_light":true,"description":"Stops light bleeding on one body part."},
+		"stops_light":true,"revives":true,"description":"Stops light bleeding on one body part. Can revive a downed teammate."},
 	&"field_dressing": {"name":"Field dressing","icon":"medicine","size":Vector2i(1,1),"uses":1,"seconds":5.0,"targets_part":true,
-		"stops_light":true,"stops_heavy":true,"description":"Stops heavy or light bleeding on one body part."},
+		"stops_light":true,"stops_heavy":true,"revives":true,"description":"Stops heavy or light bleeding on one body part. Can revive a downed teammate."},
 	&"tourniquet": {"name":"Rubber tourniquet","icon":"medicine","size":Vector2i(1,1),"uses":1,"seconds":2.0,"targets_part":true,
 		"applies_tourniquet":true,"description":"Quickly stops heavy bleeding on an arm or leg. The limb slowly loses health until a field dressing replaces it."},
 	&"splint": {"name":"Splint","icon":"medicine","size":Vector2i(1,2),"uses":1,"seconds":6.0,"targets_part":true,

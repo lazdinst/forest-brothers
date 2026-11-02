@@ -54,7 +54,7 @@ Each chunk has a headless check under `tests/`. Headless checks do not establish
 
 Placeholder values: zone maximums head 35, torso 80, arms 60, legs 65; rifle and enemy damage 40; enemy bleed-out 30 s; player bleed-out 60 s. Arms and legs are each one zone (left/right still open).
 
-Not yet built: revival, limb effects, lean-following player zones, crouching and peeking, archetypes, non-ammunition loot, real sprites.
+Not yet built: lean-following player zones, crouching and peeking, archetypes, non-ammunition loot, real sprites.
 
 ## 4. What makes the fight feel like Tarkov (proposed)
 
