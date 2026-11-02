@@ -59,6 +59,17 @@ Placeholder values: zone maximums head 35, torso 80, arms 60, legs 65; rifle and
 
 Not yet built: lean-following player zones, crouching and peeking, archetypes, non-ammunition loot, real sprites.
 
+## 3b. Known placeholders and workarounds
+
+Deliberate stand-ins that look or behave wrong on purpose until proper work replaces them. Fix each one properly before treating the area as finished.
+
+| Workaround | Where | Why it exists | Proper fix |
+|---|---|---|---|
+| Crouched enemies use the standing sprite drawn at 0.9 m (a shrunken standing figure, not a crouch pose) | `enemy_actor.gd` `_update_sprite_views` / `set_crouched` | No crouch art; the shrink keeps what the player sees matching the crouched hit zones behind a crate | Crouch and stand-up peek frames per direction (owner to direct the sprite route) |
+| Enemy sprite has no reload, flinch, fall, crawl or death frames; downed and dead bodies rotate the standing sprite flat | `enemy_actor.gd` `_go_down`, `_play_death_visual` | Art freeze | Sprite follow-up chunks |
+| Treatment shows a HUD ring loader instead of an animation, and the rifle stays raised while treating | `ui/components/treatment_progress_hud.gd` | No treatment animations | Treatment animations; remove the loader |
+| Teammate revival and treatment only work between players in one local scene | `first_person_player.gd` (`care_for`, `mission_players` group) | No networking yet | Two-instance authority checkpoint |
+
 ## 4. What makes the fight feel like Tarkov (proposed)
 
 In rough order of feel gained per effort. Art comes after behavior, sound and consequences.

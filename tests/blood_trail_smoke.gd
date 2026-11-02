@@ -100,6 +100,13 @@ func _run() -> void:
 	_check(drops.size() >= 5 and _flat(drops[drops.size() - 1].position, timid.global_position) < 3.0, "Its wound leaves a trail that leads to where it hides (%d drops)" % drops.size())
 	timid.receive_alert(player.global_position, null)
 	_check(timid.flee_phase == &"hide" and timid.search_left <= 0.0, "A hiding enemy ignores alerts")
+	# Blood loss: the untreated wound keeps draining the torso until the enemy collapses.
+	var torso: float = timid.body.health[&"torso"]
+	await _frames(60 * 10)
+	_check(timid.body.health[&"torso"] < torso - 3.0, "A wound drains the hidden enemy's health (%.1f -> %.1f)" % [torso, timid.body.health[&"torso"]])
+	timid.body.health[&"torso"] = 2.0
+	await _frames(60 * 6)
+	_check(timid.state == &"downed", "Blood loss eventually downs it where it hid")
 	timid.active = false
 	# --- Aggressive and hurt: no cover; it closes on the threat while firing. ---
 	var brave = arena.enemies[0]
@@ -120,9 +127,11 @@ func _run() -> void:
 		_keep_alive(player)
 	_check(_flat(brave.global_position, player.global_position) < gap - 3.0 and shots.n > 0, "It closes the distance while firing (gap %.1f -> %.1f, %d shots)" % [gap, _flat(brave.global_position, player.global_position), shots.n])
 	# --- Steady and hurt: cover as before. ---
+	arena.reset_enemies()
+	await _frames(5)
+	arena.enemies[0].active = false
 	var steady = arena.enemies[1]
 	steady.temperament = Enemy.STEADY
-	steady.flee_phase = &""
 	steady.global_position = Vector3(18, 0, 3)
 	steady.active = true
 	await _frames(3)

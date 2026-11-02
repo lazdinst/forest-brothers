@@ -139,8 +139,10 @@ var flee_point := Vector3.INF
 var _flee_left: float = 0.0
 ## Aggressive and hurt: no more cover; advance on the threat while firing.
 var pushing: bool = false
-# Wounds bleed and leave a trail the player can follow.
+# Wounds bleed, drain the torso (blood loss) and leave a trail the player can follow.
 var wound_bleed_seconds: float = 120.0
+var light_wound_drain: float = 0.2 # torso health per second
+var heavy_wound_drain: float = 0.45
 var wound_bleed_left: float = 0.0
 var wound_intensity: float = 0.0
 var _dripper = BloodDripper.new()
@@ -214,6 +216,12 @@ func _physics_process(delta: float) -> void:
 	if wound_bleed_left > 0.0:
 		wound_bleed_left -= delta
 		if blood_enabled: _dripper.update(self, delta, 1.0 if state == &"downed" else wound_intensity)
+		# Blood loss weakens a wounded enemy until it may collapse; downed bodies have their own bleed-out.
+		if state != &"downed":
+			var drain := (heavy_wound_drain if wound_intensity >= 1.0 else light_wound_drain) * delta
+			if body.apply_damage(BodyHealth.TORSO, drain) == BodyHealth.DOWNED:
+				_go_down(null)
+				return
 	if state == &"downed":
 		_crawl(delta)
 		return

@@ -393,7 +393,7 @@ Instead of walking straight out after holding cover, an enemy sidesteps to a sho
 Status: owner direction ("different aggression levels, sometimes they fully retreat and run away but also we need enemies who push hard while hurt"; hurt or bleeding enemies leave a blood trail to track them, and enemies can track players the same way). Numbers are placeholders.
 
 - Three temperaments, shown once an enemy is hurt (30 damage): timid flees far and hides, steady keeps to cover and peeks, aggressive leaves cover and pushes while firing. The arena draws one at random per enemy each reset; archetypes may later fix them per enemy type.
-- Wounded enemies and bleeding (or downed) players leave visible blood drops that fade after 10 minutes. Players follow an enemy's trail by eye; enemies follow a player's trail drop by drop when they see fresh blood within 7 m. Stopping a player's bleed stops their trail. Enemy wounds bleed for 120 s as a trail only and do not drain enemy health (open question whether they should).
+- Wounded enemies and bleeding (or downed) players leave visible blood drops that fade after 10 minutes. Players follow an enemy's trail by eye; enemies follow a player's trail drop by drop when they see fresh blood within 7 m. Stopping a player's bleed stops their trail. Enemy wounds bleed for 120 s; owner confirmed they drain health over time: 0.2/s (light) or 0.45/s (heavy, hits of 30+) from the torso as blood loss, which can down a fleeing enemy where it hides.
 - Not built: enemies following each other's blood, scent or dogs, weather or ground type affecting trails.
 
 ## Enemies crouch behind low cover — 2026-11-02
