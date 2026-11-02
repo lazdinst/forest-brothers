@@ -6,6 +6,7 @@ const Enemy = preload("res://scripts/combat/enemy_actor.gd")
 const AmmoCrate = preload("res://scripts/combat/ammo_crate.gd")
 const MovementHud = preload("res://ui/components/tactical_movement_hud.gd")
 const InventoryHost = preload("res://ui/inventory/inventory_host.gd")
+const ArenaSupplies = preload("res://scripts/combat/arena_supplies.gd")
 const SIZE := 70.0
 const PLAYER_SPAWN := Vector3(0, 0.02, 28)
 const ENEMY_SPAWNS: Array[Vector3] = [Vector3(-6, 0, -12), Vector3(8, 0, -20)]
@@ -57,8 +58,10 @@ func reset_enemies() -> void:
 		if is_instance_valid(enemy):
 			enemy.queue_free()
 	enemies.clear()
-	for pickup in get_tree().get_nodes_in_group(&"combat_loot"):
+	for pickup in get_tree().get_nodes_in_group(&"combat_loot") + get_tree().get_nodes_in_group(ArenaSupplies.GROUP):
 		pickup.queue_free()
+	# A lootable body by the ammunition crate and loose supplies to practise with.
+	ArenaSupplies.stage(self)
 	for index in range(ENEMY_SPAWNS.size()):
 		var enemy = Enemy.new()
 		enemy.name = "ArenaEnemy%d" % index
