@@ -302,7 +302,7 @@ func aim_sway_multiplier() -> float:
 
 ## Why a supply cannot be used on a part right now; empty when it can.
 func treatment_problem(def: Dictionary, part: StringName, uses: int) -> String:
-	if def.is_empty(): return "Not a usable supply"
+	if def.is_empty() or def.get("objective",false): return "Not a usable supply"
 	if state != &"alive": return "Cannot treat while incapacitated"
 	if not def.get("targets_part",false):
 		if def.has("painkiller"): return ""

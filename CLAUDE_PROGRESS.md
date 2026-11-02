@@ -58,5 +58,12 @@ Done:
 - Chunk 18, crouching behind crates (`enemy_crouch_smoke`). Cover is now measured from the floor
   (navigation points float 0.5 m up). Crouch sprite is the standing art drawn at 0.9 m (placeholder).
 
-Smarter-enemy chunks done. Next proposed: the arena loop (supply-recovery goal, exit, debrief).
-Open: should enemy wounds drain enemy health? Crouch/peek sprite art needs owner direction.
+Smarter-enemy chunks done. Enemy wounds now drain torso health (owner: yes). Crouch sprite shrink is
+listed in COMBAT_ARENA_PLAN 3b "Known placeholders and workarounds" (owner: address later).
+
+## 2026-11-02 — arena outing: recover the dispatch
+
+Done: chunk 19 (`arena_mission_smoke`): find the sealed dispatch at one of four spots, leave by the
+west exit (5 s), debrief on complete / early return / death, Go again.
+
+Next proposed: owner playtest of the arena, then the two-instance networking checkpoint.

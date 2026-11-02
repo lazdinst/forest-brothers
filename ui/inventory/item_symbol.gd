@@ -36,6 +36,10 @@ func _draw() -> void:
 			draw_style_box(_outline(),Rect2(19,19,26,35))
 			draw_line(Vector2(32,28),Vector2(32,44),ink,3,true)
 			draw_line(Vector2(25,36),Vector2(39,36),ink,3,true)
+		"document":
+			draw_rect(Rect2(13,18,38,28),ink,false,2)
+			draw_polyline(PackedVector2Array([Vector2(13,18),Vector2(32,33),Vector2(51,18)]),ink,2,true)
+			draw_circle(Vector2(32,35),4,ink)
 		"cloth":
 			draw_rect(Rect2(12,21,40,28),ink,false,2)
 			draw_line(Vector2(17,25),Vector2(46,44),ink,1,true)

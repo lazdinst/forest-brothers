@@ -401,3 +401,9 @@ Status: owner direction ("different aggression levels, sometimes they fully retr
 Status: owner approved ("Yes" to crouching enemies so crates count as cover). Third of the smarter-enemy chunks. Numbers are placeholders.
 
 Enemies may take a crate as cover when it hides a crouched body; full-height cover is preferred unless low cover is clearly closer. They crouch while holding and stand up in place to peek and fire over it. There is no crouch art: the standing sprite is drawn at crouched height as a stand-in, chosen so what the player sees matches what can be hit. Real crouch frames remain a sprite follow-up needing owner direction.
+
+## Arena outing: recover a document — 2026-11-02
+
+Status: owner direction ("It should be to locate a document and leave the mission with it"). Numbers and spots are placeholders.
+
+The arena's goal is to find a sealed dispatch (fictional; no historical document is implied) and leave through the west exit carrying it. It is a normal carried item, so death leaves it on the body like other gear, consistent with the confirmed equipment rule. Leaving without it is allowed as an early safe return. A debrief summarises each outing. Not built: the one-hour timeout, randomised supplies beyond the dispatch spot, camp-side rewards, co-op rules for who may carry it out, and any persistence beyond the arena.

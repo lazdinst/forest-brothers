@@ -621,7 +621,8 @@ func _show_inspect(id: StringName) -> void:
 		inspect_title.text = def.name
 		lines.append(def.description)
 		if int(def.uses) > 1: lines.append("%d of %d left" % [item.uses,int(def.uses)])
-		lines.append("%s · %d s" % ["Drag onto a body part, or right-click to treat" if def.get("targets_part",false) else "Right-click or alt-click to " + SupplyCatalog.verb(def).to_lower(),int(def.seconds)])
+		if def.get("objective",false): lines.append("Mission objective: leave the area carrying it.")
+		else: lines.append("%s · %d s" % ["Drag onto a body part, or right-click to treat" if def.get("targets_part",false) else "Right-click or alt-click to " + SupplyCatalog.verb(def).to_lower(),int(def.seconds)])
 	elif item is Inventory.BackpackInstance:
 		inspect_title.text = item.label
 		lines.append("%d × %d pack · %d items inside" % [inventory.pack_columns,ceili(float(inventory.pack_capacity)/inventory.pack_columns),inventory.contents_tree(item).size()-1])

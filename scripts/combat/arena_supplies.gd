@@ -7,6 +7,7 @@ const Inventory = preload("res://scripts/inventory/ammunition_inventory.gd")
 const BodyContainer = preload("res://scripts/inventory/body_container.gd")
 const GroundEquipment = preload("res://scripts/inventory/ground_equipment.gd")
 const GROUP := &"arena_supplies"
+const DOCUMENT_GROUP := &"arena_document"
 const BODY_SPOT := Vector3(6.5, 0, 25.5)
 
 ## Holder for loose ground items, in the shape GroundEquipment expects.
@@ -45,6 +46,22 @@ static func stage(arena: Node3D, weapon_id: StringName = &"svt_inspired_training
 		pickup.position = supply[1]
 		placed.append(pickup)
 	return placed
+
+## The mission's sealed dispatch lying at one spot, as an ordinary ground pickup.
+static func stage_document(arena: Node3D, spot: Vector3, weapon_id: StringName = &"svt_inspired_training", capacity := 10) -> Node3D:
+	var stock := Stock.new()
+	stock.inventory = Inventory.new(weapon_id, capacity, 0, 0, 0)
+	stock.inventory.items.clear()
+	stock.inventory.active_weapon_id = &""
+	var item = stock.inventory.create_supply(&"sealed_dispatch")
+	item.location.position = spot
+	var pickup := GroundEquipment.new()
+	pickup.weapon_state = stock
+	pickup.item_id = item.id
+	pickup.add_to_group(DOCUMENT_GROUP)
+	arena.add_child(pickup)
+	pickup.position = spot
+	return pickup
 
 ## A fallen rifleman by the crate: rifle with a few rounds left, two spare magazines, a stack
 ## and a field dressing.

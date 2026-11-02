@@ -24,6 +24,9 @@ const SUPPLIES := {
 		"hydration":30.0,"description":"Three drinks of water."},
 	&"rye_bread": {"name":"Rye bread","icon":"food","size":Vector2i(1,1),"uses":1,"seconds":4.0,"targets_part":false,
 		"energy":40.0,"hydration":-5.0,"description":"A dense loaf. Restores energy."},
+	# Mission objective, not a supply: carried like any item (it stays on a body), never used.
+	&"sealed_dispatch": {"name":"Sealed dispatch","icon":"document","size":Vector2i(1,1),"uses":1,"seconds":0.0,"targets_part":false,
+		"objective":true,"description":"A sealed envelope of papers. Carry it out of the area."},
 	&"tinned_meat": {"name":"Tinned meat","icon":"food","size":Vector2i(1,1),"uses":1,"seconds":5.0,"targets_part":false,
 		"energy":60.0,"hydration":-10.0,"description":"Restores a lot of energy; makes you thirsty."},
 }
@@ -33,6 +36,9 @@ static func has(id: StringName) -> bool:
 
 static func get_def(id: StringName) -> Dictionary:
 	return SUPPLIES.get(id,{})
+
+static func is_objective(id: StringName) -> bool:
+	return SUPPLIES.get(id,{}).get("objective",false)
 
 static func is_food(def: Dictionary) -> bool:
 	return def.has("energy") or def.has("hydration")
