@@ -11,6 +11,13 @@ const BodyHealth = preload("res://scripts/combat/body_health.gd")
 const HitSounds = preload("res://scripts/combat/hit_sounds.gd")
 const GunshotSound = preload("res://scripts/combat/gunshot_sound.gd")
 const BodyLoot = preload("res://scripts/combat/body_loot.gd")
+const BloodTrail = preload("res://scripts/combat/blood_trail.gd")
+const BloodDripper = preload("res://scripts/combat/blood_dripper.gd")
+## How a hurt enemy fights: timid ones run off and hide, steady ones keep to cover and peek,
+## aggressive ones stop taking cover and push the threat.
+const TIMID := &"timid"
+const STEADY := &"steady"
+const AGGRESSIVE := &"aggressive"
 const FIGURE_HEIGHT := 1.75
 # Rules-side firing geometry in actor space (+z is the true facing). The rifle proxy matches it.
 const SHOULDER := Vector3(0.18, 1.35, 0.0)
@@ -105,6 +112,29 @@ var flank_point := Vector3.INF
 var _patrol_sign: float = 1.0
 var _alert_cooldown: float = 0.0
 var _hit_tint: float = 0.0
+# Temperament and wounds, placeholders pending owner tuning.
+var temperament: StringName = STEADY
+var hurt_damage: float = 30.0 # damage taken before the temperament shows
+var damage_taken: float = 0.0
+var flee_speed: float = 3.2
+var push_speed: float = 1.8
+var push_stop_distance: float = 6.0
+var moving_spread_degrees: float = 2.0 # extra spread while firing on the move
+## &"run" while fleeing, &"hide" once out of sight, &"" otherwise. Timid enemies only.
+var flee_phase: StringName = &""
+var flee_point := Vector3.INF
+var _flee_left: float = 0.0
+## Aggressive and hurt: no more cover; advance on the threat while firing.
+var pushing: bool = false
+# Wounds bleed and leave a trail the player can follow.
+var wound_bleed_seconds: float = 120.0
+var wound_bleed_left: float = 0.0
+var wound_intensity: float = 0.0
+var _dripper = BloodDripper.new()
+# Tracking a wounded target's blood, placeholders pending owner tuning.
+var blood_sight_range: float = 7.0
+var _blood_followed_time: float = -INF
+var _blood_check_left: float = 0.0
 
 func _ready() -> void:
 	_home = global_position
@@ -168,6 +198,9 @@ func _physics_process(delta: float) -> void:
 	sprite.modulate = Color(1,0.5,0.5) if _hit_tint > 0 else shade
 	if polygon_model != null:
 		polygon_model.set_hit_flash(_hit_tint > 0)
+	if wound_bleed_left > 0.0:
+		wound_bleed_left -= delta
+		if blood_enabled: _dripper.update(self, delta, 1.0 if state == &"downed" else wound_intensity)
 	if state == &"downed":
 		_crawl(delta)
 		return
@@ -183,7 +216,14 @@ func _physics_process(delta: float) -> void:
 			break
 	velocity.x = 0
 	velocity.z = 0
-	if cover_phase != &"":
+	if flee_phase == &"run":
+		state = &"flee"
+		_update_flee(delta)
+	elif flee_phase == &"hide" and seen == null:
+		# Hiding: keep still and watch the way it came; no searching, no answering alerts.
+		state = &"hiding"
+		_face(last_known, delta)
+	elif cover_phase != &"":
 		state = &"cover"
 		if seen != null:
 			last_known = seen.global_position
@@ -211,8 +251,15 @@ func _physics_process(delta: float) -> void:
 				_alert_cooldown = 4.0
 			reaction_left -= delta
 			aim_time += delta
+			if pushing and global_position.distance_to(last_known) > push_stop_distance:
+				var advance := route_toward(last_known, delta)
+				if advance.length_squared() > 0.0001:
+					advance = advance.normalized()
+					velocity.x = advance.x * push_speed
+					velocity.z = advance.z * push_speed
 			if rounds_in_magazine <= 0 and not is_reloading():
-				if start_reload():
+				# Pushing enemies reload where they stand.
+				if start_reload() and not pushing:
 					try_take_cover(last_known)
 			if reaction_left <= 0.0 and shot_cooldown <= 0.0 and rounds_in_magazine > 0 and not is_reloading():
 				_shoot(seen)
@@ -224,6 +271,13 @@ func _physics_process(delta: float) -> void:
 		if rounds_in_magazine * 2 <= magazine_size and not is_reloading():
 			start_reload()
 		recognition = maxf(0.0, recognition - delta * 0.5)
+		_blood_check_left -= delta
+		if _blood_check_left <= 0.0:
+			_blood_check_left = 0.5
+			# Fresh blood of a target in view sets off (or carries on) a search along it.
+			# While travelling, arrival picks up the next drop (see _start_looking).
+			if search_phase != &"travel":
+				follow_blood()
 		if search_left > 0.0:
 			state = &"search"
 			search_left -= delta
@@ -276,6 +330,8 @@ func can_see(actor: Node3D) -> bool:
 	return not hit.is_empty() and hit.collider == actor
 
 func hear_noise(at: Vector3, loudness: float = 1.0) -> void:
+	if flee_phase != &"":
+		return
 	if not active or state == &"dead" or state == &"downed" or global_position.distance_to(at) > 22*loudness or state == &"engage":
 		return
 	begin_search(Vector3(snappedf(at.x,2), global_position.y, snappedf(at.z,2)))
@@ -284,6 +340,8 @@ func hear_noise(at: Vector3, loudness: float = 1.0) -> void:
 ## A nearby ally reports a target. With a reporting ally and a navigation map, approach from
 ## the side instead of along the ally's line of fire; otherwise walk straight to the report.
 func receive_alert(at: Vector3, reporter: Node3D = null) -> void:
+	if flee_phase != &"":
+		return
 	if not active or state == &"dead" or state == &"downed" or state == &"engage" or cover_phase != &"":
 		return
 	begin_search(at)
@@ -341,6 +399,9 @@ func receive_hit(damage: float, at: Vector3, _normal: Vector3, source = null, zo
 	# Callers without zone information (debug tools, older tests) strike centre mass.
 	last_hit_zone = zone if zone != &"" else BodyHealth.TORSO
 	var outcome: StringName = body.apply_damage(last_hit_zone, damage)
+	damage_taken += damage
+	wound_bleed_left = wound_bleed_seconds
+	wound_intensity = maxf(wound_intensity, 1.0 if damage >= 30.0 else 0.5)
 	_hit_tint = 0.15
 	if blood_enabled:
 		_blood(at, outcome == BodyHealth.KILLED)
@@ -353,6 +414,11 @@ func receive_hit(damage: float, at: Vector3, _normal: Vector3, source = null, zo
 		var threat: Vector3 = source.global_position if source is Node3D else at
 		if state == &"engage" or source is Node3D:
 			last_known = threat
+		if is_hurt() and temperament == TIMID and start_fleeing(threat):
+			return
+		if is_hurt() and temperament == AGGRESSIVE:
+			_start_pushing(threat)
+			return
 		if not try_take_cover(threat):
 			hear_noise(at)
 
@@ -485,6 +551,8 @@ func shot_spread_degrees(actor: Node3D) -> float:
 	var spread := aim_spread_degrees * lerpf(1.0, settled_spread_fraction, settle)
 	if "velocity" in actor:
 		spread += moving_target_spread_degrees * clampf(Vector2(actor.velocity.x, actor.velocity.z).length() / 5.0, 0.0, 1.0)
+	if Vector2(velocity.x, velocity.z).length() > 0.3:
+		spread += moving_spread_degrees
 	return spread
 
 func _spread_direction(aim: Vector3, degrees: float) -> Vector3:
@@ -680,12 +748,14 @@ func _search_travel(delta: float) -> void:
 		_start_looking()
 		return
 	direction = direction.normalized()
-	var speed := flank_speed if flanking else search_speed
+	var speed := flank_speed if flanking else (push_speed if pushing else search_speed)
 	velocity.x = direction.x * speed
 	velocity.z = direction.z * speed
 	rotation.y = atan2(direction.x, direction.z)
 
 func _start_looking() -> void:
+	if follow_blood():
+		return
 	search_phase = &"look"
 	look_left = look_seconds
 	search_left = minf(search_left, look_seconds)
@@ -705,6 +775,8 @@ func _look_around(delta: float) -> void:
 ## Runs for a nearby point the threat cannot see. Returns false when there is no such point
 ## (or no navigation map), leaving the caller's behaviour unchanged.
 func try_take_cover(threat: Vector3) -> bool:
+	if pushing or flee_phase == &"run":
+		return false
 	if cover_phase == &"move" or state == &"dead" or state == &"downed":
 		return cover_phase == &"move"
 	var point := find_cover(threat)
@@ -889,6 +961,113 @@ func find_peek_point(threat: Vector3) -> Vector3:
 
 func _clear_view(space: PhysicsDirectSpaceState3D, foot: Vector3, aim: Vector3) -> bool:
 	return space.intersect_ray(PhysicsRayQueryParameters3D.create(foot + Vector3.UP * 1.55, aim, 1, [get_rid()])).is_empty()
+
+func is_hurt() -> bool:
+	return damage_taken >= hurt_damage
+
+# --- Temperament: fleeing (timid) and pushing (aggressive) ---------------------------------
+
+## Timid and hurt: run for a far spot away from the threat, preferably out of its sight, then
+## hide there. Calls out to allies on the way. Returns false when there is nowhere to run.
+func start_fleeing(threat: Vector3) -> bool:
+	var point := find_flee_point(threat)
+	if point == Vector3.INF:
+		return false
+	flee_point = point
+	flee_phase = &"run"
+	_flee_left = 20.0
+	cover_phase = &""
+	peek_point = Vector3.INF
+	search_left = 0.0
+	search_phase = &""
+	_path_goal = Vector3.INF
+	if _alert_cooldown <= 0.0:
+		spotted.emit(self, threat)
+		_alert_cooldown = 4.0
+	return true
+
+## A reachable navigation point 18-35 m away that gains distance from the threat; hidden spots
+## win, then the one farthest from the threat. INF when none (or no navigation map).
+func find_flee_point(threat: Vector3) -> Vector3:
+	var map := get_world_3d().navigation_map
+	if NavigationServer3D.map_get_regions(map).is_empty():
+		return Vector3.INF
+	var space := get_world_3d().direct_space_state
+	var eye := threat + Vector3.UP * 1.5
+	var here := Vector2(global_position.x - threat.x, global_position.z - threat.z).length()
+	var best := Vector3.INF
+	var best_score := -INF
+	for radius in [18.0, 26.0, 35.0]:
+		for step in range(20):
+			var angle := TAU * step / 20.0
+			var probe := global_position + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+			var spot := NavigationServer3D.map_get_closest_point(map, probe)
+			if Vector2(spot.x - probe.x, spot.z - probe.z).length() > 1.0:
+				continue
+			var away := Vector2(spot.x - threat.x, spot.z - threat.z).length()
+			if away < here + 8.0:
+				continue
+			var path := NavigationServer3D.map_get_path(map, global_position, spot, true)
+			if path.is_empty() or Vector2(path[path.size() - 1].x - spot.x, path[path.size() - 1].z - spot.z).length() > 1.0:
+				continue
+			var score := away + (30.0 if hidden_from(space, eye, spot) else 0.0)
+			if score > best_score:
+				best = spot
+				best_score = score
+	return best
+
+func _update_flee(delta: float) -> void:
+	_flee_left -= delta
+	var remaining := flee_point - global_position
+	remaining.y = 0.0
+	var direction := route_toward(flee_point, delta)
+	if remaining.length() < 0.8 or direction.length_squared() <= 0.0001 or _flee_left <= 0.0:
+		flee_phase = &"hide"
+		return
+	direction = direction.normalized()
+	velocity.x = direction.x * flee_speed
+	velocity.z = direction.z * flee_speed
+	rotation.y = atan2(direction.x, direction.z)
+
+## Aggressive and hurt: leave cover for good and close on the threat.
+func _start_pushing(threat: Vector3) -> void:
+	pushing = true
+	cover_phase = &""
+	peek_point = Vector3.INF
+	last_known = threat
+	if state != &"engage":
+		begin_search(threat)
+
+# --- Tracking blood ------------------------------------------------------------------------
+
+## Follows a wounded target's blood: the freshest drop of any target within blood_sight_range
+## that this enemy can see and that is newer than the last drop it followed. Returns true when
+## it set off toward one, as a search.
+func follow_blood() -> bool:
+	if not active or blood_sight_range <= 0.0 or flee_phase != &"" or not is_inside_tree():
+		return false
+	var trail = get_tree().get_first_node_in_group(BloodTrail.GROUP)
+	if trail == null:
+		return false
+	var space := get_world_3d().direct_space_state
+	var eye := global_position + Vector3.UP * 1.55
+	for actor in targets:
+		if not is_instance_valid(actor):
+			continue
+		var drops: Array[Dictionary] = trail.drops_from(actor)
+		for index in range(drops.size() - 1, -1, -1):
+			var drop: Dictionary = drops[index]
+			if drop.time <= _blood_followed_time:
+				break
+			if Vector2(drop.position.x - global_position.x, drop.position.z - global_position.z).length() > blood_sight_range:
+				continue
+			var look := PhysicsRayQueryParameters3D.create(eye, drop.position + Vector3.UP * 0.05, 1, [get_rid()])
+			if not space.intersect_ray(look).is_empty():
+				continue
+			_blood_followed_time = drop.time
+			begin_search(drop.position)
+			return true
+	return false
 
 ## A reachable spot beside the target, roughly square to the reporting ally's line, with a clear
 ## view of the target, so the two enemies catch it from different sides. INF when none exists.

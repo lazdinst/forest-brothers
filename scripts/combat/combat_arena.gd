@@ -7,11 +7,15 @@ const AmmoCrate = preload("res://scripts/combat/ammo_crate.gd")
 const MovementHud = preload("res://ui/components/tactical_movement_hud.gd")
 const InventoryHost = preload("res://ui/inventory/inventory_host.gd")
 const ArenaSupplies = preload("res://scripts/combat/arena_supplies.gd")
+const BloodTrail = preload("res://scripts/combat/blood_trail.gd")
 const SIZE := 70.0
 const PLAYER_SPAWN := Vector3(0, 0.02, 28)
 const ENEMY_SPAWNS: Array[Vector3] = [Vector3(-6, 0, -12), Vector3(8, 0, -20)]
 var player
 var enemies: Array = []
+## Temperaments to draw from at each reset, so a hurt enemy may run, hold or push. Tests can
+## pin them by setting this to a single value.
+var temperament_pool: Array[StringName] = [Enemy.TIMID, Enemy.STEADY, Enemy.AGGRESSIVE]
 var navigation: NavigationRegion3D
 var ammo_crate: StaticBody3D
 var inventory
@@ -60,6 +64,7 @@ func reset_enemies() -> void:
 	enemies.clear()
 	for pickup in get_tree().get_nodes_in_group(&"combat_loot") + get_tree().get_nodes_in_group(ArenaSupplies.GROUP):
 		pickup.queue_free()
+	BloodTrail.clear_in(get_tree())
 	# A lootable body by the ammunition crate and loose supplies to practise with.
 	ArenaSupplies.stage(self)
 	for index in range(ENEMY_SPAWNS.size()):
@@ -72,6 +77,7 @@ func reset_enemies() -> void:
 		# Active by default: the arena is a fight, not a passive exhibit.
 		enemy.active = true
 		enemy.loot_enabled = true
+		enemy.temperament = temperament_pool.pick_random()
 		enemies.append(enemy)
 
 func _enemy_spotted(source, at: Vector3) -> void:

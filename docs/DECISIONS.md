@@ -387,3 +387,11 @@ Status: owner-approved scope ("continue with the parts we are missing"; the owne
 Status: owner approved the "smarter enemies" combat chunks (peeking, retreating when hurt, crouching behind crates), to be built one at a time. Peeking is the first. Numbers are placeholders.
 
 Instead of walking straight out after holding cover, an enemy sidesteps to a short spot beside its cover that sees the threat, reacts, fires while it sees the threat, and steps back after 2.5 s or when empty. Two peeks per cover, then the old behaviour (move toward the last known position). The reaction pause and reset first-shot spread keep each exposure readable and fair. Details in COMBAT_ARENA_PLAN.md chunk 16.
+
+## Enemy temperaments and blood trails — 2026-11-02
+
+Status: owner direction ("different aggression levels, sometimes they fully retreat and run away but also we need enemies who push hard while hurt"; hurt or bleeding enemies leave a blood trail to track them, and enemies can track players the same way). Numbers are placeholders.
+
+- Three temperaments, shown once an enemy is hurt (30 damage): timid flees far and hides, steady keeps to cover and peeks, aggressive leaves cover and pushes while firing. The arena draws one at random per enemy each reset; archetypes may later fix them per enemy type.
+- Wounded enemies and bleeding (or downed) players leave visible blood drops that fade after 10 minutes. Players follow an enemy's trail by eye; enemies follow a player's trail drop by drop when they see fresh blood within 7 m. Stopping a player's bleed stops their trail. Enemy wounds bleed for 120 s as a trail only and do not drain enemy health (open question whether they should).
+- Not built: enemies following each other's blood, scent or dogs, weather or ground type affecting trails.

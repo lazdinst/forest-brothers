@@ -51,4 +51,8 @@ Done:
   death instead of a fixed 6 s (seven-part health needs a varying number of hits); its 4 s
   "rays reach player" step is still occasionally flaky.
 
-Next: retreat when hurt, then crouching enemies so crates count as cover.
+- Chunk 17, blood trails and temperaments (`blood_trail_smoke`): timid flees and hides, steady covers
+  and peeks, aggressive pushes while hurt; players and wounded enemies drip blood; enemies follow a
+  player's fresh blood. `enemy_encounter_smoke` now waits for the first hit instead of a fixed 4 s.
+
+Next: crouching enemies so crates count as cover. Open: should enemy wounds drain enemy health?

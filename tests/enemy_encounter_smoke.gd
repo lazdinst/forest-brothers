@@ -80,7 +80,10 @@ func _run() -> void:
 		enemy.fired.connect(func(_e,actor,hit): if hit and actor==player: casualties.hits += 1)
 	player.casualty.connect(func(_p,outcome): if outcome==&"killed": casualties.killed += 1)
 	annex.arm_bout()
-	await _frames(240)
+	# Hits depend on random aim spread; wait for the first one rather than a fixed time.
+	for i in range(60 * 15):
+		if casualties.hits > 0: break
+		await _frames(1)
 	_check(casualties.hits > 0,"Armed enemy rays reach player hit zones")
 	# Seven-part player health takes a varying number of random hits; wait for the death itself.
 	for i in range(60 * 25):

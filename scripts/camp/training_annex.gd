@@ -215,6 +215,7 @@ func reset_enemies() -> void:
 	for effect in get_tree().get_nodes_in_group("training_blood"):
 		if effect.get_parent() == self:
 			effect.queue_free()
+	load("res://scripts/combat/blood_trail.gd").clear_in(get_tree())
 	for index in range(2):
 		var enemy = Enemy.new()
 		enemy.name = "TrainingEnemy%d" % index

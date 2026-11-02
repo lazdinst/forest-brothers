@@ -7,6 +7,7 @@ const Movement = preload("res://scripts/player/tactical_movement.gd")
 const BodyHealth = preload("res://scripts/combat/body_health.gd")
 const HitZones = preload("res://scripts/combat/hit_zones.gd")
 const PlayerHealth = preload("res://scripts/health/player_health.gd")
+const BloodDripper = preload("res://scripts/combat/blood_dripper.gd")
 ## Emitted with BodyHealth.DOWNED or BodyHealth.KILLED. The session/drill decides what death means.
 signal casualty(player, outcome: StringName)
 ## Presentation hook: which zone was struck and where the shot came from.
@@ -30,6 +31,8 @@ var care_patient: Node = null
 var care_reach: float = 2.5
 ## Why the last attempt to care for a teammate did not start, or empty.
 var care_message: String = ""
+## Bleeding leaves a blood trail that enemies can follow.
+var _blood_dripper = BloodDripper.new()
 @export var movement_tuning: Resource = preload("res://scripts/player/movement_tuning.gd").new()
 var locomotion
 var is_prone: bool = false
@@ -162,6 +165,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	var active := controls_active()
 	advance_condition(delta)
+	_blood_dripper.update(self, delta, blood_intensity())
 	if not active or not Input.is_action_pressed("stance_adjust"):
 		_stance_pressed = false
 		_stance_scrolled = false
@@ -430,6 +434,13 @@ func advance_condition(delta: float) -> void:
 		outcome = BodyHealth.KILLED
 	if outcome == BodyHealth.DOWNED or outcome == BodyHealth.KILLED:
 		_resolve_casualty(outcome)
+
+## How hard this player is bleeding for the blood trail: 1 heavy (or downed), 0.5 light, else 0.
+func blood_intensity() -> float:
+	if body.is_downed(): return 1.0
+	if not body.is_alive(): return 0.0
+	if not body.bleeding_parts(true).is_empty(): return 1.0
+	return 0.5 if not body.bleeding_parts(false).is_empty() else 0.0
 
 func near_miss(at: Vector3) -> void:
 	if body.is_alive():
