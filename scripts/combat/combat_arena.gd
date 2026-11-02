@@ -5,6 +5,7 @@ const PlayerScene = preload("res://scenes/player/first_person_player.tscn")
 const Enemy = preload("res://scripts/combat/enemy_actor.gd")
 const AmmoCrate = preload("res://scripts/combat/ammo_crate.gd")
 const MovementHud = preload("res://ui/components/tactical_movement_hud.gd")
+const InventoryHost = preload("res://ui/inventory/inventory_host.gd")
 const SIZE := 70.0
 const PLAYER_SPAWN := Vector3(0, 0.02, 28)
 const ENEMY_SPAWNS: Array[Vector3] = [Vector3(-6, 0, -12), Vector3(8, 0, -20)]
@@ -12,6 +13,7 @@ var player
 var enemies: Array = []
 var navigation: NavigationRegion3D
 var ammo_crate: StaticBody3D
+var inventory
 var _prompt: Label
 var _crosshair: Label
 
@@ -42,6 +44,11 @@ func _ready() -> void:
 	player.name = "Player"
 	player.position = PLAYER_SPAWN
 	add_child(player)
+	# Same carried inventory as training: Tab opens it over this scene.
+	inventory = InventoryHost.new()
+	inventory.world = self
+	inventory.player = player
+	add_child(inventory)
 	_hud()
 	reset_enemies()
 

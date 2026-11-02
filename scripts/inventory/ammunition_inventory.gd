@@ -21,13 +21,16 @@ class Location extends RefCounted:
 	var kind: StringName
 	var owner_id: StringName
 	var slot := -1
+	## Pack grid items: slot is the top-left cell; rotated swaps the footprint's width and height.
+	var rotated := false
 	var position := Vector3.ZERO
-	func _init(type: StringName = &"pocket", owner: StringName = &"", index := -1) -> void:
+	func _init(type: StringName = &"pocket", owner: StringName = &"", index := -1, turned := false) -> void:
 		kind = type
 		owner_id = owner
 		slot = index
+		rotated = turned
 	func encode() -> Dictionary:
-		return {"kind":str(kind),"owner_id":str(owner_id),"slot":slot,"position":[position.x,position.y,position.z]}
+		return {"kind":str(kind),"owner_id":str(owner_id),"slot":slot,"rotated":rotated,"position":[position.x,position.y,position.z]}
 
 class MagazineRound extends RefCounted:
 	var ammo_type_id: StringName
@@ -61,8 +64,19 @@ class WeaponInstance extends Item:
 	var jammed := false
 	func _init() -> void: kind = &"weapon"
 
+## Worn on the back. Pack cells belong to it, so its contents travel with it when dropped.
+class BackpackInstance extends Item:
+	var label := "Rucksack"
+	func _init() -> void: kind = &"backpack"
+
 const POCKET_CAPACITY := 4
-var pack_capacity := 36 # Existing reversible layout, not approved final balance.
+## Owner-approved starting footprints (2026-11-02), placeholders rather than final balance.
+## Pockets are separate single cells, so only 1 x 1 items fit there.
+## The backpack's 4 x 4 is a placeholder for when it is off the back.
+const FOOTPRINTS := {&"weapon":Vector2i(5,2),&"magazine":Vector2i(1,1),&"ammo_stack":Vector2i(1,1),&"backpack":Vector2i(4,4)}
+## One backpack size for now (owner, 2026-11-02): every backpack holds this grid.
+var pack_capacity := 54 # Owner asked for a larger pack (9 x 6); reversible, not final balance.
+var pack_columns := 9
 var owner_id: StringName
 var items: Dictionary[StringName, Item] = {}
 var ammo_definitions: Dictionary[StringName, AmmoDefinition] = {}
@@ -111,6 +125,10 @@ func _init(weapon_id: StringName = &"svt_inspired_training", capacity := 10, fir
 		items[magazine.id] = magazine
 		initial_magazine_ids.append(magazine.id)
 	gun.inserted_magazine_id = initial_magazine_ids[0]
+	var pack := BackpackInstance.new()
+	pack.id = new_id("backpack")
+	pack.location = Location.new(&"worn",owner_id,0)
+	items[pack.id] = pack
 	var added := add_loose(loose)
 	assert(added, "Initial cartridges require valid stack space")
 
@@ -122,11 +140,33 @@ func magazine(id: StringName) -> MagazineInstance: return items.get(id) as Magaz
 func equipped() -> bool: return weapon() != null and weapon().location.kind == &"equipped"
 
 func carried(item: Item) -> bool:
-	if item.location.kind in [&"pocket",&"pack",&"equipped"]: return item.location.owner_id == owner_id
-	if item.location.kind == &"magwell":
-		var gun := items.get(item.location.owner_id) as WeaponInstance
-		return gun != null and carried(gun)
+	if item.location.kind in [&"pocket",&"equipped",&"worn"]: return item.location.owner_id == owner_id
+	# Magazine wells and pack cells belong to their holder item, so contents follow it.
+	if item.location.kind in [&"magwell",&"pack"]:
+		var holder: Item = items.get(item.location.owner_id)
+		return holder != null and holder != item and carried(holder)
 	return false
+
+func backpack() -> BackpackInstance:
+	for item in items.values():
+		if item is BackpackInstance and item.location.kind == &"worn" and item.location.owner_id == owner_id: return item
+	return null
+
+## A pocket or pack cell on this carrier; null for pack cells when no backpack is worn.
+func slot_location(kind: StringName, slot: int, rotated := false) -> Location:
+	if kind != &"pack": return Location.new(kind,owner_id,slot,rotated)
+	var pack := backpack()
+	return Location.new(kind,pack.id,slot,rotated) if pack != null else null
+
+## The item and everything held inside it (inserted magazine, backpack contents).
+func contents_tree(item: Item) -> Array[Item]:
+	var tree: Array[Item] = [item]
+	var index := 0
+	while index < tree.size():
+		for other in items.values():
+			if other.location.kind in [&"magwell",&"pack"] and other.location.owner_id == tree[index].id and other not in tree: tree.append(other)
+		index += 1
+	return tree
 
 func loose_count(ammo_id: StringName = &"") -> int:
 	var count := 0
@@ -142,25 +182,73 @@ func total_rounds() -> int:
 		elif item is WeaponInstance and item.chambered_round != null: count += 1
 	return count
 
-func empty_location(excluding: StringName = &"") -> Location:
+func footprint(item: Item, rotated := false) -> Vector2i:
+	var base: Vector2i = FOOTPRINTS.get(item.kind,Vector2i.ONE)
+	return Vector2i(base.y,base.x) if rotated else base
+
+## Cells covered by an item of this size at a pocket/pack location.
+func area(location: Location, size := Vector2i.ONE) -> Rect2i:
+	if location.kind == &"pocket": return Rect2i(location.slot,0,size.x,size.y)
+	return Rect2i(location.slot % pack_columns,floori(float(location.slot)/pack_columns),size.x,size.y)
+
+## First free spot for an item of this size, trying pockets then pack.
+func empty_location(excluding: StringName = &"", size := Vector2i.ONE) -> Location:
 	for kind in [&"pocket",&"pack"]:
-		for index in range(POCKET_CAPACITY if kind == &"pocket" else pack_capacity):
-			var location := Location.new(kind,owner_id,index)
-			if occupant(location,excluding) == null: return location
+		var location := empty_location_in(kind,excluding,size)
+		if location != null: return location
 	return null
 
-func occupant(location: Location, excluding: StringName = &"") -> Item:
+## First free spot in one container, trying the item upright and then rotated.
+func empty_location_in(kind: StringName, excluding: StringName = &"", size := Vector2i.ONE) -> Location:
+	if slot_location(kind,0) == null: return null
+	for index in range(POCKET_CAPACITY if kind == &"pocket" else pack_capacity):
+		for turned in ([false] if size.x == size.y else [false,true]):
+			var location := slot_location(kind,index,turned)
+			var shape := Vector2i(size.y,size.x) if turned else size
+			if valid_slot(location,shape) and occupant(location,excluding,shape) == null: return location
+	return null
+
+## Any item overlapping the given area. Equipped/magwell/ground locations compare slots only.
+func occupant(location: Location, excluding: StringName = &"", size := Vector2i.ONE) -> Item:
+	var grid := location.kind in [&"pocket",&"pack"]
 	for item in items.values():
-		if item.id != excluding and item.location.kind == location.kind and item.location.owner_id == location.owner_id and item.location.slot == location.slot: return item
+		if item.id == excluding or item.location.kind != location.kind or item.location.owner_id != location.owner_id: continue
+		if not grid:
+			if item.location.slot == location.slot: return item
+		elif area(item.location,footprint(item,item.location.rotated)).intersects(area(location,size)): return item
 	return null
 
-func valid_slot(location: Location) -> bool:
-	return location != null and location.owner_id == owner_id and location.kind in [&"pocket",&"pack"] and location.slot >= 0 and location.slot < (POCKET_CAPACITY if location.kind == &"pocket" else pack_capacity)
+func valid_slot(location: Location, size := Vector2i.ONE) -> bool:
+	if location == null or location.kind not in [&"pocket",&"pack"] or location.slot < 0: return false
+	if location.kind == &"pocket": return location.owner_id == owner_id and size == Vector2i.ONE and location.slot < POCKET_CAPACITY
+	if not items.get(location.owner_id) is BackpackInstance: return false
+	var rows := ceili(float(pack_capacity)/pack_columns)
+	return Rect2i(0,0,pack_columns,rows).encloses(area(location,size))
+
+## Side-effect-free checks so a view can preview whether a drop would be accepted.
+## The mutating commands below still validate on their own.
+func can_move_item(id: StringName, destination: Location) -> bool:
+	var item: Item = items.get(id)
+	# Backpacks are only worn or on the ground for now; never packed inside one another.
+	if item == null or item is BackpackInstance or not carried(item) or item.location.kind == &"magwell" or destination == null: return false
+	if destination.kind == &"pack" and (not items.get(destination.owner_id) is BackpackInstance or not carried(items[destination.owner_id])): return false
+	var size := footprint(item,destination.rotated)
+	return valid_slot(destination,size) and occupant(destination,id,size) == null
+
+func can_merge_stacks(source_id: StringName, target_id: StringName) -> bool:
+	var source := items.get(source_id) as AmmoStack
+	var target := items.get(target_id) as AmmoStack
+	return source != null and target != null and source != target and carried(source) and carried(target) and source.ammo_type_id == target.ammo_type_id and target.quantity < 32
+
+func can_load_round(magazine_id: StringName, stack_id: StringName) -> bool:
+	var mag := magazine(magazine_id)
+	var stack := items.get(stack_id) as AmmoStack
+	return mag != null and stack != null and carried(mag) and mag.location.kind != &"magwell" and carried(stack) and compatible(mag,stack.ammo_type_id) and mag.rounds.size() < mag.capacity
 
 func move_item(id: StringName, destination: Location) -> bool:
 	var item: Item = items.get(id)
 	if item == null or not carried(item) or item.location.kind == &"magwell": return fail("Remove the inserted magazine first")
-	if not valid_slot(destination) or occupant(destination,id) != null: return fail("That slot is unavailable")
+	if not can_move_item(id,destination): return fail("That slot is unavailable")
 	item.location = destination
 	_notify_changed()
 	return true
@@ -178,7 +266,8 @@ func can_add_loose(amount: int, ammo_id: StringName = &"") -> bool:
 		if item is AmmoStack and carried(item) and item.ammo_type_id == ammo_id: available += 32 - item.quantity
 	for kind in [&"pocket",&"pack"]:
 		for index in range(4 if kind == &"pocket" else pack_capacity):
-			if occupant(Location.new(kind,owner_id,index)) == null: available += 32
+			var spot := slot_location(kind,index)
+			if spot != null and occupant(spot) == null: available += 32
 	return amount <= available
 
 func add_loose(amount: int, ammo_id: StringName = &"") -> bool:
@@ -214,10 +303,17 @@ func remove_loose(amount: int, ammo_id: StringName = &"") -> bool:
 	_notify_changed()
 	return true
 
-func split_stack(id: StringName, amount: int) -> StringName:
+## A new stack can be split off into this free carried cell (any free cell when null).
+func can_split_stack(id: StringName, destination: Location = null) -> bool:
 	var source := items.get(id) as AmmoStack
-	var destination := empty_location()
-	if source == null or not carried(source) or amount <= 0 or amount >= source.quantity or destination == null:
+	if source == null or not carried(source) or source.quantity < 2: return false
+	if destination == null: return empty_location() != null
+	return valid_slot(destination) and occupant(destination) == null
+
+func split_stack(id: StringName, amount: int, destination: Location = null) -> StringName:
+	var source := items.get(id) as AmmoStack
+	if destination == null: destination = empty_location()
+	if source == null or not carried(source) or amount <= 0 or amount >= source.quantity or not can_split_stack(id,destination):
 		fail("Split needs a partial amount and a free slot")
 		return &""
 	var stack := AmmoStack.new()
@@ -243,9 +339,9 @@ func merge_stacks(source_id: StringName, target_id: StringName) -> bool:
 	return true
 
 func load_round(magazine_id: StringName, stack_id: StringName) -> bool:
+	if not can_load_round(magazine_id,stack_id): return fail("Remove the magazine and use compatible cartridges")
 	var mag := magazine(magazine_id)
 	var stack := items.get(stack_id) as AmmoStack
-	if mag == null or stack == null or not carried(mag) or mag.location.kind == &"magwell" or not carried(stack) or not compatible(mag,stack.ammo_type_id) or mag.rounds.size() >= mag.capacity: return fail("Remove the magazine and use compatible cartridges")
 	mag.rounds.append(MagazineRound.new(stack.ammo_type_id))
 	stack.quantity -= 1
 	if stack.quantity == 0: items.erase(stack.id)
@@ -342,7 +438,12 @@ func drop_item(id: StringName, at: Vector3) -> bool:
 func pickup(id: StringName) -> bool:
 	var item: Item = items.get(id)
 	if item == null or item.location.kind != &"ground": return false
-	var destination := empty_location()
+	if item is BackpackInstance:
+		if backpack() != null: return fail("Already wearing a backpack")
+		item.location = Location.new(&"worn",owner_id,0)
+		_notify_changed()
+		return true
+	var destination := empty_location(&"",footprint(item))
 	if item is WeaponInstance and not equipped(): destination = Location.new(&"equipped",owner_id,0)
 	if destination == null: return fail("Inventory is full")
 	item.location = destination
@@ -356,11 +457,15 @@ func transfer_ground_item_to(id: StringName, recipient) -> bool:
 	var item: Item = items.get(id)
 	if recipient == self: return pickup(id)
 	if item == null or item.location.kind != &"ground" or recipient.weapon_type_id != weapon_type_id: return fail("Equipment cannot be recovered by this inventory")
-	var destination: Location = recipient.empty_location()
+	var destination: Location
+	if item is BackpackInstance:
+		if recipient.backpack() != null: return fail("Recipient already wears a backpack")
+		destination = Location.new(&"worn",recipient.owner_id,0)
+	else: destination = recipient.empty_location(&"",recipient.footprint(item))
 	if item is WeaponInstance and not recipient.equipped(): destination = Location.new(&"equipped",recipient.owner_id,0)
 	if destination == null: return fail("Recipient inventory is full")
-	var subtree: Array[Item] = [item]
-	if item is WeaponInstance and item.inserted_magazine_id != &"": subtree.append(magazine(item.inserted_magazine_id))
+	var subtree := contents_tree(item)
+	if item is WeaponInstance and item.inserted_magazine_id != &"" and magazine(item.inserted_magazine_id) not in subtree: subtree.append(null)
 	for member in subtree:
 		if member == null or recipient.items.has(member.id): return fail("Duplicate equipment ID")
 	for definition_id in magazine_definitions:
@@ -373,8 +478,8 @@ func transfer_ground_item_to(id: StringName, recipient) -> bool:
 		items.erase(member.id)
 		recipient.items[member.id] = member
 		if member is MagazineInstance: invalidate(member)
+		if active_weapon_id == member.id: active_weapon_id = &""
 	item.location = destination
-	if active_weapon_id == item.id: active_weapon_id = &""
 	if destination.kind == &"equipped": recipient.active_weapon_id = item.id
 	_notify_changed()
 	recipient._notify_changed()
@@ -404,6 +509,7 @@ func encode() -> Dictionary:
 			var rounds: Array = []
 			for round in item.rounds: rounds.append(str(round.ammo_type_id))
 			record.merge({"magazine_type_id":str(item.magazine_type_id),"capacity":item.capacity,"rounds":rounds,"condition":item.condition,"label":item.label,"inspected":item.inspected,"estimate":item.estimate})
+		elif item is BackpackInstance: record.merge({"label":item.label})
 		elif item is WeaponInstance: record.merge({"weapon_type_id":str(item.weapon_type_id),"inserted_magazine_id":str(item.inserted_magazine_id),"chambered_round":str(item.chambered_round.ammo_type_id) if item.chambered_round != null else "","condition":item.condition,"jammed":item.jammed})
 		records.append(record)
 	return {"version":1,"owner_id":str(owner_id),"active_weapon_id":str(active_weapon_id),"pack_capacity":pack_capacity,"initial_magazine_ids":initial_magazine_ids.duplicate(),"items":records}
@@ -412,6 +518,8 @@ func restore(snapshot: Dictionary) -> bool:
 	# Parse into a temporary inventory; rejection leaves every current item untouched.
 	if snapshot.get("version") != 1 or not snapshot.get("items") is Array or not snapshot.get("owner_id") is String or not integral(snapshot.get("pack_capacity")) or int(snapshot.pack_capacity) != pack_capacity: return fail("Invalid equipment snapshot")
 	var candidate = get_script().new(weapon_type_id,magazine_definitions[magazine_type_id].capacity,0,0,0,StringName(snapshot.owner_id),primary_ammo_id,ammo_definitions[primary_ammo_id].caliber,magazine_type_id,ammo_definitions[primary_ammo_id].display_name)
+	candidate.pack_capacity = pack_capacity
+	candidate.pack_columns = pack_columns
 	candidate.items.clear()
 	candidate.ammo_definitions = ammo_definitions
 	candidate.magazine_definitions = magazine_definitions
@@ -463,6 +571,11 @@ func restore(snapshot: Dictionary) -> bool:
 				gun.jammed = record.get("jammed",false)
 				if not is_finite(gun.condition) or gun.condition < 0 or gun.condition > 1: return fail("Invalid weapon condition")
 				item = gun
+			"backpack":
+				var pack := BackpackInstance.new()
+				if not record.get("label","Rucksack") is String: return fail("Invalid backpack label")
+				pack.label = record.get("label","Rucksack")
+				item = pack
 			_: return fail("Unknown item kind")
 		item.id = StringName(record.id)
 		var location: Dictionary = record.location
@@ -472,7 +585,8 @@ func restore(snapshot: Dictionary) -> bool:
 		for coordinate in position:
 			if not (coordinate is int or coordinate is float): return fail("Invalid world coordinate")
 		if not integral(location.get("slot")): return fail("Invalid location index")
-		item.location = Location.new(StringName(location.get("kind","")),StringName(location.get("owner_id","")),int(location.get("slot",-1)))
+		if not location.get("rotated",false) is bool: return fail("Invalid item rotation")
+		item.location = Location.new(StringName(location.get("kind","")),StringName(location.get("owner_id","")),int(location.get("slot",-1)),location.get("rotated",false))
 		item.location.position = Vector3(float(position[0]),float(position[1]),float(position[2]))
 		if not item.location.position.is_finite(): return fail("Invalid world coordinates")
 		candidate.items[item.id] = item
@@ -481,7 +595,11 @@ func restore(snapshot: Dictionary) -> bool:
 	for item in candidate.items.values():
 		var at: Location = item.location
 		if at.kind in [&"pocket",&"pack"]:
-			if not candidate.valid_slot(at) or candidate.occupant(at,item.id) != null: return fail("Duplicate or invalid slot")
+			if item is BackpackInstance: return fail("A backpack cannot be stored in a pocket or pack")
+			var size: Vector2i = candidate.footprint(item,at.rotated)
+			if not candidate.valid_slot(at,size) or candidate.occupant(at,item.id,size) != null: return fail("Duplicate or invalid slot")
+		elif at.kind == &"worn":
+			if not item is BackpackInstance or at.owner_id != candidate.owner_id or at.slot != 0 or candidate.occupant(at,item.id) != null: return fail("Invalid worn backpack")
 		elif at.kind == &"equipped":
 			if not item is WeaponInstance or item.id != candidate.active_weapon_id or at.owner_id != candidate.owner_id or at.slot != 0 or candidate.occupant(at,item.id) != null: return fail("Invalid equipped weapon")
 		elif at.kind == &"magwell":

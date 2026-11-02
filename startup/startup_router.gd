@@ -3,8 +3,7 @@ extends Node
 const Registry = preload("res://startup/scene_registry.gd")
 const MenuModal = preload("res://ui/components/menu_modal.gd")
 const TrainingUIBridge = preload("res://ui/training_ui_bridge.gd")
-const InventoryScene = preload("res://ui/inventory/inventory_view.tscn")
-const InventorySnapshot = preload("res://ui/inventory/inventory_snapshot.gd")
+const InventoryHost = preload("res://ui/inventory/inventory_host.gd")
 
 var content: Node
 var navigation: CanvasLayer
@@ -15,9 +14,12 @@ var navigation_open := false
 var confirming_leave := false
 var previous_mouse_mode: int
 var previous_process_mode: int
-var inventory_open := false
-var inventory_layer: CanvasLayer
-var inventory_view
+## Shared with every other scene that has a player; this router only keeps Tab precedence.
+var inventory_host
+var inventory_open: bool:
+	get: return inventory_host != null and inventory_host.is_open
+var inventory_view:
+	get: return inventory_host.view if inventory_host != null else null
 
 func _ready() -> void:
 	navigation = CanvasLayer.new()
@@ -35,6 +37,9 @@ func _ready() -> void:
 
 func show_menu() -> void:
 	if inventory_open: close_inventory()
+	if inventory_host != null:
+		inventory_host.queue_free()
+		inventory_host = null
 	navigation_panel.dismiss()
 	navigation_open = false
 	confirming_leave = false
@@ -53,6 +58,11 @@ func launch_training() -> void:
 		training_ui = TrainingUIBridge.new()
 		training_ui.training_root = content
 		content.add_child(training_ui)
+		inventory_host = InventoryHost.new()
+		inventory_host.handle_tab = false
+		inventory_host.world = content
+		inventory_host.player = content.get_node("Player")
+		add_child(inventory_host)
 	else:
 		show_menu()
 		content.show_message("Training unavailable", "Could not load the training scene. See the Godot output for details.")
@@ -146,25 +156,7 @@ func open_inventory() -> void:
 	if is_instance_valid(training_ui) and training_ui.has_active_context():
 		return
 	if navigation_open: close_navigation()
-	content.get_node("Player").weapon.prepare_inventory()
-	previous_process_mode = content.process_mode
-	previous_mouse_mode = Input.mouse_mode
-	content.process_mode = Node.PROCESS_MODE_DISABLED
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	inventory_layer = CanvasLayer.new()
-	inventory_layer.layer = 110
-	add_child(inventory_layer)
-	inventory_view = InventoryScene.instantiate()
-	inventory_view.data = InventorySnapshot.from_training(content.get_node("Player"))
-	inventory_view.drop_requested.connect(content.get_node("Player").weapon.drop_inventory_item)
-	inventory_layer.add_child(inventory_view)
-	inventory_view.closed.connect(close_inventory)
-	inventory_open = true
+	inventory_host.open()
 
 func close_inventory() -> void:
-	if not inventory_open: return
-	inventory_open = false
-	remove_child(inventory_layer)
-	inventory_layer.queue_free()
-	content.process_mode = previous_process_mode
-	Input.mouse_mode = previous_mouse_mode
+	if inventory_open: inventory_host.close()

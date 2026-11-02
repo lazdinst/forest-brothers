@@ -130,3 +130,59 @@ and an approved character visual, and connect the existing local item commands t
 authenticated multiplayer and full campaign transactions. Local ammunition actions,
 equipping, drag/drop, ground recovery and equipment snapshot serialization exist;
 network synchronization and campaign casualty/save/rollback do not follow from them.
+
+## Tarkov-style handling (2026-11-02)
+
+The owner asked to follow Escape from Tarkov's inventory handling where it fits.
+Planned chunks, each with a headless check and owner approval before starting:
+
+1. Done: compact 64-unit flat cells (short name top-right, count bottom-right),
+   item-picture drag preview, green/red drop preview from side-effect-free rule
+   checks (`can_move_item`, `can_merge_stacks`, `can_load_round`), left-click
+   selects, right-click opens a small cursor menu. Only splitting keeps the paper
+   dialog because it needs an amount.
+2. Done: multi-square items and rotation. Rules own footprints (`FOOTPRINTS`,
+   `footprint`, `area`), overlap checks and the saved `rotated` flag; the grid draws
+   each item across its cells and the drop tint covers the whole footprint, anchored
+   at the grabbed cell. R while dragging turns the item about the cursor. Approved
+   placeholder sizes: rifle 5 × 2, magazine 1 × 1, cartridge stack 1 × 1; pockets
+   stay 1 × 1. The owner then asked for a larger pack: now 9 × 6 (54 cells), which
+   holds a turned rifle. The grid reads its size from the rules.
+3. Done: ctrl-click pocket ↔ pack, alt-click insert magazine, shift-drag split
+   (rules: `can_split_stack`, `split_stack` with a destination), Delete drops the
+   selected item to the ground.
+
+4. Done: the backpack is an item. The kit starts wearing one Rucksack in the
+   Backpack slot; pack cells belong to that backpack (`Location.owner_id` is its ID),
+   so its contents travel with it. Right-click the Backpack slot to drop it whole;
+   F puts it back on, and a teammate recovers it with everything inside. Without a
+   backpack only pockets remain. Backpacks are only worn or on the ground (never
+   inside one another); off the back one takes 4 × 4 (placeholder).
+
+5. Done: a thin burgundy line on the busy item's cell shows timed-action progress
+   (loading, unloading, inspecting, inserting); actions on the inserted magazine or
+   chamber show it on the rifle slot. This is action time, never a fill level.
+   Double-click any item, the rifle slot or the Backpack slot to read it in the
+   inspect panel beside the pack: picture, type, earned magazine knowledge only,
+   condition and where it is. Cancel stays in the right-click menu.
+
+6. Done: drag the rifle from its slot into free pack space (it keeps its inserted
+   magazine and chamber), or drag a carried rifle onto the empty slot to equip it.
+   Ctrl-click the rifle slot stows the rifle; alt-click a stowed rifle equips it.
+   The slot drags with a rifle-sized picture.
+
+7. Done: the inventory is no longer training-only. `ui/inventory/inventory_host.gd`
+   owns opening/closing over any scene with a player (Tab, suspending only that
+   scene's world, freeing and restoring the mouse, world drops). The startup router
+   uses it for training (keeping its own Tab/pause precedence) and the combat arena
+   adds one, so Tab works there too. New scenes with a player add a host the same way.
+   Check: `tests/inventory_host_smoke.gd`.
+
+All planned Tarkov-style chunks are done. Open: final pack and item sizes, more
+backpack sizes, a nearby-loot panel (needs owner approval) and network authority.
+4. Loading progress on the magazine cell; double-click inspect panel.
+5. Rifle slot drag both ways (stow in pack, drag back to equip).
+
+Left out: secure container, insurance, traders/prices, found-in-raid, private stash,
+remote camp access, weight, containers within containers. A nearby-loot panel
+would change the "only what is on the person" rule and needs owner approval.

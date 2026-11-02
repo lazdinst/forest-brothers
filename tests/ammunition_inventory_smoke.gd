@@ -25,7 +25,7 @@ func stack(inv, quantity: int, ammo_id: StringName = &""):
 func _initialize() -> void:
 	var state = State.new()
 	var inv = state.inventory
-	check(inv.items.size() == 4 and inv.initial_magazine_ids.size() == 2, "Exactly one rifle, two magazines and one loose stack")
+	check(inv.items.size() == 5 and inv.initial_magazine_ids.size() == 2 and inv.backpack() != null, "Exactly one rifle, two magazines, one loose stack and one worn backpack")
 	check(inv.initial_magazine_ids[0] != inv.initial_magazine_ids[1], "Distinct physical magazine identities")
 	check(state.magazines == [10,10] and state.loose_rounds == 32 and state.total_rounds() == 52, "Preserve ten-round rifle, two full magazines and 32 loose; no extra chamber round")
 	check(inv.weapon().chambered_round == null and inv.magazine(inv.initial_magazine_ids[0]).location.kind == &"magwell", "Inserted magazine does not chamber a round or occupy a pocket")
