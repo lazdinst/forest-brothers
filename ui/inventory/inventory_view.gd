@@ -250,7 +250,7 @@ func _build() -> void:
 	if looting and _is_storage():
 		# A storage container shows one grid laid out like its own pack space.
 		body_pocket_grid.position = Vector2(455,80)
-		body_pocket_grid.configure(loot.inventory.pack_columns,ceili(float(loot.inventory.pack_capacity)/loot.inventory.pack_columns),64)
+		body_pocket_grid.configure(loot.inventory.pack_columns,ceili(float(loot.inventory.pack_capacity)/loot.inventory.pack_columns),int(loot.get("cell") if loot.get("cell") != null else 64))
 	loot_heading.visible = looting
 	body_rifle_grid.visible = looting and not _is_storage()
 	body_pocket_grid.visible = looting
@@ -426,7 +426,7 @@ func _refresh_loot() -> void:
 func _refresh_loot_heading() -> void:
 	if loot == null: return
 	if _is_storage():
-		loot_heading.text = "05  /  %s  ·  %s" % [loot.TITLE, "empty" if loot.visible_items().is_empty() else "drag money in or out"]
+		loot_heading.text = "05  /  %s  ·  %s" % [loot.title, "empty" if loot.visible_items().is_empty() else "drag items in or out"]
 		return
 	if loot.searching(): loot_heading.text = "05  /  BODY  ·  searching %d of %d…" % [loot.revealed+1,loot.order.size()]
 	else: loot_heading.text = "05  /  BODY  ·  searched" + ("" if not loot.visible_items().is_empty() else " · nothing left")
@@ -444,14 +444,14 @@ func _can_store(id: StringName, slot: int, _target_id: StringName, rotated: bool
 
 func _store(id: StringName, slot: int, target_id: StringName = &"", rotated := false, split := false) -> void:
 	if not _can_store(id,slot,target_id,rotated,split):
-		if _is_storage(): weapon_state.reject("Only rubles and lats go in the cash chest")
+		if _is_storage(): weapon_state.reject("That does not go in the " + String(loot.title).to_lower())
 		return
 	_put_in_storage(id,loot.inventory.slot_location(&"pack",slot,rotated))
 
 ## Moves a carried item into the storage container; a null destination takes the first space.
 func _put_in_storage(id: StringName, destination = null) -> void:
 	if weapon_state.inventory.transfer_to(id,loot.inventory,destination):
-		weapon_state.message = "Put in the " + String(loot.TITLE).to_lower()
+		weapon_state.message = "Put in the " + String(loot.title).to_lower()
 		weapon_state.revision += 1
 	else: weapon_state.reject(weapon_state.inventory.error)
 	_refresh()
@@ -662,7 +662,7 @@ func _show_inspect(id: StringName) -> void:
 		inspect_title.text = item.label
 		lines.append("%d × %d pack · %d items inside" % [inventory.pack_columns,ceili(float(inventory.pack_capacity)/inventory.pack_columns),inventory.contents_tree(item).size()-1])
 		lines.append("Everything inside stays in it when dropped.")
-	lines.append(("In the " + String(loot.TITLE).to_lower() if _is_storage() else "On the body") if on_body else where.get(item.location.kind,""))
+	lines.append(("In the " + String(loot.title).to_lower() if _is_storage() else "On the body") if on_body else where.get(item.location.kind,""))
 	lines.append("Belongs to the group; take it to carry it." if on_body else "Belongs to the group; you are carrying it.")
 	inspect_body.text = "\n".join(lines)
 	var record := Snapshot.record(item,inventory)

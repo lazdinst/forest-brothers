@@ -7,7 +7,7 @@ extends SceneTree
 const SaveStore = preload("res://scripts/state/save_store.gd")
 const GameSession = preload("res://scripts/state/game_session.gd")
 const MissionLaunch = preload("res://scripts/missions/mission_launch.gd")
-const CAMP := "res://scenes/prototype/camp_test.tscn"
+const CAMP := "res://scenes/camp/forest_camp.tscn"
 var failures: Array[String] = []
 func _initialize() -> void:
 	call_deferred("_run")
@@ -67,12 +67,14 @@ func _run() -> void:
 	startup.close_navigation()
 	# Change the camp and the character, then leave to the menu: both are saved.
 	var camp = startup.content
-	var annex = camp.get_node("SystemsAnnex")
+	var annex = camp
 	var timber: int = camp.stock.count(&"timber")
 	camp.stock.add(&"timber", 7)
 	annex.runtime.place_plan(&"rack_saved", Vector2(-10, 4))
 	annex.runtime.shelter_tier = 1
 	_give(camp.get_node("Player"), &"cloth_bandage")
+	var goods = camp.goods_chest.inventory
+	goods.create_supply(&"field_dressing", goods.empty_location_in(&"pack"))
 	startup.show_menu()
 	await _frames(3)
 	_check(not GameSession.active(), "Returning to the menu ends the session")
@@ -81,21 +83,22 @@ func _run() -> void:
 	_check(SaveStore.read("characters", character_id).equipment.inventory.items.any(func(record): return record.get("supply_id", "") == "cloth_bandage"), "Leaving saved the character's equipment")
 	# Join again: everything is back.
 	GameSession.begin(character_id, first_world)
-	startup.launch_training()
+	startup.launch_camp()
 	await _frames(14)
 	camp = startup.content
-	annex = camp.get_node("SystemsAnnex")
+	annex = camp
 	_check(camp.stock.count(&"timber") == timber + 7 and annex.runtime.plans.has(&"rack_saved") and annex.runtime.shelter_tier == 1, "The camp is restored from the world")
 	_check(_carries(camp.get_node("Player"), &"cloth_bandage"), "The character carries what it saved")
+	_check(camp.goods_chest.visible_items().any(func(item): return item.kind == &"supply" and item.supply_id == &"field_dressing"), "The goods chest keeps what was stored in it")
 	startup.show_menu()
 	await _frames(3)
 	# A second world: the character brings its gear; the camp starts with the starting stores.
 	var second := SaveStore.create_world("Bog camp")
 	GameSession.begin(character_id, second.id)
-	startup.launch_training()
+	startup.launch_camp()
 	await _frames(14)
 	camp = startup.content
-	_check(_carries(camp.get_node("Player"), &"cloth_bandage") and camp.stock.count(&"timber") == timber and not camp.get_node("SystemsAnnex").runtime.plans.has(&"rack_saved"), "In another world the character keeps its gear and the camp is that world's own")
+	_check(_carries(camp.get_node("Player"), &"cloth_bandage") and camp.stock.count(&"timber") == timber and not camp.runtime.plans.has(&"rack_saved"), "In another world the character keeps its gear and the camp is that world's own")
 	# Outings: extraction keeps gear minus objective items; death loses it. Results persist.
 	var player = camp.get_node("Player")
 	_give(player, &"sealed_dispatch")
@@ -113,13 +116,13 @@ func _run() -> void:
 	await _frames(3)
 	GameSession.begin(character_id, second.id)
 	_check(MissionLaunch.completed.has(&"courier_dispatch") and not GameSession.world.is_empty(), "Joining the world again restores its mission progress")
-	startup.launch_training()
+	startup.launch_camp()
 	await _frames(14)
 	_check(startup.content.stock.count(&"timber") == timber + int(courier.rewards.timber) and startup.content.stock.count(&"parts") > 0, "The completed mission's reward is in that camp's stores")
 	startup.show_menu()
 	await _frames(3)
 	GameSession.begin(character_id, second.id)
-	startup.launch_training()
+	startup.launch_camp()
 	await _frames(14)
 	_check(startup.content.stock.count(&"timber") == timber + int(courier.rewards.timber), "The reward is paid once")
 	startup.show_menu()

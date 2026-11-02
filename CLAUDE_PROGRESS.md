@@ -100,6 +100,8 @@ files keep the camp and mission results (`scripts/state/`, `ui/session/play_menu
 Then: mission rewards into camp stores; rubles and lats (carried items, quartermaster deposit,
 fixed-price contact station, money in regions/on enemies/in rewards; `money_smoke`).
 Then: camp cash chest, a two-way money container in the inventory view (`cash_chest_smoke`).
+Then (owner): new forest camp for Play (`scenes/camp/forest_camp.tscn`): fire, old man trader, tent,
+cash and goods chests, map barrel to the mission map (`forest_camp_smoke`). Training is a sandbox again.
 
 Open for the owner: playtest; bribes; delete/rename characters and worlds; save character health;
 network joining (two-instance check); camp issue of weapons after a death.

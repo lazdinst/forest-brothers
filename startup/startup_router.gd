@@ -31,7 +31,10 @@ func _ready() -> void:
 	navigation_panel.action_selected.connect(_navigation_action)
 	navigation_panel.canceled.connect(_cancel_navigation)
 	var route := Registry.resolve_route(OS.get_cmdline_user_args(), OS.get_environment("FOREST_BROTHERS_START"))
-	if route == "training":
+	# Coming back from the mission map or an outing: the camp when a world is being played.
+	if route == "training" and GameSession.active():
+		launch_camp()
+	elif route == "training":
 		launch_training()
 	else:
 		show_menu()
@@ -69,7 +72,7 @@ func show_play() -> void:
 
 func _join_world(character_id: String, world_id: String) -> void:
 	if GameSession.begin(character_id, world_id):
-		launch_training()
+		launch_camp()
 	else:
 		show_menu()
 		content.show_message("World unavailable", "The character or world save could not be read.")
@@ -90,6 +93,22 @@ func launch_training() -> void:
 	else:
 		show_menu()
 		content.show_message("Training unavailable", "Could not load the training scene. See the Godot output for details.")
+
+## The world's camp: playable like training (pause, Tab inventory) without the training panels.
+func launch_camp() -> void:
+	if training_active:
+		return
+	if not _replace_content(Registry.CAMP):
+		show_menu()
+		content.show_message("Camp unavailable", "Could not load the camp scene. See the Godot output for details.")
+		return
+	training_active = true
+	training_ui = null
+	inventory_host = InventoryHost.new()
+	inventory_host.handle_tab = false
+	inventory_host.world = content
+	inventory_host.player = content.get_node("Player")
+	add_child(inventory_host)
 
 func _replace_content(path: String) -> bool:
 	var packed := load(path) as PackedScene
