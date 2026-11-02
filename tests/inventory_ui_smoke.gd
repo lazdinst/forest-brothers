@@ -25,18 +25,26 @@ func _run() -> void:
 	root.add_child(preview)
 	await process_frame
 	check(preview.data.demo, "Standalone inventory is explicitly sample data")
-	check(preview.store_grid.cards.size() == 7, "Sample stores expose all seven resource categories")
+	check(not preview.data.has("stock"), "Personal inventory has no camp-stock data")
+	check(preview.pocket_grid.columns == 4 and preview.pocket_grid.rows == 1, "Pockets are exactly four squares in a line")
 	await process_frame
-	for index in range(preview.store_grid.cards.size()):
-		for other in range(index+1,preview.store_grid.cards.size()):
-			check(not preview.store_grid.cards[index].get_rect().intersects(preview.store_grid.cards[other].get_rect()), "Inventory cards fit their cells without overlapping")
-	preview._filter_store("rounds")
-	check(preview.store_grid.cards.size() == 1, "Ammunition filter")
-	preview._filter_store("supplies")
-	check(preview.store_grid.cards.size() == 6, "Supply filter excludes cartridges")
-	preview.store_grid.cards[0].pressed.emit()
-	check("stored" in preview.detail.text, "Selecting a stored item updates its detail")
-	preview._filter_store("all")
+	for grid in [preview.pack_grid,preview.pocket_grid]:
+		for index in range(grid.cards.size()):
+			check(grid.cards[index].size == Vector2.ONE * (grid.cell-4), "Every carried item occupies exactly one square")
+			for other in range(index+1,grid.cards.size()):
+				check(not grid.cards[index].get_rect().intersects(grid.cards[other].get_rect()), "Carried item cards never overlap")
+	var pocket_examples: Array = []
+	for index in range(4):
+		pocket_examples.append({"id":str(index),"title":"Item","quantity":"1","kind":"cloth","span":Vector2i(3,2)})
+	check(preview.pocket_grid.show_items(pocket_examples), "Four pocket items fit even if legacy multi-cell spans are supplied")
+	check(preview.pocket_grid.cards[3].position.y == preview.pocket_grid.cards[0].position.y, "All four pocket items stay on one row")
+	var pocket_cards: Array = preview.pocket_grid.cards.duplicate()
+	pocket_examples.append(pocket_examples[0])
+	check(not preview.pocket_grid.show_items(pocket_examples), "A fifth pocket item is rejected")
+	check(preview.pocket_grid.cards == pocket_cards, "Rejecting pocket overflow preserves visible items")
+	preview.pocket_grid.show_items(preview.data.pocket_items)
+	preview.pack_grid.cards[0].pressed.emit()
+	check("Folded coat" in preview.detail.text, "Selecting a carried item updates its detail")
 	check(not preview.character_preview.has_character, "Missing current body uses labelled neutral silhouette")
 	var source := Node3D.new()
 	var mesh := MeshInstance3D.new()
@@ -68,7 +76,7 @@ func _run() -> void:
 	await key_press(KEY_TAB)
 	check(startup.inventory_open and not startup.navigation_open, "Tab opens inventory without stacking pause")
 	check(not startup.inventory_view.data.demo and startup.inventory_view.data.loose == 17, "Inventory reads the current player state instead of sample quantities")
-	check(startup.inventory_view.store_grid.cards.size() == stock_before.size(), "Zero-stock categories remain visible for inspection")
+	check(not startup.inventory_view.data.has("stock"), "Training inventory does not read camp stores")
 	check(startup.content.process_mode == Node.PROCESS_MODE_DISABLED and not paused, "Only local training is suspended")
 	await key_press(KEY_ESCAPE)
 	check(not startup.inventory_open and startup.content.process_mode == original_mode, "Escape closes inventory and restores training")

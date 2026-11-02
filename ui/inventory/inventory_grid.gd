@@ -1,5 +1,5 @@
 extends Control
-## Reusable visual grid. Coordinates arrange UI cards only, never inventory rules.
+## One item per cell. Reject over-capacity snapshots without replacing visible items.
 signal item_selected(item: Dictionary)
 const Symbol = preload("res://ui/inventory/item_symbol.gd")
 const JournalTheme = preload("res://ui/themes/field_journal_theme.gd")
@@ -17,25 +17,23 @@ func configure(column_count: int, row_count: int, cell_size: float) -> void:
 	size = custom_minimum_size
 	queue_redraw()
 
-func show_items(items: Array) -> void:
+func show_items(items: Array) -> bool:
+	if items.size() > columns * rows:
+		return false
 	for card in cards:
 		remove_child(card)
 		card.queue_free()
 	cards.clear()
-	var occupied := {}
-	for item in items:
-		var span: Vector2i = item.get("span", Vector2i(2, 2))
-		var at := _find_space(span, occupied)
-		if at.x < 0: continue
-		for y in range(at.y, at.y + span.y):
-			for x in range(at.x, at.x + span.x): occupied[Vector2i(x,y)] = true
+	for index in range(items.size()):
+		var item: Dictionary = items[index]
+		var at := Vector2i(index % columns, floori(float(index) / columns))
 		var card := ButtonScene.instantiate() as Button
 		card.text = ""
 		card.theme = JournalTheme.create()
 		for state in ["hover", "pressed", "focus"]:
 			card.add_theme_stylebox_override(state, JournalTheme.paper(Color("e6d5b5"),10))
 		card.position = Vector2(at) * cell + Vector2(2,2)
-		card.size = Vector2(span) * cell - Vector2(4,4)
+		card.size = Vector2.ONE * cell - Vector2(4,4)
 		card.tooltip_text = item.title + " · " + str(item.quantity)
 		card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		var label := Label.new()
@@ -65,16 +63,7 @@ func show_items(items: Array) -> void:
 		card.pressed.connect(func(): item_selected.emit(item))
 		add_child(card)
 		cards.append(card)
-
-func _find_space(span: Vector2i, occupied: Dictionary) -> Vector2i:
-	for y in range(rows - span.y + 1):
-		for x in range(columns - span.x + 1):
-			var free := true
-			for dy in range(span.y):
-				for dx in range(span.x):
-					if occupied.has(Vector2i(x+dx,y+dy)): free = false
-			if free: return Vector2i(x,y)
-	return Vector2i(-1,-1)
+	return true
 
 func _draw() -> void:
 	var ink := Color("66523c65")

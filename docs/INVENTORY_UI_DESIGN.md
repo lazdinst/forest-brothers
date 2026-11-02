@@ -1,9 +1,11 @@
-# Inventory interface — first layout
+# Personal inventory interface
 
 Status: owner-requested inventory design prototype. Worn equipment, a current
-character pane and a large inventory area are requested. The specific slot catalog,
-grid dimensions, items, clothing and interactions below are reversible layout
-proposals, not approved inventory rules.
+character pane and a large carried-inventory area are requested. Owner-confirmed:
+this screen shows only what is on the person; camp storage is a separate interaction.
+Each pack item occupies one square. Pockets are exactly four squares in a horizontal
+line and hold at most four items. Total pack capacity, clothing slots, stack limits
+and other interactions remain proposals.
 
 ## Reference review
 
@@ -12,7 +14,8 @@ equipment slots flank a central character, smaller carried containers occupy the
 middle, and a large contextual container occupies the right. Item footprints,
 quantity labels, visible empty space and clear container boundaries make custody
 and capacity easy to scan. The screenshot's right pane is labelled loot/ground
-cache; this prototype instead reserves that large area for communal camp stores.
+cache. Following owner clarification, this personal screen omits that external
+container and devotes the large right sheet to pockets and pack space instead.
 
 The [publisher's Steam listing](https://store.steampowered.com/app/3932890/Escape_from_Tarkov/)
 was checked for product context. The official website rejected automated access
@@ -24,8 +27,9 @@ No Tarkov artwork, icons, fonts, weapon pictures, branding or UI files are copie
 | --- | --- |
 | Character with equipped slots | Left paper sheet, current visual pane and six proposed clothing/equipment positions |
 | Carried magazines and small containers | Separate loaded/spare magazine and loose-cartridge quantities from existing weapon state |
-| Backpack grid | Middle pack space, visibly marked as a proposed layout |
-| Large contextual container | Right scrollable communal camp-store grid with All/Supplies/Ammunition filters |
+| Backpack grid | Large right-hand pack grid; every item takes exactly one square |
+| Small carried containers | Four pocket squares in one horizontal row, maximum four items |
+| Large external container | Omitted here; camp stores require their own separate interaction/menu |
 | Item inspection | Click a card/slot to read its context in the lower paper strip |
 | Dark modern interface | Existing torn paper, fibers, ink lines, serif type and burgundy interaction states |
 
@@ -45,12 +49,18 @@ preview. This version explicitly labels its sample outfit, provisions and pack
 arrangement. Its Back action emits a view-close signal for a containing owner; F8
 stops the standalone scene in the editor. The main-menu Controls panel lists Tab.
 
-The composition scales uniformly from 1600 × 900. The right container scrolls
-independently. Item categories remain visible at zero quantity. The current
-training adapter reads the actual rifle definition, condition, jam state, loaded
-and spare magazine contents, loose rounds and camp stock totals. It never mutates
-those sources. The store cards summarize ledger categories; their footprints are
-illustrative and do not implement physical storage or packing rules.
+The composition scales uniformly from 1600 × 900. The large right sheet contains
+four pocket cells and a provisional 9 × 4 pack layout (36 shown spaces, preserving
+the prior draft's slot count). Only the four-pocket capacity and one-square item
+footprint are confirmed; total pack capacity remains unapproved.
+
+The training adapter reads only the supplied player's rifle definition, condition,
+jam state, magazine contents and loose rounds. It no longer accepts or reads camp
+stock. The live build has no per-location carried-item records yet: pack and pocket
+entries stay empty rather than inventing possessions or assigning existing ammo to
+an unconfirmed pocket location. Carried ammunition remains a separate summary.
+Standalone preview data demonstrates pocket and pack items and is clearly labelled.
+No source is mutated, transferred or refilled by viewing this screen.
 
 ## Current character limitation
 
@@ -71,15 +81,17 @@ wardrobe validation remains with that workstream under MODULAR_CHARACTER_BRIEF.m
 ## Components and ownership
 
 - `ui/inventory/inventory_snapshot.gd`: read-only training-to-UI adapter plus clearly
-  separate standalone sample data. Takes an explicit player and stock; no global
+  separate standalone sample data. Takes only an explicit player; no global
   player reference or new inventory authority.
 - `ui/inventory/inventory_grid.gd`: reusable view grid with selectable item cards.
-  Its first-fit arrangement is presentation only, not a storage rule or capacity
-  check. The current draft uses 6 × 6 pack and 10 × 14 storage cells.
+  Each entry takes one square regardless of legacy span metadata. Over-capacity
+  snapshots are rejected before changing visible entries, so a fifth pocket item
+  cannot disappear silently or displace an existing item. This view validation does
+  not replace future authoritative pickup/transfer rules.
 - `ui/inventory/item_symbol.gd`: original code-drawn category sketches, not final or
   historically verified item art. No protected asset-generation pipeline is used.
 - `ui/inventory/character_preview.gd`: isolated visual preview and honest fallback.
-- `ui/inventory/inventory_view.gd` / `.tscn`: three paper sheets and inspection strip,
+- `ui/inventory/inventory_view.gd` / `.tscn`: character/carried paper sheets and inspection strip,
   reusing shared MenuPanel/MenuButton/theme resources.
 - `startup/startup_router.gd`: local opening/closing, input precedence and restoration.
 
@@ -94,10 +106,11 @@ source files and project.godot are unchanged by this work. No dependencies added
 <godot> --headless --path . --script res://tests/menu_startup_smoke.gd
 ```
 
-The inventory check covers sample/live separation, category filtering, item detail,
-absent-body fallback, isolated supplied-visual rotation, actual current ammunition,
-visible zero stock, Tab/Escape/pause routing, local process restoration, no stacking
-over camp panels, and conservation of ammunition and stock during inspection.
+The inventory check covers sample/live separation, no camp-stock data in the
+snapshot, item detail, one-square item footprints, four pockets on one row, fifth-item
+rejection without replacing contents, absent-body fallback, isolated supplied-visual
+rotation, actual ammunition, Tab/Escape/pause routing, local process restoration,
+no stacking over camp panels, and conservation of ammunition/stock during inspection.
 The supplied-visual check uses a synthetic mesh, not the rejected character.
 
 Performed on Godot 4.7.2: inventory and existing menu/startup checks passed
@@ -107,7 +120,7 @@ rectangles are checked for overlap. Restricted-environment certificate-store and
 shader-cache write warnings occurred; no gameplay, networking or approved-character
 art acceptance is implied.
 
-Before real inventory manipulation: approve slots/capacities and physical access,
+Before real inventory manipulation: approve total pack capacity, stacking and physical access,
 introduce item/location IDs and authoritative transfer/equip rules, supply current
 clothing records and an approved character visual, then connect requests to those
 rules. No drag/drop, equip, consumption, persistence, network synchronization or

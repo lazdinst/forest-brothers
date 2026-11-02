@@ -206,3 +206,11 @@ Verification covers GLB skin/skeleton/socket retention, actual joint movement, c
 Owner judged the first polygon models substantially worse than the sprites and too generic for distinct clothing. Rigged 3D remains the goal, but these code-built blockouts are rejected as the production art foundation. Each character must support varied separate clothing pieces; recoloring a fused body is insufficient. Normal training play restores preserved sprites and disables the rejected player body; the isolated rig display and explicit opt-in tests remain.
 
 The agent's proposed next proof is one believable old civilian on a shared production rig, wearing two interchangeable outfits with body coverage and clipping checks before another migration. Blender/MPFB is a researched candidate, not an installed dependency or an owner-approved final asset source. See MODULAR_CHARACTER_BRIEF.md for production steps, source/license references and visual acceptance. No improved finished model or wardrobe runtime is claimed.
+
+## Personal inventory scope and pocket capacity — 2026-11-01
+
+Status: owner-confirmed clarification of the inventory design.
+
+The personal inventory screen shows only equipment and supplies currently on the person. Camp stores belong to a separate interaction/menu and must not appear here. Each item occupies one square in pack space. Pockets are four squares in a single horizontal row, permitting at most four items. This supersedes the initial UI proposal that showed communal camp storage alongside carried gear and used multi-cell pack items.
+
+Total pack capacity, item stacking, clothing-slot details and authoritative transfer/equip rules remain open. All items remain communal; being carried denotes physical custody, not private ownership.

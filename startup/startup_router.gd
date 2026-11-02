@@ -154,7 +154,7 @@ func open_inventory() -> void:
 	inventory_layer.layer = 110
 	add_child(inventory_layer)
 	inventory_view = InventoryScene.instantiate()
-	inventory_view.data = InventorySnapshot.from_training(content.get_node("Player"),content.stock)
+	inventory_view.data = InventorySnapshot.from_training(content.get_node("Player"))
 	inventory_layer.add_child(inventory_view)
 	inventory_view.closed.connect(close_inventory)
 	inventory_open = true

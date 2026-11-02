@@ -12,10 +12,9 @@ const Symbol = preload("res://ui/inventory/item_symbol.gd")
 var data: Dictionary
 var composition: Control
 var character_preview
-var store_grid
+var pack_grid
+var pocket_grid
 var detail: Label
-var store_items: Array = []
-var filter := "all"
 var close_button: Button
 
 func _ready() -> void:
@@ -75,7 +74,7 @@ func _build() -> void:
 	composition.add_child(background)
 	var title := _label(composition,"MEŽABRĀĻI  /  FIELD INVENTORY",Vector2(44,20),1100,30)
 	title.add_theme_color_override("font_color",JournalTheme.PAPER)
-	var caption := "Layout preview · sample outfit & supplies" if data.demo else "Carried equipment · communal camp stocks · view only"
+	var caption := "Layout preview · sample carried gear" if data.demo else "On your person · equipment, pockets & pack · view only"
 	var subtitle := _label(composition,caption,Vector2(45,61),1100,17)
 	subtitle.add_theme_color_override("font_color",JournalTheme.PAPER)
 	close_button = _button(composition,"Back / Esc",Vector2(1360,25),Vector2(195,50),func(): closed.emit())
@@ -107,57 +106,30 @@ func _build() -> void:
 	rifle_symbol.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	rifle_button.add_child(rifle_symbol)
 	_label(character,"Loaded %d / %d   ·   Condition %d%%" % [data.loaded,data.capacity,data.cleanliness],Vector2(18,628),470,17)
-	var carried := _frame(Vector2(572,106),Vector2(406,718))
-	_label(carried,"Carried supplies",Vector2(0,0),360,27)
-	_label(carried,"02  /  AMMUNITION",Vector2(0,39),360,15)
-	var ammo := Grid.new()
-	ammo.position = Vector2(0,75)
-	ammo.configure(6,2,60)
-	carried.add_child(ammo)
-	ammo.show_items([
-		{"id":"loaded","title":"Loaded mag.","quantity":"%d / %d" % [data.loaded,data.capacity],"kind":"magazine","span":Vector2i(2,2)},
-		{"id":"spare","title":"Spare mag.","quantity":"%d / %d" % [data.spare,data.capacity],"kind":"magazine","span":Vector2i(2,2)},
-		{"id":"loose","title":"Cartridges","quantity":str(data.loose)+" loose","kind":"rounds","span":Vector2i(2,2)},
-	])
-	ammo.item_selected.connect(_select_item)
-	_label(carried,"PACK SPACE",Vector2(0,220),355,20)
-	_label(carried,"Proposed layout · capacity to be decided",Vector2(0,250),355,15)
-	var pack := Grid.new()
-	pack.position = Vector2(0,287)
-	pack.configure(6,6,60)
-	carried.add_child(pack)
-	pack.show_items(data.pack_items)
-	pack.item_selected.connect(_select_item)
-	var stores := _frame(Vector2(986,106),Vector2(590,718))
-	_label(stores,"Camp stores",Vector2(0,0),540,27)
-	_label(stores,"03  /  COMMUNAL STORAGE",Vector2(0,39),540,15)
-	_label(stores,"Stored at camp. Viewing does not grant remote access.",Vector2(0,67),540,16)
-	for index in range(3):
-		var ids := ["all","supplies","rounds"]
-		var names := ["All","Supplies","Ammunition"]
-		_button(stores,names[index],Vector2(index*180,103),Vector2(176,48),_filter_store.bind(ids[index]))
-	var scroll := ScrollContainer.new()
-	scroll.position = Vector2(0,166)
-	scroll.size = Vector2(550,480)
-	stores.add_child(scroll)
-	store_grid = Grid.new()
-	store_grid.configure(10,14,52)
-	scroll.add_child(store_grid)
-	store_grid.item_selected.connect(_select_item)
-	for id in data.stock:
-		store_items.append({"id":str(id),"title":str(id).capitalize(),"quantity":str(data.stock[id])+" stored","kind":str(id),"span":Vector2i(2,2)})
-	_filter_store("all")
+	var carried := _frame(Vector2(572,106),Vector2(1004,718))
+	_label(carried,"On your person",Vector2(0,0),920,27)
+	_label(carried,"02  /  POCKETS",Vector2(0,45),420,20)
+	_label(carried,"Four slots · up to four items",Vector2(0,75),420,16)
+	pocket_grid = Grid.new()
+	pocket_grid.position = Vector2(0,110)
+	pocket_grid.configure(4,1,96)
+	carried.add_child(pocket_grid)
+	var pockets_fit: bool = pocket_grid.show_items(data.pocket_items)
+	pocket_grid.item_selected.connect(_select_item)
+	_label(carried,"CARRIED AMMUNITION",Vector2(455,45),470,20)
+	_label(carried,"Loaded magazine   %d / %d\nSpare magazine     %d / %d\nLoose cartridges  %d" % [data.loaded,data.capacity,data.spare,data.capacity,data.loose],Vector2(455,87),470,20)
+	_label(carried,"03  /  PACK SPACE",Vector2(0,238),920,20)
+	_label(carried,"One item per square · total pack capacity under review",Vector2(0,269),920,16)
+	pack_grid = Grid.new()
+	pack_grid.position = Vector2(0,305)
+	pack_grid.configure(9,4,90)
+	carried.add_child(pack_grid)
+	var pack_fits: bool = pack_grid.show_items(data.pack_items)
+	pack_grid.item_selected.connect(_select_item)
 	var footer := _frame(Vector2(24,829),Vector2(1552,60))
 	detail = _label(footer,"Select equipment or supplies to inspect. All equipment belongs to the group.",Vector2(0,-4),1490,17)
-
-func _filter_store(category: String) -> void:
-	filter = category
-	var shown: Array = []
-	for item in store_items:
-		if category == "all" or (category == "rounds" and item.kind == "rounds") or (category == "supplies" and item.kind != "rounds"):
-			shown.append(item)
-	store_grid.show_items(shown)
-	if detail != null: detail.text = "Camp stores · " + ("Ammunition" if category == "rounds" else category.capitalize()) + " · inspect only; access requires the storage location."
+	if not pockets_fit or not pack_fits:
+		detail.text = "Carried-item record exceeds the available slots; contents could not be displayed."
 
 func _inspect(title: String, description: String) -> void:
 	detail.text = title + "  /  " + description
