@@ -4,6 +4,8 @@ signal shot_fired(origin: Vector3)
 
 const WeaponState = preload("res://scripts/weapons/prototype_weapon_state.gd")
 const GroundEquipment = preload("res://scripts/inventory/ground_equipment.gd")
+const HitZones = preload("res://scripts/combat/hit_zones.gd")
+const GunshotSound = preload("res://scripts/combat/gunshot_sound.gd")
 const DEFAULT_DEFINITION = preload("res://weapons/svt_inspired_training.tres")
 const MAGAZINE_SHADER = preload("res://scripts/weapons/weapon_magazine.gdshader")
 @export var definition: Resource = DEFAULT_DEFINITION
@@ -30,6 +32,7 @@ var _world_light: OmniLight3D
 var last_shot_origin := Vector3.ZERO
 var last_shot_end := Vector3.ZERO
 var last_shot_blocked: bool = false
+var last_hit_zone: StringName = &""
 var _sound: AudioStreamPlayer
 var _ground_items: Dictionary = {}
 
@@ -172,9 +175,15 @@ func _fire() -> void:
 	var end := aim_point
 	if not hit.is_empty():
 		end = hit.position
+		last_hit_zone = &""
 		if hit.collider.has_method("receive_hit"):
-			hit.collider.receive_hit(definition.damage,hit.position,hit.normal,_player)
-			hits += 1
+			# Actors with zones are struck only where the shot meets a zone; a gap is a miss.
+			var has_zones: bool = "hit_zones" in hit.collider and hit.collider.hit_zones != null
+			if has_zones:
+				last_hit_zone = HitZones.zone_along(space, hit.collider, hit.position, -camera.global_basis.z)
+			if not has_zones or last_hit_zone != &"":
+				hit.collider.receive_hit(definition.damage,hit.position,hit.normal,_player,last_hit_zone)
+				hits += 1
 		elif hit.collider.has_method("take_hit"):
 			hit.collider.take_hit()
 			hits += 1
@@ -277,16 +286,4 @@ func status_text() -> String:
 
 
 func _make_test_shot_sound() -> AudioStreamWAV:
-	var stream := AudioStreamWAV.new()
-	stream.format = AudioStreamWAV.FORMAT_16_BITS
-	stream.mix_rate = 22050
-	var bytes := PackedByteArray()
-	bytes.resize(2646 * 2)
-	var noise := RandomNumberGenerator.new()
-	noise.seed = 7331
-	for index in range(2646):
-		var t := float(index) / 22050.0
-		var sample := (noise.randf_range(-1.0, 1.0) * 0.65 + sin(t * TAU * 95.0) * 0.35) * exp(-t * 55.0)
-		bytes.encode_s16(index * 2, int(sample * 24000.0))
-	stream.data = bytes
-	return stream
+	return GunshotSound.stream()

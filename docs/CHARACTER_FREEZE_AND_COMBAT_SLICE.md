@@ -1,6 +1,6 @@
 # Character freeze, gameplay audit and proposed combat slice
 
-Status: character art frozen by the owner. Visual validation and the small representation-independence correction are complete. The combat vertical slice below is **proposed for review, not approved or implemented**. No nature/environment or main-menu agent files were edited for this work.
+Status: character art frozen by the owner. Visual validation and the small representation-independence correction are complete. The combat vertical slice below was **proposed for review**; on 2026-11-01 the owner adjusted it and directed zone-based combat work, now tracked in [COMBAT_ARENA_PLAN.md](COMBAT_ARENA_PLAN.md). No nature/environment or main-menu agent files were edited for this work.
 
 ## What is preserved and playable
 

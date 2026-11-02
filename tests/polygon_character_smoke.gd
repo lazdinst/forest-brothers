@@ -99,6 +99,7 @@ func _run() -> void:
 	var opponent = annex.enemies[0]
 	_check(opponent.polygon_model != null and not opponent.sprite.visible,"First enemy uses polygon rig; second remains a comparison sprite")
 	opponent.receive_hit(100,opponent.global_position+Vector3.UP,Vector3.FORWARD,player)
+	opponent.receive_hit(1,opponent.global_position,Vector3.FORWARD,player)
 	await _frames(75)
 	_check(opponent.state==&"dead" and opponent.polygon_model.current_state==&"die","Combat death selects the rig's death animation")
 	annex.open_station(annex.stations[&"planning"],player)

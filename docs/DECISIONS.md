@@ -60,7 +60,7 @@ This is the durable project memory. User-confirmed direction and agent recommend
 
 - Exact region, protagonist, and relationship to real events; working year is approximately 1946.
 - Whether any competitive mode is ever desired; co-op has a confirmed maximum of four players.
-- Bleed-out duration, revival requirements, fatal injury exceptions, physical gear recovery, body persistence, camp recovery, and save rules. See `MISSIONS_AND_MEDICINE.md`.
+- Bleed-out duration, revival requirements, remaining fatal injury exceptions (the head case is decided below), physical gear recovery, body persistence, camp recovery, and save rules. See `MISSIONS_AND_MEDICINE.md`.
 - Safe exit design, staggered-return/civilian arrival timing, main-quest completion/turn-in checks, and real-time versus simulation-time details within the one-hour cap. See `MISSION_STRUCTURE.md`.
 - Shared stock visibility and physical access, spending/build permissions, camp/mission time, construction mechanics, repair and food/water rules, and character progression. Ownership is communal. See `CAMP_AND_PROGRESSION.md`.
 - Combat perception thresholds, search/alert durations, ammunition/loading UI, jam/maintenance balance, and friendly-fire damage tuning; civilian needs and labor details; when partial returns commit shared rescue arrivals. See `COMBAT_DESIGN.md`.
@@ -311,3 +311,22 @@ interaction prompts stay visible; a tiny existing prone indication remains
 until prone artwork is approved. This is a UI-only revision, not a change to
 movement balance or combat. See TACTICAL_MOVEMENT.md for scale, validation and
 remaining owner appearance review.
+
+## Combat body zones, incapacitation and finishing — 2026-11-01
+
+Status: owner-confirmed direction from design conversation; numbers and
+details remain open.
+
+Characters have separate hit zones for head, torso, arms and legs. Head at
+zero health is immediate death with no revival. Torso at zero health is
+incapacitation. A downed player lies helpless and any further hit kills; a
+downed enemy crawls and a further hit finishes it. Finishing is done by
+shooting. No knife or pistol finisher for now. Enemies stay sprite-based for
+now; the sprite production route is open. This resolves the head case of
+"fatal injury exceptions" and leaves the incapacitation rules (bleed-out
+window, teammate revival, solo and all-incapacitated resolving as mission
+death, friendly fire) unchanged. Zone health, damage multipliers, limb
+effects, bleed-out duration, enemy aim and ammunition values remain open
+placeholders. The owner directed implementation in small chunks on branch
+`combat/body-zones`, superseding the review hold on a common health system
+in CHARACTER_FREEZE_AND_COMBAT_SLICE.md. See COMBAT_ARENA_PLAN.md.

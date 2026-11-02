@@ -4,6 +4,22 @@ extends CharacterBody3D
 # Rejected blockout stays opt-in until a replacement passes visual review.
 @export var use_polygon_body: bool = false
 const Movement = preload("res://scripts/player/tactical_movement.gd")
+const BodyHealth = preload("res://scripts/combat/body_health.gd")
+const HitZones = preload("res://scripts/combat/hit_zones.gd")
+## Emitted with BodyHealth.DOWNED or BodyHealth.KILLED. The session/drill decides what death means.
+signal casualty(player, outcome: StringName)
+## Presentation hook: which zone was struck and where the shot came from.
+signal hit_taken(zone: StringName, from: Vector3)
+## Presentation hook: a bullet passed close by at this point.
+signal bullet_passed(at: Vector3)
+var body = BodyHealth.new()
+var hit_zones
+var last_hit_zone: StringName = &""
+## Co-op stand-in: solo incapacitation is mission death, so without a nearby teammate a down becomes death.
+var has_teammate_nearby: bool = false
+# Placeholder pending owner tuning (open question 5).
+var bleed_out_seconds: float = 60.0
+var bleed_left: float = 0.0
 @export var movement_tuning: Resource = preload("res://scripts/player/movement_tuning.gd").new()
 var locomotion
 var is_prone: bool = false
@@ -43,6 +59,14 @@ func _ready() -> void:
 	_spawn_position = global_position
 	body_shape.shape = body_shape.shape.duplicate()
 	_head_probe.radius = 0.12
+	hit_zones = HitZones.new()
+	hit_zones.name = "HitZones"
+	add_child(hit_zones)
+	hit_zones.build(self, body_shape.shape.height)
+	var feedback = load("res://scripts/combat/hit_feedback.gd").new()
+	feedback.name = "HitFeedback"
+	add_child(feedback)
+	feedback.attach(self)
 	if use_polygon_body:
 		body_visual = load("res://scripts/characters/polygon_character.gd").new()
 		body_visual.name = "BodyVisual"
@@ -55,6 +79,8 @@ func _ready() -> void:
 
 
 func controls_active() -> bool:
+	if not body.is_alive():
+		return false
 	return Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or DisplayServer.get_name() == "headless"
 
 
@@ -117,6 +143,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	var active := controls_active()
+	if body.is_downed():
+		bleed_left -= delta
+		if bleed_left <= 0.0:
+			body.bleed_out()
+			_resolve_casualty(BodyHealth.KILLED)
 	if not active or not Input.is_action_pressed("stance_adjust"):
 		_stance_pressed = false
 		_stance_scrolled = false
@@ -171,7 +202,9 @@ func toggle_prone() -> void:
 func _update_stance(active: bool, delta: float) -> void:
 	if is_vaulting: return # Keep the clearance-tested traversal shape.
 	var target: float = locomotion.target_height()
-	if active and Input.is_action_pressed("crouch") and not locomotion.prone:
+	if not body.is_alive():
+		target = movement_tuning.prone_height
+	elif active and Input.is_action_pressed("crouch") and not locomotion.prone:
 		target = movement_tuning.stance_heights[0]
 	var height: float = body_shape.shape.height
 	var desired := move_toward(height, target, movement_tuning.height_change_speed * delta)
@@ -185,6 +218,7 @@ func _update_stance(active: bool, delta: float) -> void:
 		desired = low
 	body_shape.shape.height = desired
 	body_shape.position.y = desired * 0.5
+	hit_zones.set_height(desired)
 	is_prone = locomotion.prone
 	is_crouching = not is_prone and desired < movement_tuning.stance_heights[6] - 0.01
 
@@ -332,3 +366,38 @@ func _update_body_visual() -> void:
 	else:
 		var moving := Vector2(velocity.x,velocity.z).length() > 0.1
 		body_visual.play(&"crouch" if is_crouching else (&"run" if is_sprinting else (&"walk" if moving else (&"aim" if is_aiming else &"idle"))))
+
+func center_of_mass() -> Vector3:
+	if not body.is_alive():
+		return global_position + Vector3.UP * 0.12
+	return global_position + Vector3.UP * (body_shape.shape.height * 0.6)
+
+func receive_hit(damage: float, at: Vector3, _normal: Vector3, source = null, zone: StringName = &"") -> void:
+	if body.is_dead() or damage <= 0:
+		return
+	last_hit_zone = zone if zone != &"" else BodyHealth.TORSO
+	var outcome: StringName = body.apply_damage(last_hit_zone, damage)
+	hit_taken.emit(last_hit_zone, source.global_position if source is Node3D else at)
+	if outcome == BodyHealth.DOWNED and not has_teammate_nearby:
+		body.bleed_out()
+		outcome = BodyHealth.KILLED
+	if outcome == BodyHealth.DOWNED or outcome == BodyHealth.KILLED:
+		_resolve_casualty(outcome)
+
+func near_miss(at: Vector3) -> void:
+	if body.is_alive():
+		bullet_passed.emit(at)
+
+func _resolve_casualty(outcome: StringName) -> void:
+	if outcome == BodyHealth.DOWNED:
+		bleed_left = bleed_out_seconds
+		hit_zones.set_layout(&"downed")
+	velocity = Vector3.ZERO
+	casualty.emit(self, outcome)
+
+## Drill-only reset after a debrief. Not a medical treatment or a revival.
+func restore_for_drill() -> void:
+	body = BodyHealth.new()
+	last_hit_zone = &""
+	hit_zones.set_layout(&"standing")
+
