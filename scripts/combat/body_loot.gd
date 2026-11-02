@@ -1,6 +1,6 @@
 extends RefCounted
-## Leaves a dead enemy's rifle and magazines on its body as a searchable container.
-## Round counts move exactly; nothing is created. The rifle keeps its inserted magazine.
+## Leaves a dead enemy's rifle and magazines on its body as a searchable container, with a few
+## rubles. Round counts move exactly. The rifle keeps its inserted magazine.
 const AmmunitionInventory = preload("res://scripts/inventory/ammunition_inventory.gd")
 const BodyContainer = preload("res://scripts/inventory/body_container.gd")
 const GroundEquipment = preload("res://scripts/inventory/ground_equipment.gd")
@@ -28,6 +28,10 @@ static func drop(enemy: Node3D, weapon_id: StringName = &"svt_inspired_training"
 		var pocket = inventory.empty_location_in(&"pocket", extra.id)
 		if pocket != null: extra.location = pocket
 		else: overflow.append(extra)
+	# A few rubles in a pocket, when one is free (placeholder amounts).
+	var pocket_for_money = inventory.empty_location_in(&"pocket")
+	if pocket_for_money != null:
+		inventory.create_supply(&"rubles", pocket_for_money, randi_range(5, 40))
 	var space := enemy.get_world_3d().direct_space_state
 	var ground := space.intersect_ray(PhysicsRayQueryParameters3D.create(enemy.global_position + Vector3.UP, enemy.global_position + Vector3.DOWN * 3, 1, [enemy.get_rid()]))
 	var body := BodyContainer.new()

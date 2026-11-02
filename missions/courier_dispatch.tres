@@ -19,5 +19,5 @@ briefing = "A courier hid a sealed dispatch at the farmstead before he was taken
 objectives = Array[Resource]([SubResource("objective")])
 exit_seconds = 5.0
 enemy_groups = {"farm": 2}
-rewards = {"parts": 2, "timber": 4}
+rewards = {"parts": 2, "rubles": 60, "timber": 4}
 area_name = "Farmstead"

@@ -19,5 +19,5 @@ briefing = "The road checkpoint keeps a codebook of call signs. It is guarded cl
 objectives = Array[Resource]([SubResource("objective")])
 exit_seconds = 5.0
 enemy_groups = {"checkpoint": 3, "farm": 1}
-rewards = {"parts": 3, "rounds": 40}
+rewards = {"parts": 3, "rounds": 40, "rubles": 100}
 area_name = "Road checkpoint"

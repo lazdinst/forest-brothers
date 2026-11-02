@@ -6,7 +6,7 @@ const GameSession = preload("res://scripts/state/game_session.gd")
 ## Seconds between camp autosaves while a character plays a world.
 const AUTOSAVE_SECONDS := 30.0
 # Generous reset-on-run training supplies, not campaign starting balance.
-const TRAINING_STOCK = {&"food":100,&"water":100,&"medicine":30,&"meals":30,&"timber":200,&"parts":60,&"cloth":80,&"rounds":500}
+const TRAINING_STOCK = {&"food":100,&"water":100,&"medicine":30,&"meals":30,&"timber":200,&"parts":60,&"cloth":80,&"rounds":500,&"rubles":120,&"lats":3}
 var stock = CampStock.new()
 var resource_strip
 var debug_overlay

@@ -12,6 +12,8 @@ const GroundEquipment = preload("res://scripts/inventory/ground_equipment.gd")
 const SummaryScreen = preload("res://ui/missions/mission_summary_screen.gd")
 const MissionHud = preload("res://ui/missions/mission_hud.gd")
 const ITEM_GROUP := &"mission_items"
+## Other things a map scatters for an outing (money caches), cleared on the next start.
+const LOOSE_GROUP := &"mission_loose_items"
 ## A participant's outing ended (extracted, killed or timed out); report from MissionReport.
 signal participant_ended(player, report: Dictionary)
 ## Nobody is left in the area.
@@ -37,8 +39,9 @@ class GroundHolder extends RefCounted:
 func start(mission_players: Array, local: Node) -> void:
 	players = mission_players
 	local_player = local
-	for old in get_tree().get_nodes_in_group(ITEM_GROUP):
-		old.queue_free()
+	for group in [ITEM_GROUP, LOOSE_GROUP]:
+		for old in get_tree().get_nodes_in_group(group):
+			old.queue_free()
 	# Missions sharing a tag on one outing get different spots while there are enough.
 	var used: Array = []
 	for objective in definition.objectives:
@@ -66,18 +69,19 @@ func start(mission_players: Array, local: Node) -> void:
 static func participant_id(player: Node) -> StringName:
 	return StringName(str(player.name))
 
-## An item lying at a point as an ordinary ground pickup with its own identity.
-func place_item(item_id: StringName, at: Vector3) -> Node3D:
+## An item lying at a point as an ordinary ground pickup with its own identity. uses sets the
+## amount (money) or remaining uses; group marks it for clearing on the next start.
+func place_item(item_id: StringName, at: Vector3, uses := -1, group: StringName = ITEM_GROUP) -> Node3D:
 	var holder := GroundHolder.new()
 	holder.inventory = Inventory.new()
 	holder.inventory.items.clear()
 	holder.inventory.active_weapon_id = &""
-	var item = holder.inventory.create_supply(item_id)
+	var item = holder.inventory.create_supply(item_id, null, uses)
 	item.location.position = at
 	var pickup := GroundEquipment.new()
 	pickup.weapon_state = holder
 	pickup.item_id = item.id
-	pickup.add_to_group(ITEM_GROUP)
+	pickup.add_to_group(group)
 	get_parent().add_child(pickup)
 	pickup.global_position = at
 	return pickup

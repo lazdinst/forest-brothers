@@ -35,6 +35,12 @@ const SUPPLIES := {
 		"objective":true,"description":"A forester's hand-drawn map of paths through the forest and bog. Carry it out of the area."},
 	&"ration_cache": {"name":"Wrapped rations","icon":"food","size":Vector2i(2,1),"uses":1,"seconds":0.0,"targets_part":false,
 		"objective":true,"description":"Food wrapped in oilcloth and hidden for the winter. Carry it out of the area."},
+	# Money: carried as notes and coins (uses = the amount held), lost on the body at death, and
+	# deposited into the camp treasury at the quartermaster. Never used like a supply.
+	&"rubles": {"name":"Rubles","icon":"rubles","size":Vector2i(1,1),"uses":500,"seconds":0.0,"targets_part":false,
+		"money":true,"description":"Soviet banknotes, the only legal money in Latvia since March 1941. Deposit them in the camp treasury at the quartermaster."},
+	&"lats": {"name":"Lats","icon":"lats","size":Vector2i(1,1),"uses":50,"seconds":0.0,"targets_part":false,
+		"money":true,"description":"Pre-war Latvian money, withdrawn without notice in March 1941 and kept hidden since. Scarce; the camp's contact values it highly."},
 	&"tinned_meat": {"name":"Tinned meat","icon":"food","size":Vector2i(1,1),"uses":1,"seconds":5.0,"targets_part":false,
 		"energy":60.0,"hydration":-10.0,"description":"Restores a lot of energy; makes you thirsty."},
 }
@@ -48,6 +54,8 @@ static func get_def(id: StringName) -> Dictionary:
 static func is_objective(id: StringName) -> bool:
 	return SUPPLIES.get(id,{}).get("objective",false)
 
+static func is_money(id: StringName) -> bool:
+	return SUPPLIES.get(id,{}).get("money",false)
 static func is_food(def: Dictionary) -> bool:
 	return def.has("energy") or def.has("hydration")
 

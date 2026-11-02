@@ -3,7 +3,7 @@ extends RefCounted
 
 signal changed
 
-var quantities: Dictionary = {&"food":0,&"water":0,&"medicine":0,&"meals":0,&"timber":0,&"parts":0,&"cloth":0,&"rounds":0}
+var quantities: Dictionary = {&"food":0,&"water":0,&"medicine":0,&"meals":0,&"timber":0,&"parts":0,&"cloth":0,&"rounds":0,&"rubles":0,&"lats":0}
 
 
 func add(item_id: StringName, amount: int) -> void:

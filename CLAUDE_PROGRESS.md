@@ -97,5 +97,8 @@ world select/create/join -> camp. Character files keep carried gear (travels bet
 files keep the camp and mission results (`scripts/state/`, `ui/session/play_menu.gd`,
 `session_persistence_smoke`). Training saves nothing.
 
-Open for the owner: playtest; delete/rename characters and worlds; save character health;
+Then: mission rewards into camp stores; rubles and lats (carried items, quartermaster deposit,
+fixed-price contact station, money in regions/on enemies/in rewards; `money_smoke`).
+
+Open for the owner: playtest; bribes; delete/rename characters and worlds; save character health;
 network joining (two-instance check); camp issue of weapons after a death.

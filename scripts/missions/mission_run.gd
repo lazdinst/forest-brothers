@@ -140,15 +140,19 @@ static func carries(inventory, item_id: StringName) -> bool:
 		if item.kind == &"supply" and item.supply_id == item_id and inventory.carried(item): return true
 	return false
 
-## Carried rounds (loose, in magazines, chambered) and carried supply items, objective items excluded.
+## Carried rounds (loose, in magazines, chambered), carried supply items (objective items and
+## money excluded) and carried money.
 static func tally(inventory) -> Dictionary:
 	var rounds := 0
 	var supplies := 0
+	var money := {}
 	for item in inventory.items.values():
 		if not inventory.carried(item): continue
 		match item.kind:
 			&"ammo_stack": rounds += item.quantity
 			&"magazine": rounds += item.rounds.size()
 			&"weapon": rounds += 1 if item.chambered_round != null else 0
-			&"supply": supplies += 0 if SupplyCatalog.is_objective(item.supply_id) else 1
-	return {"rounds":rounds,"supplies":supplies}
+			&"supply":
+				if SupplyCatalog.is_money(item.supply_id): money[item.supply_id] = money.get(item.supply_id, 0) + item.uses
+				elif not SupplyCatalog.is_objective(item.supply_id): supplies += 1
+	return {"rounds":rounds,"supplies":supplies,"rubles":money.get(&"rubles", 0),"lats":money.get(&"lats", 0)}

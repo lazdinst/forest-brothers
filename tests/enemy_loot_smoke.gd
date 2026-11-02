@@ -82,7 +82,7 @@ func _run() -> void:
 	while body.searching():
 		await create_timer(0.1).timeout
 	await _frames(1)
-	_check(view.body_pocket_grid.cards.size() == 2, "The search then reveals both spare magazines")
+	_check(view.body_pocket_grid.cards.size() == 3, "The search then reveals both spare magazines and a few rubles")
 	if "--capture" in OS.get_cmdline_user_args():
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png(OS.get_environment("TEMP").path_join("forest-brothers-body-loot.png"))

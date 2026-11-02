@@ -1,7 +1,7 @@
 extends GridContainer
 ## Read-only stock presentation shared by training HUD and workshop panels.
 const Symbol = preload("res://ui/inventory/item_symbol.gd")
-const TITLES = {&"food":"Food", &"water":"Water", &"medicine":"Medicine", &"meals":"Meals", &"timber":"Timber", &"parts":"Parts", &"cloth":"Cloth", &"rounds":"Cartridges"}
+const TITLES = {&"food":"Food", &"water":"Water", &"medicine":"Medicine", &"meals":"Meals", &"timber":"Timber", &"parts":"Parts", &"cloth":"Cloth", &"rounds":"Cartridges", &"rubles":"Rubles", &"lats":"Lats"}
 var labels: Dictionary = {}
 var ink := Color("efe6cf")
 var outlined := true

@@ -79,6 +79,7 @@ func _ready() -> void:
 	_station(&"planning",&"planning","Build planning table",Vector3(-3,0,6))
 	_station(&"hq",&"hq","Headquarters / rescue exercise",Vector3(3,0,6))
 	_station(&"combat",&"combat","Enemy test controls",Vector3(0,0,-1))
+	_station(&"contact",&"contact","Contact (buys and sells at fixed prices)",Vector3(-12,0,-6))
 	_box(self,"LeftCover",Vector3(-3,1,-5),Vector3(6,2,0.35),Color(0.3,0.32,0.29),true)
 	_box(self,"RightCover",Vector3(7,1,-8),Vector3(0.5,2,5),Color(0.3,0.32,0.29),true)
 	_label(self,"ENEMY TEST LANE\nArm the bout at the control table\n3 rifle hits / non-graphic blood / collapse",Vector3(0,3,-10))
@@ -358,7 +359,7 @@ func _ui() -> void:
 	_planner.look_at(global_position+Vector3(-0.5,0,5),Vector3.FORWARD)
 	for id in stations:
 		var label := Label.new()
-		label.text = {&"depot":"Quartermaster",&"well":"Well",&"cook":"Cooking",&"food":"Food store",&"armourer":"Armourer",&"ammo":"Ammo store",&"medical":"Medical post",&"shelter":"Shelter upgrade",&"trench":"Trench",&"planning":"Build table",&"hq":"HQ / Rescue",&"combat":"Enemy controls"}.get(id,stations[id].title)
+		label.text = {&"depot":"Quartermaster",&"well":"Well",&"cook":"Cooking",&"food":"Food store",&"armourer":"Armourer",&"ammo":"Ammo store",&"medical":"Medical post",&"shelter":"Shelter upgrade",&"trench":"Trench",&"planning":"Build table",&"hq":"HQ / Rescue",&"combat":"Enemy controls",&"contact":"Contact"}.get(id,stations[id].title)
 		label.custom_minimum_size.x = 130
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -419,7 +420,16 @@ func refresh_panel() -> void:
 	var station = stations[_panel_station]
 	_heading.text = station.title
 	match station.kind:
-		&"depot": _button("Claim training cache (once this session)",runtime.claim_cache)
+		&"depot":
+			_button("Claim training cache (once this session)",runtime.claim_cache)
+			_details.text += "\nTreasury: %d rubles, %d lats." % [runtime.stock.count(&"rubles"),runtime.stock.count(&"lats")]
+			_button("Deposit carried rubles and lats into the treasury",runtime.deposit_money.bind(player.weapon.state))
+		&"contact":
+			_details.text += "\nTreasury: %d rubles, %d lats. Fixed prices; goods go to the communal stores." % [runtime.stock.count(&"rubles"),runtime.stock.count(&"lats")]
+			for good in runtime.PRICES:
+				var offer: Dictionary = runtime.PRICES[good]
+				_button("Buy %d %s for %d rubles" % [offer.amount,offer.label.to_lower(),offer.rubles],runtime.buy.bind(good,&"rubles"))
+				_button("Buy %d %s for %d lats" % [offer.amount,offer.label.to_lower(),offer.lats],runtime.buy.bind(good,&"lats"))
 		&"well": _recipe_button(&"water",_panel_station)
 		&"cook": _recipe_button(&"cook",_panel_station)
 		&"food":

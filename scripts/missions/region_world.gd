@@ -82,6 +82,7 @@ func _ready() -> void:
 	add_child(mission)
 	_spawn_enemies()
 	mission.start([player], player)
+	_hide_money()
 
 ## Enemies for this mission: per EnemySpawn tag, the requested number at randomly drawn spots.
 func _spawn_enemies() -> void:
@@ -102,6 +103,17 @@ func _spawn_enemies() -> void:
 			enemy.loot_enabled = true
 			enemy.temperament = [Enemy.TIMID, Enemy.STEADY, Enemy.AGGRESSIVE].pick_random()
 			enemies.append(enemy)
+
+## Hidden money for this outing at objective spots no mission item uses: a bundle of rubles
+## and, more rarely, a few pre-war lats. Placeholder amounts.
+func _hide_money() -> void:
+	var taken: Array = get_tree().get_nodes_in_group(MissionController.ITEM_GROUP).map(func(item): return item.global_position)
+	var spots: Array = get_tree().get_nodes_in_group(ObjectiveSpot.GROUP).filter(func(spot): return not taken.any(func(at): return at.distance_to(spot.global_position) < 0.5))
+	spots.shuffle()
+	if spots.size() > 0:
+		mission.place_item(&"rubles", spots[0].global_position, randi_range(30, 90), MissionController.LOOSE_GROUP)
+	if spots.size() > 1 and randf() < 0.6:
+		mission.place_item(&"lats", spots[1].global_position, randi_range(2, 6), MissionController.LOOSE_GROUP)
 
 func _enemy_spotted(source, at: Vector3) -> void:
 	for enemy in enemies:

@@ -48,6 +48,16 @@ func _draw() -> void:
 			for y in [22,34,46]:
 				draw_line(Vector2(15,y),Vector2(49,y-6),ink,7,true)
 				draw_circle(Vector2(14,y),4,ink,false,1,true)
+		"rubles":
+			# A small bundle of banknotes.
+			for offset in [0,5]:
+				draw_rect(Rect2(10+offset,18+offset,40,24),ink,false,2)
+			draw_circle(Vector2(35,35),5,ink,false,2,true)
+		"lats":
+			# Coins.
+			for at in [Vector2(24,36),Vector2(40,28)]:
+				draw_circle(at,12,ink,false,3,true)
+				draw_circle(at,6,ink,false,1,true)
 		_:
 			draw_arc(Vector2(22,22),10,0,PI*1.7,20,ink,4,true)
 			draw_line(Vector2(28,29),Vector2(47,49),ink,5,true)

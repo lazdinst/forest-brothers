@@ -45,6 +45,7 @@ static func build(run, id: StringName) -> Dictionary:
 	var equipment: Array = [
 		["Rounds carried", "%d → %d" % [entry.start.rounds, end.rounds]],
 		["Medical and food supplies", "%d → %d" % [entry.start.supplies, end.supplies]],
+		["Money carried", "%d → %d rubles, %d → %d lats" % [entry.start.get("rubles", 0), end.get("rubles", 0), entry.start.get("lats", 0), end.get("lats", 0)]],
 		["Carried gear", "Brought back to camp" if personal == MissionRun.EXTRACTED else ("Left on your body" if personal != MissionRun.ACTIVE else "Still with you")],
 	]
 	sections.append({"heading":"Equipment","rows":equipment})

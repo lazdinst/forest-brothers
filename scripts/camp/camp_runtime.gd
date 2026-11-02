@@ -4,6 +4,16 @@ signal changed
 var can_complete: Callable
 var can_player_work: Callable
 const Stock = preload("res://scripts/state/camp_stock.gd")
+const SupplyCatalog = preload("res://scripts/health/supply_catalog.gd")
+## The contact's fixed prices per lot, in rubles or in lats. Lats buy more: they are scarce
+## pre-war savings the contact values highly. Placeholder amounts, not balance.
+const PRICES = {
+	&"medicine": {"label":"Medicine","amount":1,"rubles":40,"lats":2},
+	&"rounds": {"label":"Cartridges","amount":20,"rubles":30,"lats":1},
+	&"parts": {"label":"Weapon parts","amount":1,"rubles":25,"lats":1},
+	&"cloth": {"label":"Cloth","amount":2,"rubles":10,"lats":1},
+	&"food": {"label":"Food","amount":3,"rubles":15,"lats":1},
+}
 const RECIPES = {
 	&"water": {"label":"Draw water", "cost":{}, "output":{&"water":2}, "seconds":2.0, "role":&""},
 	&"cook": {"label":"Cook communal meal", "cost":{&"food":1,&"water":1}, "output":{&"meals":1}, "seconds":4.0, "role":&"cook"},
@@ -190,6 +200,35 @@ func deposit_ammo(weapon_state, amount: int = 10) -> bool:
 	weapon_state.loose_rounds -= amount
 	stock.try_exchange({}, {&"rounds":amount})
 	message = "Cartridges returned to communal storage"
+	changed.emit()
+	return true
+
+## Moves every carried rubles and lats item into the camp treasury.
+func deposit_money(weapon_state) -> bool:
+	if weapon_state == null:
+		return _fail("Nothing carried to deposit")
+	var inventory = weapon_state.inventory
+	var amounts := {}
+	for item in inventory.items.values().duplicate():
+		if item.kind == &"supply" and SupplyCatalog.is_money(item.supply_id) and inventory.carried(item):
+			amounts[item.supply_id] = amounts.get(item.supply_id, 0) + item.uses
+			inventory.items.erase(item.id)
+	if amounts.is_empty():
+		return _fail("You carry no rubles or lats")
+	inventory._notify_changed()
+	stock.try_exchange({}, amounts)
+	message = "Deposited %d rubles and %d lats into the camp treasury" % [amounts.get(&"rubles", 0), amounts.get(&"lats", 0)]
+	changed.emit()
+	return true
+
+## Buys one lot of a good from the contact, paying from the treasury in rubles or lats.
+func buy(good: StringName, currency: StringName) -> bool:
+	if not PRICES.has(good) or not currency in [&"rubles", &"lats"]:
+		return _fail("The contact does not sell that")
+	var offer: Dictionary = PRICES[good]
+	if not stock.try_exchange({currency: int(offer[currency])}, {good: int(offer.amount)}):
+		return _fail("The treasury is short of %s" % currency)
+	message = "Bought %d %s for %d %s" % [offer.amount, good, offer[currency], currency]
 	changed.emit()
 	return true
 
