@@ -253,3 +253,47 @@ func feed_resident(id: StringName) -> bool:
 	message = "Resident provisioned from communal food storage"
 	changed.emit()
 	return true
+
+## Persistent camp state for a world save (JSON-safe). Jobs in progress are not saved: their
+## reserved supplies count back into the stores and their workers are free again on load.
+func encode() -> Dictionary:
+	var stores := {}
+	for id in stock.quantities:
+		stores[str(id)] = stock.quantities[id]
+	for job in jobs.values():
+		for id in job.cost:
+			stores[str(id)] = stores.get(str(id), 0) + int(job.cost[id])
+	var people := {}
+	for id in residents:
+		people[str(id)] = {"role":str(residents[id].role),"fed":residents[id].fed}
+	var plan_records := {}
+	for id in plans:
+		var status: StringName = plans[id].status
+		plan_records[str(id)] = {"at":[plans[id].at.x, plans[id].at.y],"status":str(&"planned" if status == &"building" else status)}
+	return {"stores":stores,"residents":people,"plans":plan_records,"shelter_tier":shelter_tier,"trench_complete":trench_complete,
+		"patient":patient.duplicate(),"cache_claimed":cache_claimed,"quests_completed":quests_completed}
+
+## Replaces the camp with a saved state; unknown store entries are ignored.
+func restore(state: Dictionary) -> void:
+	jobs.clear()
+	for id in stock.quantities.keys():
+		stock.quantities[id] = int(state.get("stores", {}).get(str(id), 0))
+	residents.clear()
+	for id in state.get("residents", {}):
+		var record: Dictionary = state.residents[id]
+		residents[StringName(id)] = {"role":StringName(record.get("role", "unassigned")),"busy":"","fed":bool(record.get("fed", false))}
+	plans.clear()
+	for id in state.get("plans", {}):
+		var record: Dictionary = state.plans[id]
+		plans[StringName(id)] = {"at":Vector2(record.at[0], record.at[1]),"status":StringName(record.status)}
+	shelter_tier = int(state.get("shelter_tier", 0))
+	trench_complete = bool(state.get("trench_complete", false))
+	if state.get("patient") is Dictionary:
+		patient = {"bleeding":bool(state.patient.bleeding),"fracture":bool(state.patient.fracture),"recovery":float(state.patient.recovery)}
+	cache_claimed = bool(state.get("cache_claimed", false))
+	quests_completed = int(state.get("quests_completed", 0))
+	pending_recruits.clear()
+	exercise_active = false
+	message = "Camp restored from the world save."
+	stock.changed.emit()
+	changed.emit()

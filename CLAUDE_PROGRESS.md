@@ -92,5 +92,10 @@ Then (owner): connect from the camp, no menu edits. The camp HQ station opens th
 the combat arena; map, outing summaries and arena return to camp (`camp_mission_flow_smoke`).
 `enemy_crouch_smoke` fixed: a shot that killed the player ended the arena outing and froze the enemy.
 
-Open for the owner: playtest; campaign save (completed missions and camp state across outings;
-the camp currently reloads on return); main menu New Game stays disabled (menu agent).
+Then (owner): characters and worlds, Valheim-style. Main menu Play -> character select/create ->
+world select/create/join -> camp. Character files keep carried gear (travels between worlds); world
+files keep the camp and mission results (`scripts/state/`, `ui/session/play_menu.gd`,
+`session_persistence_smoke`). Training saves nothing.
+
+Open for the owner: playtest; delete/rename characters and worlds; save character health;
+network joining (two-instance check); camp issue of weapons after a death.

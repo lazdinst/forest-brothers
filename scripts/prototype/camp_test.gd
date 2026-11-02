@@ -2,11 +2,15 @@ extends Node3D
 
 const CampStock = preload("res://scripts/state/camp_stock.gd")
 const ResourceStrip = preload("res://ui/components/resource_strip.gd")
+const GameSession = preload("res://scripts/state/game_session.gd")
+## Seconds between camp autosaves while a character plays a world.
+const AUTOSAVE_SECONDS := 30.0
 # Generous reset-on-run training supplies, not campaign starting balance.
 const TRAINING_STOCK = {&"food":100,&"water":100,&"medicine":30,&"meals":30,&"timber":200,&"parts":60,&"cloth":80,&"rounds":500}
 var stock = CampStock.new()
 var resource_strip
 var debug_overlay
+var _autosave_left := AUTOSAVE_SECONDS
 
 @onready var player: CharacterBody3D = $Player
 @onready var stock_label: Label = $HUD/Stock
@@ -16,6 +20,7 @@ var debug_overlay
 
 func _ready() -> void:
 	stock.try_exchange({},TRAINING_STOCK)
+	_load_session()
 	stock_label.hide()
 	resource_strip = ResourceStrip.new()
 	resource_strip.name = "ResourceStock"
@@ -35,7 +40,32 @@ func _ready() -> void:
 	add_child(debug_overlay)
 
 
-func _process(_delta: float) -> void:
+## Playing a world (not Training): its saved camp replaces the starting stores, the character's
+## equipment replaces the standard kit, and leaving the camp saves both.
+func _load_session() -> void:
+	if not GameSession.active(): return
+	GameSession.apply_equipment(player)
+	# The training course installs the camp systems annex deferred; restore after it exists.
+	call_deferred("_restore_camp")
+	tree_exiting.connect(save_session)
+
+func _restore_camp() -> void:
+	var camp: Dictionary = GameSession.camp_state()
+	if not camp.is_empty() and has_node("SystemsAnnex"):
+		$SystemsAnnex.runtime.restore(camp)
+
+## Saves the camp into the world and the character's equipment. Safe to call at any time.
+func save_session() -> void:
+	if not GameSession.active(): return
+	GameSession.save_world($SystemsAnnex.runtime.encode() if has_node("SystemsAnnex") else {})
+	GameSession.save_equipment(player)
+
+func _process(delta: float) -> void:
+	if GameSession.active():
+		_autosave_left -= delta
+		if _autosave_left <= 0.0:
+			_autosave_left = AUTOSAVE_SECONDS
+			save_session()
 	var mouse_free := Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and DisplayServer.get_name() != "headless"
 	prompt_label.text = "Click to look around" if mouse_free else player.get_interaction_prompt()
 	if debug_overlay.enabled:

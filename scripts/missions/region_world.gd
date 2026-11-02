@@ -10,6 +10,8 @@ const MovementHud = preload("res://ui/components/tactical_movement_hud.gd")
 const InventoryHost = preload("res://ui/inventory/inventory_host.gd")
 const MissionController = preload("res://scripts/missions/mission_controller.gd")
 const MissionLaunch = preload("res://scripts/missions/mission_launch.gd")
+const GameSession = preload("res://scripts/state/game_session.gd")
+const MissionRun = preload("res://scripts/missions/mission_run.gd")
 const ObjectiveSpot = preload("res://scripts/missions/objective_spot.gd")
 const MissionExit = preload("res://scripts/missions/mission_exit.gd")
 const EnemySpawn = preload("res://scripts/missions/enemy_spawn.gd")
@@ -44,6 +46,7 @@ var _prompt: Label
 var _crosshair: Label
 var _wall_material: StandardMaterial3D
 var _rng := RandomNumberGenerator.new()
+var _ended_extracted := false
 
 func _ready() -> void:
 	definition = MissionLaunch.pending if MissionLaunch.pending != null else default_region.compose(default_region.missions)
@@ -63,6 +66,7 @@ func _ready() -> void:
 	player.name = "Player"
 	player.position = player_spawn
 	add_child(player)
+	GameSession.apply_equipment(player)
 	inventory = InventoryHost.new()
 	inventory.world = self
 	inventory.player = player
@@ -73,6 +77,7 @@ func _ready() -> void:
 	mission.definition = definition
 	mission.continue_text = "Return to camp" if MissionLaunch.camp_scene != "" else "Return to the mission map"
 	mission.mission_over.connect(_mission_over)
+	mission.participant_ended.connect(_participant_ended)
 	mission.continue_requested.connect(_continue)
 	add_child(mission)
 	_spawn_enemies()
@@ -107,8 +112,15 @@ func _enemy_defeated(_enemy) -> void:
 	if mission.run != null and not mission.run.is_over():
 		mission.run.count("Enemies killed")
 
+## Notes how the local player's outing ended, for the save when the outing is over.
+func _participant_ended(who, report: Dictionary) -> void:
+	if who == player:
+		_ended_extracted = report.personal == MissionRun.EXTRACTED
+
+## Saves the outing: mission results, and the character's gear kept on extraction, lost on death.
 func _mission_over(run) -> void:
 	MissionLaunch.record_run(run)
+	GameSession.outing_ended(player, _ended_extracted)
 	for enemy in enemies:
 		if is_instance_valid(enemy):
 			enemy.active = false

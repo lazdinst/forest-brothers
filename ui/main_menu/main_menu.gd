@@ -1,5 +1,6 @@
 extends Control
 
+signal play_requested
 signal training_requested
 signal quit_requested
 
@@ -7,6 +8,7 @@ const JournalTheme = preload("res://ui/themes/field_journal_theme.gd")
 const MenuActions = preload("res://ui/components/menu_actions.gd")
 const MenuModal = preload("res://ui/components/menu_modal.gd")
 const MenuPanel = preload("res://ui/components/menu_panel.gd")
+var play_button: Button
 var training_button: Button
 var details
 
@@ -47,17 +49,19 @@ func _ready() -> void:
 	paper_menu.size = Vector2(400, 0)
 	canvas.add_child(paper_menu)
 	paper_menu.add_child(menu)
-	for entry in [["Continue", "No campaign save yet."], ["New Game", "Campaign missions are in development."], ["Co-op Game", "Co-op is planned for up to four players; joining is not implemented."]]:
-		var unavailable := _button(entry[0] + "  ·  unavailable", menu)
-		unavailable.disabled = true
-		unavailable.tooltip_text = entry[1]
+	# Play: choose a character, then a world (a camp hosted on this computer).
+	play_button = _button("Play", menu)
+	play_button.pressed.connect(func(): play_requested.emit())
+	var coop := _button("Co-op Game  ·  unavailable", menu)
+	coop.disabled = true
+	coop.tooltip_text = "Co-op is planned for up to four players; joining a world over the network is not implemented."
 	training_button = _button("Training", menu)
 	training_button.pressed.connect(func(): training_requested.emit())
 	_button("Controls", menu).pressed.connect(show_controls)
-	_button("Records", menu).pressed.connect(func(): show_message("Records", "Forest Brothers / Mežabrāļi\nLocal development prototype\n\nCampaign records are not implemented. Training progress resets when you leave."))
+	_button("Records", menu).pressed.connect(func(): show_message("Records", "Forest Brothers / Mežabrāļi\nLocal development prototype\n\nCharacters and worlds from Play are saved on this computer. Training is a sandbox: its progress resets when you leave."))
 	_button("Exit", menu).pressed.connect(func(): quit_requested.emit())
 	var note := Label.new()
-	note.text = "DEVELOPMENT PROTOTYPE  /  TRAINING AVAILABLE"
+	note.text = "DEVELOPMENT PROTOTYPE"
 	note.position = Vector2(112, 625)
 	note.add_theme_font_size_override("font_size", 14)
 	note.add_theme_color_override("font_color", Color("fff0d4"))
@@ -71,7 +75,7 @@ func _ready() -> void:
 	details.canceled.connect(details.dismiss)
 	resized.connect(_fit_composition)
 	_fit_composition()
-	training_button.grab_focus()
+	play_button.grab_focus()
 
 func _fit_composition() -> void:
 	var factor := minf(size.x / 1280.0, size.y / 720.0)

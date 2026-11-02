@@ -42,7 +42,7 @@ func _run() -> void:
 	startup.show_menu()
 	await process_frame
 	check(not startup.training_active, "Menu active")
-	check(startup.content.training_button.has_focus(), "Training is initial keyboard focus")
+	check(startup.content.play_button.has_focus(), "Play is initial keyboard focus")
 	startup.content.show_controls()
 	check(startup.content.details.visible, "Controls dialog opens")
 	check(startup.content.details.theme == startup.navigation_panel.theme, "Details and navigation share one theme resource")
