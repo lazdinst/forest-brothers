@@ -75,6 +75,12 @@ func _run() -> void:
 	_give(camp.get_node("Player"), &"cloth_bandage")
 	var goods = camp.goods_chest.inventory
 	goods.create_supply(&"field_dressing", goods.empty_location_in(&"pack"))
+	# Meet Ģirts and ask him something, then say goodbye.
+	camp.old_man.interact(camp.get_node("Player"))
+	camp.npcs.talk()
+	camp.npcs.controller.choose_topic("weather")
+	camp.npcs.controller.goodbye()
+	camp.npcs.controller.show_topics()
 	startup.show_menu()
 	await _frames(3)
 	_check(not GameSession.active(), "Returning to the menu ends the session")
@@ -90,6 +96,8 @@ func _run() -> void:
 	_check(camp.stock.count(&"timber") == timber + 7 and annex.runtime.plans.has(&"rack_saved") and annex.runtime.shelter_tier == 1, "The camp is restored from the world")
 	_check(_carries(camp.get_node("Player"), &"cloth_bandage"), "The character carries what it saved")
 	_check(camp.goods_chest.visible_items().any(func(item): return item.kind == &"supply" and item.supply_id == &"field_dressing"), "The goods chest keeps what was stored in it")
+	var girts = camp.npcs.state_of(&"girts")
+	_check(girts.met() and girts.told.has("st_weather") and girts.conversations_completed == 1, "Ģirts remembers meeting the player and what they talked about")
 	startup.show_menu()
 	await _frames(3)
 	# A second world: the character brings its gear; the camp starts with the starting stores.

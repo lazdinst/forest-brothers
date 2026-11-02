@@ -1,13 +1,18 @@
 extends Control
-## The old man's trade window. Left: what he can get, at fixed prices, paid from the treasury in
-## rubles or lats. Right: what you can sell him cheaply, from what you carry and from the goods
-## chest; the rubles go to the treasury. The rules (prices, values, transfers) live in
-## CampRuntime; this only shows them and forwards choices. Placeholder prices.
+## An NPC's trade window, for any NPC with trade stock. Left: the few lots he has, at fixed
+## prices, paid from the treasury in rubles or lats. Right: what you can sell him cheaply, from
+## what you carry and from the goods chest; the rubles go to the treasury. The rules live in
+## NPCTrade (stock, buying) and CampRuntime (sale values); this only shows them and forwards
+## choices. Placeholder prices.
 const JournalTheme = preload("res://ui/themes/field_journal_theme.gd")
 const SupplyCatalog = preload("res://scripts/health/supply_catalog.gd")
 const Snapshot = preload("res://ui/inventory/inventory_snapshot.gd")
 signal closed
 var runtime
+## NPCTrade for the NPC being traded with.
+var trade
+var title_label: Label
+var said_label: Label
 ## Sources to sell from: [{"label", "inventory"}], e.g. carried gear and the goods chest.
 var sources: Array = []
 var treasury_label: Label
@@ -29,18 +34,16 @@ func _ready() -> void:
 	add_child(outer)
 	var top := HBoxContainer.new()
 	outer.add_child(top)
-	var title := _label(30, JournalTheme.PAPER)
-	title.text = "The old man"
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top.add_child(title)
+	title_label = _label(30, JournalTheme.PAPER)
+	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(title_label)
 	close_button = Button.new()
 	close_button.text = "Leave (Esc)"
 	close_button.pressed.connect(func(): closed.emit())
 	top.add_child(close_button)
-	var said := _label(17, JournalTheme.PAPER)
-	said.text = "\"I know people in the village. Bring money and I can get things. What you bring me, I can sell on, but not for much.\""
-	said.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	outer.add_child(said)
+	said_label = _label(17, JournalTheme.PAPER)
+	said_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	outer.add_child(said_label)
 	treasury_label = _label(18, JournalTheme.PAPER)
 	outer.add_child(treasury_label)
 	var columns := HBoxContainer.new()
@@ -73,18 +76,19 @@ func _column(parent: Node, heading: String) -> VBoxContainer:
 	return list
 
 func refresh() -> void:
-	if runtime == null or buy_list == null: return
-	treasury_label.text = "Cash chest: %d rubles, %d lats. Bought goods go to the camp stores; sales are paid into the cash chest." % [runtime.stock.count(&"rubles"), runtime.stock.count(&"lats")]
+	if runtime == null or buy_list == null or trade == null: return
+	title_label.text = trade.definition.full_name
+	said_label.text = trade.definition.trade_line
+	treasury_label.text = "Cash chest: %d rubles, %d lats. Bought goods go to your pack (or the goods chest) or the camp stores; sales are paid into the cash chest." % [runtime.stock.count(&"rubles"), runtime.stock.count(&"lats")]
 	message_label.text = runtime.message
 	for list in [buy_list, sell_list]:
 		for child in list.get_children():
 			list.remove_child(child)
 			child.queue_free()
-	for good in runtime.PRICES:
-		var offer: Dictionary = runtime.PRICES[good]
-		var row := _row(buy_list, "%d %s" % [offer.amount, offer.label.to_lower()])
-		_button(row, "%d rubles" % offer.rubles, buy.bind(good, &"rubles")).disabled = runtime.stock.count(&"rubles") < int(offer.rubles)
-		_button(row, "%d lats" % offer.lats, buy.bind(good, &"lats")).disabled = runtime.stock.count(&"lats") < int(offer.lats)
+	for offer in trade.offers():
+		var row := _row(buy_list, "%s  ·  %s" % [offer.label, "%d left" % offer.left if offer.left > 0 else "none left"])
+		_button(row, "%d rubles" % offer.rubles, buy.bind(offer.id, &"rubles")).disabled = not trade.can_buy(offer.id, &"rubles")
+		_button(row, "%d lats" % offer.lats, buy.bind(offer.id, &"lats")).disabled = not trade.can_buy(offer.id, &"lats")
 	var any := false
 	for source in sources:
 		var inventory = source.inventory
@@ -104,8 +108,8 @@ func refresh() -> void:
 		none.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		sell_list.add_child(none)
 
-func buy(good: StringName, currency: StringName) -> void:
-	runtime.buy(good, currency)
+func buy(id: String, currency: StringName) -> void:
+	trade.buy(id, currency)
 	refresh()
 
 func sell(inventory, id: StringName) -> void:

@@ -41,18 +41,21 @@ func _run() -> void:
 	await _frames(3)
 	player.refresh_interaction_target()
 	var reach = player.interaction_target
-	_check(reach == camp.old_man and player.get_interaction_prompt().contains("old man"), "Looking at the old man offers to talk to him (%s)" % reach)
-	var medicine: int = camp.stock.count(&"medicine")
+	_check(reach == camp.old_man and player.get_interaction_prompt().contains("Interact") and player.get_interaction_prompt().contains("Ģirts"), "Looking at Ģirts offers to interact with him (%s)" % reach)
 	var rubles: int = camp.stock.count(&"rubles")
 	player.try_interact()
 	await _frames(1)
-	var window = camp.trade_panel
-	_check(window.visible and window.buy_list.get_child_count() == camp.Runtime.PRICES.size() and player.process_mode == Node.PROCESS_MODE_DISABLED, "His trade window lists what he can get; the player stands still")
-	window.buy(&"medicine", &"rubles")
-	_check(camp.stock.count(&"medicine") == medicine + 1 and camp.stock.count(&"rubles") == rubles - int(camp.Runtime.PRICES.medicine.rubles), "Buying from him spends the treasury")
+	_check(camp.npcs.menu.visible and camp.npcs.menu.buttons.get_child_count() == 3 and player.process_mode == Node.PROCESS_MODE_DISABLED, "F opens his menu (Talk, Trade, Leave); the player stands still")
+	camp.npcs.menu.action_chosen.emit(&"trade")
+	await _frames(1)
+	var window = camp.npcs.trader
+	_check(window.visible and window.buy_list.get_child_count() == camp.GIRTS.trade_stock.size(), "Trade lists his few goods")
+	var carried_inventory = player.weapon.state.inventory
+	var breads: int = carried_inventory.items.values().filter(func(item): return item.kind == &"supply" and item.supply_id == &"rye_bread").size()
+	window.buy("bread", &"rubles")
+	_check(camp.stock.count(&"rubles") == rubles - 8 and carried_inventory.items.values().filter(func(item): return item.kind == &"supply" and item.supply_id == &"rye_bread").size() == breads + 1, "Buying a loaf spends the treasury and puts the bread in the pack")
 	rubles = camp.stock.count(&"rubles")
 	# Selling: a carried magazine with its rounds, cheaply; the rubles go to the cash chest.
-	var carried_inventory = player.weapon.state.inventory
 	var spare: StringName = carried_inventory.initial_magazine_ids[1]
 	var value: int = camp.runtime.sell_value(carried_inventory, carried_inventory.items[spare])
 	_check(value > 0 and value < int(camp.Runtime.PRICES.rounds.rubles), "A spare magazine sells for less than buying cartridges costs (%d rubles)" % value)
@@ -68,7 +71,9 @@ func _run() -> void:
 	_check(not camp.goods_chest.inventory.items.has(stored.id) and camp.stock.count(&"rubles") == rubles + int(camp.Runtime.SELL_SUPPLIES.morphine), "Goods in the chest can be sold too")
 	rubles = camp.stock.count(&"rubles") + int(camp.Runtime.PRICES.medicine.rubles)
 	window.closed.emit()
-	_check(not window.visible and player.process_mode == Node.PROCESS_MODE_INHERIT, "Leave closes the trade")
+	_check(camp.npcs.menu.visible and not window.visible, "Leaving trade goes back to his menu")
+	camp.npcs.menu.action_chosen.emit(&"leave")
+	_check(not camp.npcs.is_open() and player.process_mode == Node.PROCESS_MODE_INHERIT, "Leave closes the interaction and gives control back")
 	_check(camp.goods_chest.inventory.pack_capacity >= 1000, "The goods chest holds a thousand squares")
 	# The goods chest takes goods, not money.
 	var inventory = player.weapon.state.inventory

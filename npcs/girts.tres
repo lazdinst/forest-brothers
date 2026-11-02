@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/npc/npc_definition.gd" id="1_definition"]
+[ext_resource type="Texture2D" path="res://assets/characters/starting_civilian/starting_civilian_front_v1.png" id="2_portrait"]
+
+[resource]
+script = ExtResource("1_definition")
+id = &"girts"
+display_name = "Ģirts"
+full_name = "Ģirts Ozoliņš"
+description = "An old farmer from the forest edge. Born 1877, under the Tsar."
+portrait = ExtResource("2_portrait")
+portrait_region = Rect2(300, 20, 420, 470)
+trade_line = "\"Bread, potatoes, a bandage or two. That's all an old farmer has. What you bring me I can sell on in the village, but not for much.\""
+actions = Array[StringName]([&"talk", &"trade", &"leave"])
+dialogue_path = "res://npcs/girts_dialogue.json"
+stages = Array[Dictionary]([{"stage": "stranger"}, {"stage": "acquaintance", "familiarity": 2}, {"stage": "trusted", "familiarity": 3, "trust": 3}, {"stage": "confidant", "familiarity": 5, "trust": 6, "respect": 3}])
+suspicion_cap = 3
+trade_stock = Array[Dictionary]([{"id": "bread", "kind": "item", "supply": "rye_bread", "label": "Rye bread", "amount": 1, "rubles": 8, "lats": 1, "max": 3, "restock": 1}, {"id": "potatoes", "kind": "item", "supply": "potatoes", "label": "Potatoes", "amount": 1, "rubles": 4, "lats": 1, "max": 4, "restock": 2}, {"id": "bandage", "kind": "item", "supply": "cloth_bandage", "label": "Cloth bandage", "amount": 1, "rubles": 12, "lats": 1, "max": 2, "restock": 1}, {"id": "village_food", "kind": "stores", "stock": "food", "label": "Food from the village (3 food to the camp stores)", "amount": 3, "rubles": 15, "lats": 1, "max": 2, "restock": 1}, {"id": "old_clothes", "kind": "stores", "stock": "cloth", "label": "Old clothing for rags (2 cloth to the camp stores)", "amount": 2, "rubles": 10, "lats": 1, "max": 1, "restock": 1}])

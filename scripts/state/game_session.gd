@@ -112,6 +112,8 @@ static func take_reward_backlog() -> Dictionary:
 ## got out, lost when they died or ran out of time.
 static func outing_ended(player: Node, extracted: bool) -> void:
 	if not active(): return
+	# Outings are the world's clock for now: NPCs count visits and restock by them.
+	world.outings = int(world.get("outings", 0)) + 1
 	if extracted:
 		save_equipment(player)
 	else:

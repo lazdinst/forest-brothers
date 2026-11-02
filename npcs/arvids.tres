@@ -1,0 +1,13 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/npc/npc_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+id = &"arvids"
+display_name = "Arvīds"
+full_name = "Arvīds"
+description = "A young lookout. Test NPC for the shared dialogue system."
+actions = Array[StringName]([&"talk", &"leave"])
+dialogue_path = "res://npcs/arvids_dialogue.json"
+stages = Array[Dictionary]([{"stage": "stranger"}, {"stage": "acquaintance", "familiarity": 2}])

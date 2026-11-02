@@ -103,6 +103,9 @@ Then: camp cash chest, a two-way money container in the inventory view (`cash_ch
 Then (owner): new forest camp for Play (`scenes/camp/forest_camp.tscn`): fire, old man trader, tent,
 cash and goods chests, map barrel to the mission map (`forest_camp_smoke`). Training is a sandbox again.
 Then (owner): old man trade window (buy, and sell items cheaply); goods chest 1,000 squares, scrolling.
+Then (owner brief): generic NPC system (`scripts/npc/`, `ui/npc/`, `npcs/`, `docs/NPC_DIALOGUE.md`):
+Ģirts Ozoliņš with 129 authored nodes, relationship/memory saved per world, limited trade; test NPC
+Arvīds (`npc_dialogue_smoke`).
 
 Open for the owner: playtest; bribes; delete/rename characters and worlds; save character health;
 network joining (two-instance check); camp issue of weapons after a death.

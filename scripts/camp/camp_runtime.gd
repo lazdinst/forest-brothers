@@ -17,7 +17,7 @@ const PRICES = {
 ## What the trader pays for a full supply item, in rubles; partly used items pay in proportion.
 ## Placeholder amounts, kept well under buying prices.
 const SELL_SUPPLIES = {&"cloth_bandage":3,&"field_dressing":5,&"tourniquet":6,&"splint":5,&"morphine":15,
-	&"medical_satchel":20,&"sulfa_powder":8,&"surgical_kit":25,&"canteen":4,&"rye_bread":2,&"tinned_meat":4}
+	&"medical_satchel":20,&"sulfa_powder":8,&"surgical_kit":25,&"canteen":4,&"rye_bread":2,&"potatoes":1,&"tinned_meat":4}
 const SELL_WEAPON := 60
 const SELL_MAGAZINE := 5
 const RECIPES = {

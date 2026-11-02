@@ -1,0 +1,458 @@
+{
+	"npc": "girts",
+	"notes": "Fictional character within researched events; see docs/NPC_DIALOGUE.md for sources and which lines rest on game premises. He knows only what a farmer could know in 1946.",
+	"visit_rules": [
+		{"effects": [{"familiarity": 1}]},
+		{"conditions": [{"context_at_least": {"new_missions_completed": 1}}], "effects": [{"trust": 1}, {"respect": 1}, {"event": "Soldiers have been asking questions since the group's last outing."}]},
+		{"conditions": [{"context": "completed_winter_rations"}], "effects": [{"flag": "helped_camp_food", "once": "helped_camp_food"}, {"trust": 1, "once": "helped_camp_food_trust"}]},
+		{"conditions": [{"context": "completed_forester_map"}], "effects": [{"flag": "has_forester_map", "once": "has_forester_map"}]}
+	],
+	"greetings": [
+		{"priority": 0, "text": [
+			"Well, you're still alive. That's something these days.",
+			"Ah. You again. The pot's empty, before you ask.",
+			"Mm. Sit, then. Mind the smoke.",
+			"Back already? The forest must be dull without you.",
+			"You walk like a man with something on his mind. Out with it."
+		]},
+		{"priority": 5, "conditions": [{"stage_at_least": "trusted"}], "text": [
+			"There you are. I kept your stump warm.",
+			"Good. I was starting to talk to the goat, and she doesn't answer."
+		]},
+		{"priority": 10, "conditions": [{"first_meeting": true}], "text": [
+			"So. You're the one they told me about. Sit, if you're staying. Don't touch the pot."
+		]},
+		{"priority": 12, "conditions": [{"context": "carries_rifle"}, {"stage_below": "acquaintance"}], "text": [
+			"You can lower that rifle. If I wanted you dead I'd have poisoned the soup."
+		]},
+		{"priority": 15, "conditions": [{"context": "winter"}], "text": [
+			"Winter doesn't care what uniform you wear. Come closer to the fire."
+		]},
+		{"priority": 18, "conditions": [{"flag": "threatened"}, {"not_flag": "forgiven"}], "text": [
+			"You. Keep your hands where I can see them this time."
+		]},
+		{"priority": 20, "conditions": [{"context_at_least": {"outings_since_visit": 2}}], "text": [
+			"Thought they'd caught you. Glad to be wrong."
+		]},
+		{"priority": 22, "conditions": [{"context_at_least": {"new_missions_completed": 1}}], "text": [
+			"There's talk in the village. Soldiers at every door, asking questions. Your doing, I suppose. Don't tell me."
+		]},
+		{"priority": 25, "conditions": [{"context": "night"}], "text": [
+			"Do you know what hour it is? Keep your voice down and the fire low."
+		]},
+		{"priority": 30, "conditions": [{"context": "player_bleeding"}], "text": [
+			"You're bleeding on my ground. Sit down before you fall down."
+		]},
+		{"priority": 28, "conditions": [{"context": "player_injured"}, {"not_context": "player_bleeding"}], "text": [
+			"You're walking like a man twice my age. Who did that to you?"
+		]}
+	],
+	"greeting_choices": [
+		{"text": "How are you?", "next": "st_health"},
+		{"text": "Any news from the village?", "next": "v_news"},
+		{"text": "I need some supplies.", "open": "trade"},
+		{"text": "I'm hurt. Can you help?", "conditions": [{"context": "player_injured"}], "next": "st_hurt"},
+		{"text": "About last time. I'm sorry.", "conditions": [{"flag": "threatened"}, {"not_flag": "forgiven"}], "next": "st_apology"},
+		{"text": "I want to ask you about something."},
+		{"text": "Goodbye.", "end": true}
+	],
+	"goodbyes": [
+		"Go carefully.",
+		"Mind the road. Not the road itself, the men on it.",
+		"Don't make me bury you. My back can't take the digging.",
+		{"conditions": [{"context": "night"}], "text": "Go. And don't light anything until you're under the trees."},
+		{"conditions": [{"stage_at_least": "trusted"}, {"flag": "told_son"}], "text": "If you see Pēteris... no. Go on. Go carefully."}
+	],
+	"categories": [
+		{"id": "small_talk", "title": "Small talk"},
+		{"id": "his_past", "title": "His past"},
+		{"id": "village", "title": "The village"},
+		{"id": "war", "title": "The war"},
+		{"id": "resistance", "title": "The resistance"},
+		{"id": "survival", "title": "Survival advice"},
+		{"id": "personal", "title": "Personal questions"}
+	],
+	"topics": [
+		{"id": "health", "category": "small_talk", "title": "How are you keeping?", "start": "st_health"},
+		{"id": "age", "category": "small_talk", "title": "How old are you, Ģirts?", "start": "st_age"},
+		{"id": "weather", "category": "small_talk", "title": "This weather.", "start": "st_weather"},
+		{"id": "harvest", "category": "small_talk", "title": "How was the harvest?", "start": "st_harvest"},
+		{"id": "needs", "category": "small_talk", "title": "Do you need anything?", "start": "st_needs"},
+		{"id": "old_age", "category": "small_talk", "title": "Getting old.", "start": "st_old"},
+		{"id": "food", "category": "small_talk", "title": "Is there enough to eat?", "start": "st_food"},
+		{"id": "winter_talk", "category": "small_talk", "title": "Winter's coming.", "start": "st_winter"},
+		{"id": "gift", "category": "small_talk", "title": "Anything to spare?", "start": "st_gift", "conditions": [{"stage_at_least": "trusted"}, {"not_visit_flag": "gift_given"}]},
+		{"id": "childhood", "category": "his_past", "title": "Where did you grow up?", "start": "p_childhood", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "y1905", "category": "his_past", "title": "Do you remember 1905?", "start": "p_1905", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "riflemen", "category": "his_past", "title": "Were you a soldier?", "start": "p_riflemen", "conditions": [{"stage_at_least": "trusted"}]},
+		{"id": "soldier_refused", "category": "his_past", "title": "Were you a soldier?", "start": "p_soldier_refused", "conditions": [{"stage_below": "trusted"}]},
+		{"id": "reds", "category": "his_past", "title": "You fought for the Reds?", "start": "p_reds", "conditions": [{"stage_at_least": "trusted"}, {"told": "p_revolution"}]},
+		{"id": "return_home", "category": "his_past", "title": "How did you get home?", "start": "p_return", "conditions": [{"stage_at_least": "trusted"}, {"told": "p_reds"}]},
+		{"id": "independence", "category": "his_past", "title": "What did independence mean to you?", "start": "p_independence", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "then_now", "category": "his_past", "title": "Was it better before?", "start": "p_compare", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "news", "category": "village", "title": "Any news?", "start": "v_news"},
+		{"id": "settlements", "category": "village", "title": "What's around here?", "start": "l_settlements"},
+		{"id": "farms", "category": "village", "title": "Will the farms help us?", "start": "l_farms", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "roads", "category": "village", "title": "Which roads are dangerous?", "start": "l_roads"},
+		{"id": "activity", "category": "village", "title": "Are the soldiers busy?", "start": "l_activity"},
+		{"id": "villagers", "category": "village", "title": "What do the villagers think of us?", "start": "w_villagers", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "informants", "category": "village", "title": "Who talks to the soldiers?", "start": "w_informants", "conditions": [{"stage_at_least": "trusted"}]},
+		{"id": "informants_refused", "category": "village", "title": "Who talks to the soldiers?", "start": "v_informants_refused", "conditions": [{"stage_below": "trusted"}]},
+		{"id": "y1940", "category": "war", "title": "When the Soviets first came.", "start": "w_1940", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "germans", "category": "war", "title": "And the Germans?", "start": "w_german", "conditions": [{"stage_at_least": "acquaintance"}, {"told": "w_1940"}]},
+		{"id": "y1944", "category": "war", "title": "When the front came back.", "start": "w_1944", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "soldiers", "category": "war", "title": "What do you make of the soldiers?", "start": "w_soldiers"},
+		{"id": "security", "category": "war", "title": "The security men.", "start": "w_security", "conditions": [{"stage_at_least": "trusted"}]},
+		{"id": "arrests", "category": "war", "title": "Have people been taken?", "start": "w_arrests", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "next_war", "category": "war", "title": "Will there be another war?", "start": "w_next_war"},
+		{"id": "opinion", "category": "resistance", "title": "What do you think of us?", "start": "r_opinion"},
+		{"id": "risks", "category": "resistance", "title": "Is hiding worth it?", "start": "r_risks", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "too_old", "category": "resistance", "title": "Would you fight, if you were younger?", "start": "r_too_old", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "wounded", "category": "resistance", "title": "If one of us is wounded...", "start": "r_wounded", "conditions": [{"stage_at_least": "confidant"}]},
+		{"id": "advice", "category": "survival", "title": "Any advice for us?", "start": "r_advice"},
+		{"id": "winter_survival", "category": "survival", "title": "How do we get through the winter?", "start": "r_winter", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "trust_people", "category": "survival", "title": "Who can we trust?", "start": "r_trust", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "trails", "category": "survival", "title": "The forest trails.", "start": "l_trails"},
+		{"id": "marsh", "category": "survival", "title": "The bog.", "start": "l_marsh"},
+		{"id": "hunting", "category": "survival", "title": "Is there game in the forest?", "start": "l_hunting"},
+		{"id": "supplies", "category": "survival", "title": "Where could we find supplies?", "start": "l_supplies", "conditions": [{"stage_at_least": "trusted"}]},
+		{"id": "family", "category": "personal", "title": "Do you have family?", "start": "pl_family", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "alone", "category": "personal", "title": "Why do you live alone?", "start": "pl_alone", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "old_friends", "category": "personal", "title": "Your old friends.", "start": "pl_friends", "conditions": [{"stage_at_least": "trusted"}]},
+		{"id": "regret", "category": "personal", "title": "What's your greatest regret?", "start": "pl_regret", "conditions": [{"stage_at_least": "trusted"}]},
+		{"id": "hope", "category": "personal", "title": "What do you hope for?", "start": "pl_hope", "conditions": [{"stage_at_least": "acquaintance"}]},
+		{"id": "death", "category": "personal", "title": "Are you afraid of dying?", "start": "pl_death", "conditions": [{"stage_at_least": "trusted"}]},
+		{"id": "son", "category": "personal", "title": "Your younger son.", "start": "pl_son", "conditions": [{"stage_at_least": "confidant"}, {"told": "pl_lost"}]},
+		{"id": "informant_question", "category": "personal", "title": "How do I know you're not an informer?", "start": "pl_informer", "conditions": [{"stage_below": "trusted"}]}
+	],
+	"nodes": {
+		"st_health": {"text": [
+			"My back is older than I am. The rest of me complains less.",
+			"Still standing. Ask me again when it rains.",
+			{"conditions": [{"context": "winter"}], "text": "Cold gets in the old wounds. Otherwise I'm a spring lamb."}
+		], "choices": [
+			{"text": "You should rest more.", "next": "st_rest"},
+			{"text": "How old are you, Ģirts?", "next": "st_age"},
+			{"text": "Glad to hear it."}
+		]},
+		"st_rest": {"text": "Rest is for the dead and the gentry. I've no wish to join either yet."},
+		"st_age": {"text": "Sixty-nine. Though some mornings my knees insist it's ninety.", "choices": [
+			{"text": "You've seen a lot.", "next": "st_seen"},
+			{"text": "Still working the farm?", "next": "st_farm"},
+			{"text": "Let's talk about something else."}
+		]},
+		"st_seen": {"text": "Too much of some things. Not enough of others. Peace, mostly. I saw a little of that once, between wars. Didn't know to look at it properly.", "choices": [
+			{"text": "When was that?", "next": "p_independence", "conditions": [{"stage_at_least": "acquaintance"}]},
+			{"text": "I understand."}
+		]},
+		"st_farm": {"text": "What's left of it. Two rows of potatoes and a goat that hates me. The far field went to nettles when the boys went.", "choices": [
+			{"text": "Your boys?", "next": "pl_family", "conditions": [{"stage_at_least": "acquaintance"}]},
+			{"text": "Your boys?", "next": "st_boys_refused", "conditions": [{"stage_below": "acquaintance"}]},
+			{"text": "I could help in the field some time.", "next": "st_offer_help", "conditions": [{"not_flag": "offered_field_help"}]}
+		]},
+		"st_boys_refused": {"text": "Another time. I don't know you well enough to talk about my sons."},
+		"st_offer_help": {"text": "You? With those soft hands? ...Well. We'll see. It's kind of you to say it.", "effects": [{"flag": "offered_field_help"}, {"respect": 1, "once": "offered_field_help"}]},
+		"st_weather": {"text": [
+			"Grey again. My father said a grey autumn means a long winter. My father was wrong about most things, so we'll see.",
+			"Rain. The soldiers hate it more than we do. That's the only good thing I can say for it.",
+			{"conditions": [{"context": "winter"}], "text": "Snow. It keeps every step you take, like a clerk keeps a ledger."}
+		], "choices": [
+			{"text": "Rain hides tracks, at least.", "next": "st_rain_tracks"},
+			{"text": "Let's hope for a mild winter."}
+		]},
+		"st_rain_tracks": {"text": "Hides yours, hides theirs. Rain doesn't take sides. Neither does mud, but mud remembers longer."},
+		"st_harvest": {"text": "Rye came in thin. The delivery quota came first, of course. They count every sack. Nobody counts what's left for the people who grew it.", "choices": [
+			{"text": "Do they take much?", "next": "st_quota"},
+			{"text": "Is there enough for winter?", "next": "st_food"}
+		]},
+		"st_quota": {"text": "Enough that you learn to hide a sack under the floor. Don't ask me where my floor is."},
+		"st_needs": {"text": "Need? Salt. Paraffin. My wife back. Two of those you could find.", "choices": [
+			{"text": "I'll see what I can find.", "next": "st_promise", "conditions": [{"not_flag": "promised_salt"}]},
+			{"text": "Nobody can bring back the third.", "next": "st_wife_glimpse"},
+			{"text": "Hard times for everyone."}
+		]},
+		"st_promise": {"text": "Don't promise. Promises are what the town men do. Bring it or don't, and we'll stay friends either way.", "effects": [{"flag": "promised_salt"}]},
+		"st_wife_glimpse": {"text": "No. Nobody can. Don't look at me like that, it was a long time ago. Seven years in the spring.", "choices": [
+			{"text": "What was her name?", "next": "pl_anna", "conditions": [{"stage_at_least": "acquaintance"}]},
+			{"text": "I'm sorry."}
+		]},
+		"st_old": {"text": "Getting old is a fine thing. You stop being afraid of the right people and start being afraid of stairs.", "choices": [
+			{"text": "Who are the right people?", "next": "st_right_people"},
+			{"text": "You don't seem afraid of much."}
+		]},
+		"st_right_people": {"text": "Men with lists. They've been around since the barons. The paper changes. The lists don't."},
+		"st_food": {"text": "Bread in the village is half bark this year if you buy it. Mine's honest rye. Thin, but honest. Potatoes, if you don't mind them small.", "choices": [
+			{"text": "Could you sell us some?", "open": "trade"},
+			{"text": "We manage."}
+		]},
+		"st_winter": {"text": "Last winter the snow came to the window. The soldiers stayed by their stoves, thank God for the cold. Cold can be a friend out there.", "choices": [
+			{"text": "How is the cold a friend?", "next": "st_winter_friend"},
+			{"text": "Not much of a friend to us."}
+		]},
+		"st_winter_friend": {"text": "It keeps the soldiers indoors. But snow keeps your tracks. Weigh one against the other every time you step out.", "choices": [
+			{"text": "How do you survive a winter in the forest?", "next": "r_winter", "conditions": [{"stage_at_least": "acquaintance"}]},
+			{"text": "I'll remember that."}
+		]},
+		"st_gift": {"text": "Here. A loaf. Don't argue, and don't pay me. Pay me by coming back.", "effects": [{"gift": "rye_bread"}, {"visit_flag": "gift_given"}, {"flag": "gave_gift"}, {"event": "Ģirts gave the player a loaf."}]},
+		"st_hurt": {"text": [
+			"Sit. No, not there, by the fire. Show me. ...You'll live, if you're not stupid with it. Use what's in your pack; I've only rags and good advice.",
+			{"conditions": [{"context": "player_bleeding"}], "text": "Press on it. Harder. A dressing, if you have one. If it won't stop, a belt above it, and you remember how long it's been on."}
+		], "choices": [
+			{"text": "Where did you learn that?", "next": "p_learned_wounds", "conditions": [{"stage_at_least": "trusted"}]},
+			{"text": "Thank you."}
+		]},
+		"p_learned_wounds": {"text": "In the Riflemen. You learn quickly when the doctor is three marshes away and drunk."},
+		"st_apology": {"text": "...Hm. A man who apologises is either honest or wants something. We'll see which. Sit down.", "effects": [{"flag": "forgiven"}, {"suspicion": -1, "once": "apology"}]},
+		"p_soldier_refused": {"text": "Every man my age was something. Ask me again when I know you better."},
+		"p_childhood": {"text": "Vidzeme, under the Tsar. My father worked land that belonged to a German baron, and his father before him. We ate what the baron didn't want.", "choices": [
+			{"text": "Were you poor?", "next": "p_poverty"},
+			{"text": "What were the barons like?", "next": "p_barons"},
+			{"text": "Do you miss those days?", "next": "p_miss"}
+		]},
+		"p_poverty": {"text": "One pair of boots between three boys. Whoever went to church wore them. I became very religious."},
+		"p_barons": {"text": "Some were decent. Most didn't know our names. The manor was another country, five hundred paces from our door.", "choices": [
+			{"text": "Then 1905 came.", "next": "p_1905"},
+			{"text": "Did anyone stand up to them?", "next": "p_1905"}
+		]},
+		"p_miss": {"text": "Miss being hungry? No. I miss my mother's voice, and being too young to know what was coming. That's not the same as missing the Tsar."},
+		"p_1905": {"text": "Twenty-eight, I was. The manors burned that year, all over the country. I won't tell you I watched from a distance.", "choices": [
+			{"text": "Did you take part?", "next": "p_1905_part"},
+			{"text": "What happened after?", "next": "p_1905_after"},
+			{"text": "Why did people burn them?", "next": "p_1905_why"}
+		]},
+		"p_1905_part": {"text": "I carried a torch once. That's all I'll say about it. The baron's horses got out. I made sure of that.", "effects": [{"flag": "told_1905_torch"}]},
+		"p_1905_after": {"text": "Then the soldiers came. Punitive expeditions, they called them. Men from our parish were shot without much asking, farms burned for the farms that burned. You learn early what a government is for.", "choices": [
+			{"text": "What is it for?", "next": "p_government"},
+			{"text": "That's terrible."}
+		]},
+		"p_1905_why": {"text": "Centuries of bowing. And men from the towns with leaflets saying we didn't have to. Some of them were right. Some just liked fire."},
+		"p_government": {"text": "For counting. Taxes, soldiers, sacks of rye. And for punishing anyone who counts differently."},
+		"p_riflemen": {"text": "In '15 the Germans were coming for Courland and Riga, and they let us form our own battalions. Latvian officers, orders in Latvian. Half the parish went. I went.", "effects": [{"flag": "asked_military"}], "choices": [
+			{"text": "Why did you join?", "next": "p_why_join"},
+			{"text": "Tell me about the fighting.", "next": "p_riga"},
+			{"text": "Half the parish?", "next": "p_parish"}
+		]},
+		"p_parish": {"text": "Every boy who could hold a rifle and plenty who couldn't. Farmers' sons, mostly. We thought we were defending our own fields. For a while, we were."},
+		"p_why_join": {"text": "I was thirty-eight, too old to be stupid, and I joined anyway. We thought if Latvians bled for this country, the country would remember. Countries have short memories."},
+		"p_riga": {"text": "The marshes west of Riga. Christmas, the winter of '16. We went through the German wire in the snow and took what we were told to take. Then we were told to wait. Nobody came to follow us through.", "choices": [
+			{"text": "You lost friends there.", "next": "p_friends"},
+			{"text": "Why did nobody come?", "next": "p_why_waste"},
+			{"text": "What happened then?", "next": "p_revolution"}
+		]},
+		"p_friends": {"text": "Most of the men I played cards with. You don't count them. You just stop learning new names. I remember their faces better than my own.", "effects": [{"flag": "told_losses"}]},
+		"p_why_waste": {"text": "Generals. Russian generals who thought we were cheap. Maybe we were. A man doesn't forget being spent like small change."},
+		"p_revolution": {"text": "Then the Tsar was gone, and everyone became a speaker. Every regiment had a committee. The Bolsheviks said: end the war, land to those who work it. Say that to a tired farmer in a trench.", "choices": [
+			{"text": "So you joined the Reds?", "next": "p_reds"},
+			{"text": "Did everyone agree?", "next": "p_not_everyone"}
+		]},
+		"p_not_everyone": {"text": "No. Some officers went the other way, and some men just went home. Don't believe anyone who tells you all the Riflemen were one thing. We were thousands of men, not one."},
+		"p_reds": {"text": "Aye. I did.", "effects": [{"flag": "asked_military"}], "choices": [
+			{"text": "Why?", "next": "p_reds_why"},
+			{"text": "I won't judge you.", "next": "p_no_judge"}
+		]},
+		"p_no_judge": {"text": "You will. Everyone does, one way or the other. Judge me for the right things, at least.", "choices": [
+			{"text": "Then tell me why.", "next": "p_reds_why"}
+		]},
+		"p_reds_why": {"text": "Because I was still fool enough to believe a man with a red flag couldn't lie as well as a man with a crown.", "choices": [
+			{"text": "Do you regret it?", "next": "p_regret"},
+			{"text": "What was it like?", "next": "p_red_war"},
+			{"text": "What do you think of the Soviets now?", "next": "p_soviets_now"}
+		]},
+		"p_red_war": {"text": "Hungry. We went where we were sent, deep into Russia. We were good soldiers, and good soldiers are useful to bad men. I saw villages emptied of grain at gunpoint. Russian peasants, just like my father.", "choices": [
+			{"text": "Why did your views change?", "next": "p_changed"}
+		]},
+		"p_regret": {"text": "Regret is a long word. I regret some things I did. I don't regret wanting land for the people who worked it. I regret believing the men who promised it.", "effects": [{"trust": 1, "once": "heard_regret"}], "choices": [
+			{"text": "What changed your mind?", "next": "p_changed"}
+		]},
+		"p_changed": {"text": "The promises got bigger and the graves got deeper. By the end I couldn't always tell you who we were shooting, or why. A man goes home when he can't answer that.", "choices": [
+			{"text": "How did you get home?", "next": "p_return"}
+		]},
+		"p_soviets_now": {"text": [
+			"Now? I have nothing to say about the Soviet power. Write that down, if anyone ever asks you.",
+			{"conditions": [{"stage_at_least": "confidant"}], "text": "The flag is the same colour I followed. The men under it learned from the Tsar's police, and improved on them."}
+		]},
+		"p_return": {"text": "When the peace was signed with Russia, they let a good many of us come home. I walked the last part. The farm was weeds, but my mother was alive. That was enough.", "choices": [
+			{"text": "Were you welcome?", "next": "p_welcome"},
+			{"text": "And then independence.", "next": "p_independence"}
+		]},
+		"p_welcome": {"text": "Some neighbours didn't speak to me for a year. Some had sons on the other side. In the end the rye needs cutting whatever you were. That's how villages forgive."},
+		"p_independence": {"text": "It meant a man could put his own name on a deed. Mine. Ozoliņš. Twenty years we had that. It isn't long. It was something.", "choices": [
+			{"text": "Was it a good time?", "next": "p_good_time"},
+			{"text": "Was it better than now?", "next": "p_compare"}
+		]},
+		"p_good_time": {"text": "Not always. Hard years too, and men in Riga who liked giving orders. But I could curse the government at the market, and the worst that happened was an argument."},
+		"p_compare": {"text": "Under the Tsar we were afraid of the baron. Under our own government we were afraid of the weather. Now we're afraid of the neighbours. You tell me which is worse."},
+		"v_news": {"text": [
+			"News? A cow died. The miller's girl is getting married, God help the groom. And more soldiers on the road than last week.",
+			"The miller says a truck went through toward the checkpoint at night. The miller says many things.",
+			{"conditions": [{"context_at_least": {"new_missions_completed": 1}}], "text": "They're asking questions door to door. About papers, and who's been seen near the farm by the road. I said I'd seen my goat."},
+			{"conditions": [{"context": "soviet_activity_high"}], "text": "More trucks than I've seen since '44. They're looking for someone. Try not to be them."}
+		], "choices": [
+			{"text": "Who told you that?", "next": "v_source"},
+			{"text": "Thanks for the warning."}
+		]},
+		"v_source": {"text": "People. Some of it I saw myself, some of it is the miller's mouth. You'll learn to tell the two apart. The miller always has more detail."},
+		"v_informants_refused": {"text": "I don't name names to people whose names I don't know.", "choices": [
+			{"text": "Fair enough.", "next": "v_fair", "effects": [{"respect": 1, "once": "respected_refusal"}]},
+			{"text": "Tell me, or I'll make you.", "next": "v_threat"}
+		]},
+		"v_fair": {"text": "Good. Then maybe one day I will."},
+		"v_threat": {"text": "Make me? I was being shot at before your mother was born. Get out of my sight.", "effects": [{"flag": "threatened"}, {"suspicion": 2}, {"trust": -1}, {"event": "The player threatened Ģirts."}, {"end": true}]},
+		"l_settlements": {"text": "The village by the road, with the dairy. Farmsteads along the forest edge. The big farm by the road has soldiers in it now. Past the forest, the bog, and further east the logging track. I told you that before, didn't I? Old men repeat themselves.", "choices": [
+			{"text": "Tell me about the farm by the road.", "next": "l_big_farm"},
+			{"text": "And the checkpoint?", "next": "l_roads"}
+		]},
+		"l_big_farm": {"text": "A good family had it. They were put on the train in '41, and the house stood empty, and now soldiers sleep in it. Don't go near the barn by day."},
+		"l_farms": {"text": "Most farms still have someone at home. Old people and widows. They'll sell you a loaf at the back door if you pay in coin. Old coin, mind. Lats. They trust it more than paper, though it's no good in any shop.", "choices": [
+			{"text": "Why trust lats?", "next": "l_lats"},
+			{"text": "Will they report us?", "next": "w_villagers"}
+		]},
+		"l_lats": {"text": "Because it was ours. And because paper money has been worthless twice in my life already. Silver remembers what it's worth."},
+		"l_roads": {"text": "The road past the checkpoint. They stop every cart. They look at hands, not papers. Soft hands mean town. Rough hands mean farmer. And a callus just here means rifle.", "choices": [
+			{"text": "How do we get past?", "next": "l_get_past"},
+			{"text": "I'll keep my gloves on."}
+		]},
+		"l_get_past": {"text": "You don't. You go round, through the forest, and you come out where no one is counting carts."},
+		"l_activity": {"text": [
+			"Quiet, for now. Quiet means they're counting.",
+			{"conditions": [{"context": "soviet_activity_high"}], "text": "Busy. More trucks, more patrols at the forest edge. Somebody has made them angry. I can guess who."}
+		]},
+		"l_trails": {"text": "The north trail out of the deep forest is old. The foresters used it. The logging track to the east is newer and anyone can find it, which means anyone does.", "choices": [
+			{"text": "Which would you take?", "next": "l_which_trail"},
+			{"text": "Who uses the logging track?", "next": "l_logging"}
+		]},
+		"l_which_trail": {"text": "The old one. Always the old one. New roads are built by people who want to get somewhere fast. Those are the people you want to avoid."},
+		"l_logging": {"text": "Timber men, when there's work. Soldiers when there isn't. Lately there isn't."},
+		"l_marsh": {"text": "The bog south-east of the forest. Firm in some places, a grave in others. The dead trees stand on firmer ground, mostly. Don't trust me on that in spring.", "choices": [
+			{"text": "Could we hide in the bog?", "next": "l_hide_bog"}
+		]},
+		"l_hide_bog": {"text": "Men have. Wet feet for a month and a cough for a year. But dogs lose a scent in water, and soldiers hate wet boots more than they hate you."},
+		"l_hunting": {"text": "There were elk in the deep forest before the war. Soldiers shot most of them for meat, or for fun. Hares are still stupid enough to be caught. A shot carries a long way, remember that."},
+		"l_supplies": {"text": "The forester kept a store before they took him. A map in his hut, I'd wager; he never trusted his memory. And people say food was hidden in the old bunker in the winter of '44. Rumours. I haven't seen it myself.", "choices": [
+			{"text": "We found the forester's map.", "next": "l_found_map", "conditions": [{"flag": "has_forester_map"}]},
+			{"text": "Who hid the food?", "next": "l_who_hid"}
+		]},
+		"l_found_map": {"text": "Did you. Then he wasn't as forgetful as he pretended. Look after it better than he looked after himself."},
+		"l_who_hid": {"text": "Someone who expected to come back for it. Whether they did, I couldn't tell you."},
+		"w_villagers": {"text": "Ordinary people think about cows and winter. They'll feed you if no one is watching and forget your face if someone is. Don't hate them for it. They have children.", "choices": [
+			{"text": "Some must help.", "next": "w_some_help"},
+			{"text": "And some must betray us.", "next": "w_informants", "conditions": [{"stage_at_least": "trusted"}]}
+		]},
+		"w_some_help": {"text": "Some do. They're the ones who never mention it. Remember them, and never make them say it out loud."},
+		"w_informants": {"text": "Every village has one or two now. Not wicked, mostly. Frightened, or owed something, or they want the farm next door. Don't trust a man who suddenly has sugar.", "effects": [{"flag": "warned_informants"}], "choices": [
+			{"text": "Do you know who?", "next": "w_who"},
+			{"text": "Sugar?", "next": "w_sugar"}
+		]},
+		"w_who": {"text": [
+			"I have guesses. Guesses get people killed. When I'm sure, maybe.",
+			{"conditions": [{"stage_at_least": "confidant"}], "text": "Watch who goes to the town on market day and comes back without selling anything. That's all I'll say. Don't make me say more."}
+		]},
+		"w_sugar": {"text": "Sugar, new boots, a son let out of a camp early. Nothing comes free from them. If a neighbour's luck turns sudden, ask yourself who paid for it."},
+		"w_1940": {"text": "Summer of '40. Tanks on the road. Some fools threw flowers. Then came the meetings, the elections with one list, and then the other lists began.", "choices": [
+			{"text": "What other lists?", "next": "w_deportation"},
+			{"text": "Did anyone resist?", "next": "w_resist_1940"}
+		]},
+		"w_resist_1940": {"text": "Not with rifles. Not then. We were told not to. Some of us remember being told that, and what it cost."},
+		"w_deportation": {"text": "June of '41. They came in the night with trucks. Families with children, put on trains going east. My neighbours, the whole household. Nobody knows where they are. Nobody asks loudly.", "effects": [{"flag": "told_deportation"}], "choices": [
+			{"text": "Could it happen again?", "next": "w_again"},
+			{"text": "I'm sorry."}
+		]},
+		"w_again": {"text": "It never stopped. It only goes quiet between times. A family here, a man there. If they do it all at once again, God help us, you'll know it by the trucks."},
+		"w_german": {"text": "Then the Germans came, and some people cheered them too. People cheer whoever stops the last thing. The Germans took the grain and, later, the young men for their legion. And the Jews from the towns... they were taken into the woods, and they didn't come back. Everyone knew. No one says it now.", "choices": [
+			{"text": "Did you see it?", "next": "w_saw"},
+			{"text": "Let's talk about something else."}
+		]},
+		"w_saw": {"text": "I saw them marched along the road. I heard the rest. I'll not say more than I know. That's the one thing an old man can still do right."},
+		"w_1944": {"text": "In '44 the front came back through here. I sat in the root cellar two days with the goat. When I came up it was the Russians again. Some men went to the forest that same week.", "choices": [
+			{"text": "Why did they go to the forest?", "next": "w_why_forest"},
+			{"text": "And you stayed.", "next": "r_too_old"}
+		]},
+		"w_why_forest": {"text": "Some had worn the German uniform and knew what was coming. Some just remembered '41 and wouldn't wait for the trucks. Different reasons. Same trees."},
+		"w_soldiers": {"text": "Soldiers are boys. Most of them are hungry and a long way from home, and they drink what they find. It isn't the soldiers you watch. It's the men who come after them, in good boots.", "choices": [
+			{"text": "The men in good boots?", "next": "w_security", "conditions": [{"stage_at_least": "trusted"}]},
+			{"text": "The men in good boots?", "next": "w_boots_refused", "conditions": [{"stage_below": "trusted"}]}
+		]},
+		"w_boots_refused": {"text": "Some other day. You'll meet them soon enough without my help."},
+		"w_security": {"text": "The security men. The Cheka, we called it in my day. They give it a new name every few years. The work stays the same.", "choices": [
+			{"text": "You knew Chekists?", "next": "w_knew", "conditions": [{"told": "p_reds"}]},
+			{"text": "How do we avoid them?", "next": "w_avoid"}
+		]},
+		"w_knew": {"text": "Some Riflemen went that way after the fighting. Good shots make good executioners. I came home instead. That's the difference between us, and it isn't as wide as I'd like.", "effects": [{"trust": 1, "once": "told_chekists"}, {"flag": "told_chekists"}]},
+		"w_avoid": {"text": "Don't be interesting. Don't be seen twice in the same place. And never write anything down that you'd mind them reading."},
+		"w_arrests": {"text": "A man from the dairy went to a meeting in the town and didn't come home. His wife asked once. Then she stopped asking. That's how you know it's serious.", "choices": [
+			{"text": "What happens to them?", "next": "w_what_happens"}
+		]},
+		"w_what_happens": {"text": "Prison, then a train east. That's what people say. A few letters came back from the first lot. Very few. I don't know more than that, and I won't guess for you."},
+		"w_next_war": {"text": "The English will come, people say. The Americans. I've heard that every spring since the war ended. I'll believe it when I see an English boot on my porch.", "choices": [
+			{"text": "You don't think they'll come?", "next": "w_no_war"},
+			{"text": "We have to believe something.", "next": "w_believe"}
+		]},
+		"w_no_war": {"text": "I think everyone is tired. Everyone except the ones who won."},
+		"w_believe": {"text": "Believe in your feet and your rifle. Believe in the farmer who leaves bread on the stump. Leave the English to the English."},
+		"r_opinion": {"text": "The boys in the forest? I think they're brave, and I think they're young. Both are true.", "choices": [
+			{"text": "Do you think we can win?", "next": "r_win"},
+			{"text": "Is that all?", "next": "r_all"}
+		]},
+		"r_all": {"text": "No. I also think you're the only ones still saying out loud what the rest of us whisper. That's worth something. I haven't decided how much."},
+		"r_win": {"text": "Win? I don't know. Survive? Perhaps. But don't mistake the two.", "choices": [
+			{"text": "So we should surrender?", "next": "r_surrender"},
+			{"text": "You don't believe in us?", "next": "r_believe"},
+			{"text": "What would you do?", "next": "r_would"}
+		]},
+		"r_surrender": {"text": "Did I say that? Surrender to whom, the men who put families in cattle wagons? No. But know what you're fighting for. Something you can keep, not something on a poster."},
+		"r_believe": {"text": "I believe in you. I don't believe in promises. There's a difference, and it's kept me alive since the Tsar.", "effects": [{"trust": 1, "once": "believes_in_you"}]},
+		"r_would": {"text": "If I were your age? Keep my head down by day and my rifle oiled by night. Never sleep in the same place twice. And never, ever go home to see my mother, however much I wanted to."},
+		"r_risks": {"text": "Hiding is a slow fight. Hunger, damp, lice, nothing to do. Boredom kills more partisans than bullets. It makes them visit their mothers.", "choices": [
+			{"text": "Is it worth it?", "next": "r_worth"}
+		]},
+		"r_worth": {"text": "That's not mine to answer. I'll tell you this: in 1905 we thought the burning was worth it, and in 1917 we thought the shooting was worth it. Ask me in twenty years, if we're both here."},
+		"r_too_old": {"text": "Too old to run and too stiff to crawl. I'd only slow you down. Doesn't stop me thinking about it, nights.", "choices": [
+			{"text": "You help us enough.", "next": "r_help_enough"},
+			{"text": "Thinking about it how?", "next": "r_thinking"}
+		]},
+		"r_help_enough": {"text": "Don't flatter an old man. ...Thank you.", "effects": [{"trust": 1, "once": "help_enough"}]},
+		"r_thinking": {"text": "Thinking which of you I'd want beside me in the snow at Riga. Not many. You, maybe. Don't let it go to your head."},
+		"r_wounded": {"text": "If you bring me a wounded boy, I'll do what I can. I've sewn up men with worse thread than I have now. But bring him at night, and don't leave blood at my door.", "effects": [{"flag": "will_help_wounded"}, {"event": "Ģirts offered to help wounded partisans."}]},
+		"r_advice": {"text": [
+			"Oil your rifle. Keep your feet dry. Don't talk in your sleep. And when someone offers you a warm bed in the village, ask yourself why.",
+			"Eat when you can. Sleep when you can. Never both in the same place."
+		]},
+		"r_winter": {"text": "A bunker, dug deep, roofed with logs, a stove that doesn't smoke by day. And mind the snow: it tells everyone where you walked. Use old tracks. Walk in a stream if you must. Your feet will forgive you by spring.", "choices": [
+			{"text": "And food?", "next": "r_winter_food"}
+		]},
+		"r_winter_food": {"text": "Put it by in autumn, in more than one place. One store is a gift to whoever finds it. Three stores is a winter."},
+		"r_trust": {"text": "Trust the ones who ask for nothing. Be careful with the ones who ask too many questions. And never tell anyone where you sleep. Not even me.", "choices": [
+			{"text": "Not even you?", "next": "r_not_even_you"}
+		]},
+		"r_not_even_you": {"text": "Especially not me. What I don't know, I can't be made to say. I'm old, not made of iron."},
+		"pl_informer": {"text": "You don't. And I don't know you're not one. That's the country now. Sit by my fire long enough and we'll both find out.", "effects": [{"suspicion": 1, "once": "asked_informer"}]},
+		"pl_family": {"text": "I had a wife, Anna. Two sons.", "choices": [
+			{"text": "Tell me about Anna.", "next": "pl_anna"},
+			{"text": "Where are your sons now?", "next": "pl_lost", "conditions": [{"stage_at_least": "trusted"}]},
+			{"text": "Where are your sons now?", "next": "pl_sons_refused", "conditions": [{"stage_below": "trusted"}]}
+		]},
+		"pl_sons_refused": {"text": "Away. That's all you need to know, and more than most people get."},
+		"pl_anna": {"text": "She laughed at me for forty years. Died in '39, before all this started. I thank God for that, some nights. Isn't that a terrible thing to thank Him for."},
+		"pl_lost": {"text": "Kārlis, the elder. The Germans took him for their legion in '43. He didn't argue; nobody did. The last letter came from Courland. Then nothing.", "effects": [{"flag": "told_sons"}], "choices": [
+			{"text": "He may still be alive.", "next": "pl_alive"},
+			{"text": "And the younger one?", "next": "pl_younger_hint"}
+		]},
+		"pl_alive": {"text": "May be. In a camp somewhere, or hiding, or in a field under Courland snow. I've stopped choosing. Choosing hurts more."},
+		"pl_younger_hint": {"text": [
+			"Another day.",
+			{"conditions": [{"stage_at_least": "confidant"}], "text": "Ask me properly. Not like that, in passing."}
+		]},
+		"pl_son": {"text": "Pēteris is in the forest. Not with your lot. Further north. If you ever meet a man called Pēteris with my nose, tell him his father's knees are fine. He'll know I'm lying.", "effects": [{"flag": "told_son"}, {"event": "Ģirts told the player about his son in the forest."}]},
+		"pl_alone": {"text": "The house is too quiet, and it suits me. People bring trouble. Except you, of course. You bring a different kind.", "choices": [
+			{"text": "What kind?", "next": "pl_what_kind"}
+		]},
+		"pl_what_kind": {"text": "The kind I'd miss if it stopped coming."},
+		"pl_friends": {"text": "Old friends? Most are in the ground, or in Siberia, or in Moscow giving orders. I'm not sure which ones I mourn the most."},
+		"pl_regret": {"text": "That I taught my boys to shoot. Kārlis was a good shot. Everyone wanted him.", "effects": [{"trust": 1, "once": "told_greatest_regret"}]},
+		"pl_hope": {"text": "That one day a man can say what he thinks over his own fence, and his neighbour only argues with him.", "choices": [
+			{"text": "Do you think that day will come?", "next": "pl_hope_come"}
+		]},
+		"pl_hope_come": {"text": "Not for me. Maybe for you. Maybe for your children. Somebody has to plant trees they won't sit under."},
+		"pl_death": {"text": "I've stood next to it so long we're on first-name terms. I'm not afraid. I'm only curious who'll feed the goat."}
+	}
+}

@@ -17,8 +17,10 @@ const MissionLaunch = preload("res://scripts/missions/mission_launch.gd")
 const InventoryHost = preload("res://ui/inventory/inventory_host.gd")
 const MovementHud = preload("res://ui/components/tactical_movement_hud.gd")
 const ResourceStrip = preload("res://ui/components/resource_strip.gd")
-const TraderWindow = preload("res://ui/camp/trader_window.gd")
 const OldManScript = preload("res://scripts/camp/camp_old_man.gd")
+const NPCHost = preload("res://scripts/npc/npc_host.gd")
+const GIRTS = preload("res://npcs/girts.tres")
+const ARVIDS = preload("res://npcs/arvids.tres")
 const ENV := "res://assets/environment/"
 const TREES: Array[PackedScene] = [preload(ENV + "scenes/forest_pine_v1.tscn"), preload(ENV + "scenes/forest_spruce_v1.tscn"), preload(ENV + "scenes/forest_birch_v1.tscn")]
 const BOULDER: PackedScene = preload(ENV + "scenes/boulder_v1.tscn")
@@ -47,7 +49,9 @@ var map_barrel
 var old_man: Node3D
 var fire_light: OmniLight3D
 var flames: Array[MeshInstance3D] = []
-var trade_panel
+## Talk, trade and memory for the camp's people.
+var npcs
+var lookout: Node3D
 var inventory
 var _prompt: Label
 var _crosshair: Label
@@ -60,6 +64,13 @@ func _ready() -> void:
 	_rng.seed = 1944
 	runtime = Runtime.new(stock)
 	runtime.message = ""
+	npcs = NPCHost.new()
+	npcs.name = "NPCs"
+	npcs.runtime = runtime
+	npcs.context_provider = npc_context
+	npcs.item_destinations = func(): return [player.weapon.state.inventory, goods_chest.inventory]
+	npcs.sell_sources = func(): return [{"label":"carried","inventory":player.weapon.state.inventory}, {"label":"goods chest","inventory":goods_chest.inventory}]
+	add_child(npcs)
 	stock.try_exchange({}, STARTING_STOCK)
 	_lighting()
 	_ground()
@@ -69,10 +80,12 @@ func _ready() -> void:
 	_chests()
 	_map_barrel()
 	_old_man()
+	_lookout()
 	player = PlayerScene.instantiate()
 	player.name = "Player"
 	player.position = PLAYER_SPAWN
 	add_child(player)
+	npcs.player = player
 	# Through startup, the router's inventory host serves this player; opened directly, our own.
 	if get_parent() == get_tree().root:
 		inventory = InventoryHost.new()
@@ -90,6 +103,7 @@ func _load_session() -> void:
 	if not camp.is_empty():
 		runtime.restore(camp)
 		goods_chest.restore(camp.get("goods", {}))
+		npcs.restore(camp.get("npcs", {}))
 	var backlog: Dictionary = GameSession.take_reward_backlog()
 	for id in backlog:
 		if stock.quantities.has(StringName(id)):
@@ -101,6 +115,7 @@ func _load_session() -> void:
 func camp_state() -> Dictionary:
 	var state: Dictionary = runtime.encode()
 	state.goods = goods_chest.encode()
+	state.npcs = npcs.encode()
 	return state
 
 ## Saves the camp into the world and the character's equipment. Safe to call at any time.
@@ -120,7 +135,7 @@ func _process(delta: float) -> void:
 		if _autosave_left <= 0.0:
 			_autosave_left = AUTOSAVE_SECONDS
 			save_session()
-	var busy: bool = trade_panel.visible
+	var busy: bool = npcs.is_open()
 	var mouse_free := Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and DisplayServer.get_name() != "headless"
 	_prompt.text = "" if busy else ("Click to look around" if mouse_free else player.get_interaction_prompt())
 	_crosshair.visible = not busy and not player.is_aiming and player.weapon.aim_fraction < 0.05
@@ -131,23 +146,28 @@ func _process(delta: float) -> void:
 func open_mission_map(_actor = null) -> void:
 	MissionLaunch.leave_camp(get_tree(), MISSION_MAP)
 
-## The old man knows people in the village: his trade window buys from him at fixed prices and
-## sells him what you carry or keep in the goods chest, cheaply. The player stands still meanwhile.
-func open_trade(_actor = null) -> void:
-	trade_panel.sources = [{"label":"carried","inventory":player.weapon.state.inventory}, {"label":"goods chest","inventory":goods_chest.inventory}]
-	trade_panel.refresh()
-	trade_panel.show()
-	$HUD.hide()
-	player.process_mode = Node.PROCESS_MODE_DISABLED
-	if DisplayServer.get_name() != "headless":
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-
-func _close_trade() -> void:
-	trade_panel.hide()
-	$HUD.show()
-	player.process_mode = Node.PROCESS_MODE_INHERIT
-	if DisplayServer.get_name() != "headless":
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+## World context for NPC dialogue conditions (see DialogueRules). The camp has no clock,
+## weather or seasons yet: those read as day, overcast and autumn unless the world sets them.
+func npc_context() -> Dictionary:
+	var world: Dictionary = GameSession.world if GameSession.active() else {}
+	var health = player.body
+	var season: String = str(world.get("season", "autumn"))
+	var context := {
+		"outings": int(world.get("outings", 0)),
+		"missions_completed": MissionLaunch.completed.size(),
+		"time_of_day": str(world.get("time_of_day", "day")),
+		"night": str(world.get("time_of_day", "day")) == "night",
+		"season": season,
+		"winter": season == "winter",
+		"weather": str(world.get("weather", "overcast")),
+		"player_injured": health.total_health() < health.total_max(),
+		"player_bleeding": not health.bleeding_parts(true).is_empty() or not health.bleeding_parts(false).is_empty(),
+		"carries_rifle": player.weapon.state.inventory.equipped(),
+		"soviet_activity_high": MissionLaunch.completed.size() >= 3,
+	}
+	for id in MissionLaunch.completed:
+		context["completed_" + str(id)] = true
+	return context
 
 # --- Layout ----------------------------------------------------------------------------------
 
@@ -345,9 +365,35 @@ func _old_man() -> void:
 	old_man.walk_back = textures[5]
 	old_man.name = "OldMan"
 	old_man.position = Vector3(2.4, 0, 1.6)
-	old_man.prompt = "F  Talk to the old man (trade)"
-	old_man.action = open_trade
 	add_child(old_man)
+	npcs.register(old_man, GIRTS)
+
+## A second, simple NPC on the same system: a young lookout by the path (a plain placeholder
+## figure; character art is frozen).
+func _lookout() -> void:
+	lookout = Interactable.new()
+	lookout.name = "Lookout"
+	lookout.position = Vector3(-1.5, 0, -9.5)
+	add_child(lookout)
+	var shape := CollisionShape3D.new()
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = 0.3
+	capsule.height = 1.75
+	shape.shape = capsule
+	shape.position.y = 0.875
+	lookout.add_child(shape)
+	var figure := MeshInstance3D.new()
+	var mesh := CapsuleMesh.new()
+	mesh.radius = 0.28
+	mesh.height = 1.72
+	var cloth := WOOD_MATERIAL.duplicate() as StandardMaterial3D
+	cloth.albedo_color = Color(0.36, 0.38, 0.3)
+	mesh.material = cloth
+	figure.mesh = mesh
+	figure.position.y = 0.86
+	lookout.add_child(figure)
+	_sign("ARVĪDS (test NPC)", lookout.position + Vector3(0, 2.1, 0))
+	npcs.register(lookout, ARVIDS)
 
 # --- Helpers ---------------------------------------------------------------------------------
 
@@ -450,11 +496,5 @@ func _hud() -> void:
 	_prompt.add_theme_color_override("font_outline_color", Color.BLACK)
 	_prompt.add_theme_constant_override("outline_size", 4)
 	layer.add_child(_prompt)
-	var modal_layer := CanvasLayer.new()
-	modal_layer.layer = 30
-	add_child(modal_layer)
-	trade_panel = TraderWindow.new()
-	trade_panel.runtime = runtime
-	trade_panel.hide()
-	modal_layer.add_child(trade_panel)
-	trade_panel.closed.connect(_close_trade)
+	npcs.ui_opened.connect(layer.hide)
+	npcs.ui_closed.connect(layer.show)

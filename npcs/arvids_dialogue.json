@@ -1,0 +1,35 @@
+{
+	"npc": "arvids",
+	"notes": "Test NPC proving the system is generic: a fictional young lookout with a few lines, Talk and Leave only.",
+	"visit_rules": [
+		{"effects": [{"familiarity": 1}]}
+	],
+	"greetings": [
+		{"priority": 0, "text": ["Quiet on the path. Too quiet, Ģirts would say.", "Nothing moving. Except my stomach."]},
+		{"priority": 10, "conditions": [{"first_meeting": true}], "text": ["You're new. I'm Arvīds. I watch the path, mostly I watch squirrels."]}
+	],
+	"greeting_choices": [
+		{"text": "Anything on the path?", "next": "a_path"},
+		{"text": "Let me ask you something."},
+		{"text": "Goodbye.", "end": true}
+	],
+	"goodbyes": ["I'll whistle if anyone comes. Twice for soldiers."],
+	"categories": [
+		{"id": "small_talk", "title": "Small talk"},
+		{"id": "camp", "title": "The camp"}
+	],
+	"topics": [
+		{"id": "watch", "category": "small_talk", "title": "How's the watch?", "start": "a_watch"},
+		{"id": "girts", "category": "camp", "title": "What do you think of Ģirts?", "start": "a_girts"},
+		{"id": "home", "category": "small_talk", "title": "Where are you from?", "start": "a_home", "conditions": [{"stage_at_least": "acquaintance"}]}
+	],
+	"nodes": {
+		"a_path": {"text": "A fox, an hour ago. Unless the fox was wearing boots.", "choices": [{"text": "Keep your eyes open."}]},
+		"a_watch": {"text": "Cold. Long. I count trees. There are four hundred and twelve, or I fell asleep somewhere around two hundred."},
+		"a_girts": {"text": "He frightens me a little. He knows things he doesn't say. But he gave me his own scarf last winter.", "choices": [
+			{"text": "What does he know?", "next": "a_girts_knows"}
+		]},
+		"a_girts_knows": {"text": "Ask him yourself. He likes you better than me. He likes the goat better than me."},
+		"a_home": {"text": "A farm north of here. There's nobody there now. Let's not talk about it."}
+	}
+}

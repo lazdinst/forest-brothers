@@ -41,6 +41,8 @@ const SUPPLIES := {
 		"money":true,"description":"Soviet banknotes, the only legal money in Latvia since March 1941. Deposit them in the camp treasury at the quartermaster."},
 	&"lats": {"name":"Lats","icon":"lats","size":Vector2i(1,1),"uses":50,"seconds":0.0,"targets_part":false,
 		"money":true,"description":"Pre-war Latvian money, withdrawn without notice in March 1941 and kept hidden since. Scarce; the camp's contact values it highly."},
+	&"potatoes": {"name":"Potatoes","icon":"food","size":Vector2i(1,1),"uses":1,"seconds":5.0,"targets_part":false,
+		"energy":25.0,"description":"A few small potatoes, cooked in their skins. Plain, filling enough."},
 	&"tinned_meat": {"name":"Tinned meat","icon":"food","size":Vector2i(1,1),"uses":1,"seconds":5.0,"targets_part":false,
 		"energy":60.0,"hydration":-10.0,"description":"Restores a lot of energy; makes you thirsty."},
 }
