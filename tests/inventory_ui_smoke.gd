@@ -2,7 +2,12 @@ extends SceneTree
 const View = preload("res://ui/inventory/inventory_view.tscn")
 const Inventory = preload("res://scripts/inventory/ammunition_inventory.gd")
 var failures := 0
-func _initialize() -> void: call_deferred("_run")
+func _initialize() -> void:
+	# A script error stops _run without quitting; fail instead of hanging forever.
+	create_timer(60.0).timeout.connect(func():
+		push_error("Inventory UI check timed out")
+		quit(1))
+	call_deferred("_run")
 func check(ok: bool, message: String) -> void:
 	if not ok:
 		failures += 1
@@ -109,8 +114,8 @@ func _run() -> void:
 	var rifle_id: StringName = inv.active_weapon_id
 	check(inv.footprint(inv.weapon()) == Vector2i(5,2) and inv.footprint(inv.magazine(b)) == Vector2i.ONE,"Rifle covers 5 x 2, magazine 1 x 1")
 	check(not inv.can_move_item(rifle_id,Inventory.Location.new(&"pocket",inv.owner_id,2)),"A rifle never fits a single pocket")
-	check(not inv.can_move_item(rifle_id,Inventory.Location.new(&"pack",inv.owner_id,5)),"A rifle cannot hang off the pack's right edge")
-	check(inv.can_move_item(rifle_id,Inventory.Location.new(&"pack",inv.owner_id,0,true)) and not inv.can_move_item(rifle_id,Inventory.Location.new(&"pack",inv.owner_id,18,true)),"A turned 2 x 5 rifle fits the 9 x 6 pack but not past its bottom")
+	check(not inv.can_move_item(rifle_id,inv.slot_location(&"pack",5)),"A rifle cannot hang off the pack's right edge")
+	check(inv.can_move_item(rifle_id,inv.slot_location(&"pack",0,true)) and not inv.can_move_item(rifle_id,inv.slot_location(&"pack",18,true)),"A turned 2 x 5 rifle fits the 9 x 6 pack but not past its bottom")
 	check(state.move_item(rifle_id,&"pack",9),"Rifle moves into the pack")
 	preview._refresh()
 	var rifle_card: Button
@@ -118,7 +123,7 @@ func _run() -> void:
 		if card.item_id == rifle_id: rifle_card = card
 	check(rifle_card != null and rifle_card.size == Vector2(5,2)*preview.pack_grid.cell-Vector2(4,4),"Pack draws the rifle across 5 x 2 cells")
 	check(StringName(preview.pack_grid.slot_ids.get(9+4+9,"")) == rifle_id,"Every covered cell belongs to the rifle")
-	check(not inv.can_move_item(b,Inventory.Location.new(&"pack",inv.owner_id,13)) and inv.can_move_item(b,Inventory.Location.new(&"pack",inv.owner_id,5)),"Other items cannot overlap the rifle")
+	check(not inv.can_move_item(b,inv.slot_location(&"pack",13)) and inv.can_move_item(b,inv.slot_location(&"pack",5)),"Other items cannot overlap the rifle")
 	var rifle_payload: Dictionary = rifle_card.drag_payload(Vector2(32,32))
 	check(not preview.pack_grid._can_drop_data(Vector2(7.5,0.5)*preview.pack_grid.cell,rifle_payload) and preview.pack_grid._highlight.color == preview.pack_grid.REJECT,"Rifle dragged past the edge previews a rejection")
 	check(preview.pack_grid._can_drop_data(Vector2(3.5,2.5)*preview.pack_grid.cell,rifle_payload) and preview.pack_grid._highlight.size.x > 4*preview.pack_grid.cell,"Rifle drop preview covers its whole footprint and may overlap its own old cells")
@@ -140,11 +145,11 @@ func _run() -> void:
 	var big = Inventory.new()
 	big.pack_capacity = 54
 	var big_rifle: StringName = big.active_weapon_id
-	check(big.move_item(big_rifle,Inventory.Location.new(&"pack",big.owner_id,0,true)) and big.area(big.weapon().location,big.footprint(big.weapon(),true)) == Rect2i(0,0,2,5),"Turned rifle covers 2 x 5 in a taller pack")
+	check(big.move_item(big_rifle,big.slot_location(&"pack",0,true)) and big.area(big.weapon().location,big.footprint(big.weapon(),true)) == Rect2i(0,0,2,5),"Turned rifle covers 2 x 5 in a taller pack")
 	var saved = JSON.parse_string(JSON.stringify(big.encode()))
 	check(big.restore(saved) and big.weapon().location.rotated,"Rotation survives a JSON save round trip")
 	for record in saved.items:
-		if record.id == str(big.initial_magazine_ids[1]): record.location = {"kind":"pack","owner_id":str(big.owner_id),"slot":9,"rotated":false,"position":[0,0,0]}
+		if record.id == str(big.initial_magazine_ids[1]): record.location = {"kind":"pack","owner_id":str(big.backpack().id),"slot":9,"rotated":false,"position":[0,0,0]}
 	check(not big.restore(saved) and big.weapon().location.rotated,"A save that overlaps a turned rifle is rejected unchanged")
 	check(big.empty_location(&"",Vector2i(5,2)) != null and big.empty_location(&"",Vector2i(5,2)).kind == &"pack","Free space search finds room for a rifle")
 	# Shortcuts: ctrl-click quick-move, alt-click insert, shift-drag split, Delete drop.
@@ -182,7 +187,7 @@ func _run() -> void:
 	check(preview.context.visible and preview.split_amount.visible,"Shift-drop asks for the split amount")
 	preview.split_amount.value = 1
 	preview._inventory_action(&"split")
-	var placed = inv.occupant(Inventory.Location.new(&"pack",inv.owner_id,53))
+	var placed = inv.occupant(inv.slot_location(&"pack",53))
 	check(placed is Inventory.AmmoStack and placed.quantity == 1 and inv.items[split_source].quantity == source_quantity-1 and state.total_rounds() == 52,"The split stack lands where it was dropped and rounds are conserved")
 	preview._select(placed.id)
 	var delete := InputEventKey.new()
@@ -192,6 +197,30 @@ func _run() -> void:
 	check(placed.location.kind == &"ground" and state.total_rounds() == 52,"Delete drops the selected item to the ground")
 	check(inv.pickup(placed.id),"Dropped stack can be picked back up")
 	preview._refresh()
+	# Backpack as an item: its cells belong to it, so contents travel with it.
+	var pack = inv.backpack()
+	var spare: StringName = inv.initial_magazine_ids[0] if inv.weapon().inserted_magazine_id == b else b
+	check(pack != null and preview.backpack_button.text.contains(pack.label) and preview.pack_grid.visible,"Training kit wears a backpack and shows its grid")
+	check(state.move_item(spare,&"pack",0),"Magazine goes into the backpack")
+	var b_rounds: int = inv.magazine(spare).rounds.size()
+	var before_drop: int = state.total_rounds()
+	preview._select(pack.id)
+	check(preview._describe(pack.id).choices.size() == 1 and preview.detail.text.contains("1 items inside"),"Backpack describes its contents and offers dropping it whole")
+	preview._inventory_action(&"drop")
+	check(pack.location.kind == &"ground" and inv.magazine(spare).location.owner_id == pack.id and not inv.carried(inv.magazine(spare)),"Dropped backpack keeps its contents, which are no longer carried")
+	preview._refresh()
+	check(not preview.pack_grid.visible and preview.no_pack_label.visible and preview.backpack_button.text.contains("None"),"Without a backpack only pockets remain")
+	check(inv.empty_location_in(&"pack") == null and inv.slot_location(&"pack",0) == null,"No pack space without a backpack")
+	var other = Inventory.new()
+	other.items.erase(other.backpack().id)
+	var other_before: int = other.total_rounds()
+	check(inv.transfer_ground_item_to(pack.id,other) and other.backpack() == pack and other.carried(other.magazine(spare)),"A teammate recovers the backpack whole, contents included")
+	check(other.total_rounds() == other_before + b_rounds and inv.total_rounds() == before_drop - b_rounds,"Recovering a backpack moves its rounds without creating any")
+	check(other.drop_item(pack.id,Vector3.ZERO) and not other.transfer_ground_item_to(pack.id,Inventory.new()),"Someone already wearing a backpack cannot take another")
+	var pack_save = JSON.parse_string(JSON.stringify(other.encode()))
+	check(other.restore(pack_save) and other.items.has(pack.id) and other.magazine(spare).location.owner_id == pack.id,"A save keeps a dropped backpack and what is inside it")
+	check(other.pickup(pack.id) and other.backpack().id == pack.id,"Picking a backpack up puts it on")
+	check(not other.can_move_item(pack.id,other.slot_location(&"pack",0)),"A backpack cannot go inside itself")
 	# A fifth item snapshot must reject rather than hiding or displacing inventory.
 	var examples: Array = []
 	for index in range(4): examples.append({"id":str(index),"title":"Item","kind":"cloth","quantity":"1","span":Vector2i(3,2)})
@@ -244,6 +273,10 @@ func _run() -> void:
 	check(not gun.state.equipped() and not gun.state.try_fire(1),"Dropped rifle cannot fire")
 	gun._ground_items[rifle_id].interact(player)
 	check(gun.state.equipped() and gun.state.inventory.weapon().inserted_magazine_id != &"","Recovering rifle preserves nested magazine")
+	var worn = gun.state.inventory.backpack()
+	check(gun.drop_inventory_item(worn.id) and gun.state.inventory.backpack() == null,"Backpack drops into the world")
+	gun._ground_items[worn.id].interact(player)
+	check(gun.state.inventory.backpack() == worn,"F puts the same backpack back on")
 	await key_press(KEY_K)
 	await create_timer(0.8).timeout
 	var before: int = gun.state.total_rounds()

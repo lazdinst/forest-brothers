@@ -32,6 +32,8 @@ var rifle_art
 var rifle_status: Label
 var ammunition_status: Label
 var item_menu: PopupMenu
+var backpack_button: Button
+var no_pack_label: Label
 var _menu_actions: Array[StringName] = []
 var _split_destination
 var _seen_revision := -1
@@ -120,6 +122,12 @@ func _build() -> void:
 	for index in range(slots.size()):
 		var slot = slots[index]
 		var item_name: String = data.outfit.get(slot[0],"Not recorded")
+		if slot[0] == "back":
+			# The backpack is a real item: left click selects it, right click opens its actions.
+			backpack_button = _button(character,"",locations[index],Vector2(143,94),func(): if data.backpack_id != "": _select(StringName(data.backpack_id)))
+			backpack_button.add_theme_font_size_override("font_size",16)
+			backpack_button.gui_input.connect(_backpack_input)
+			continue
 		var button := _button(character,slot[1]+"\n"+item_name,locations[index],Vector2(143,94),_inspect.bind(slot[1],item_name + (" · sample outfit" if data.demo else " · clothing record unavailable")))
 		button.add_theme_font_size_override("font_size",16)
 	if not character_preview.has_character:
@@ -167,6 +175,8 @@ func _build() -> void:
 	pack_grid.item_menu_requested.connect(_open_item_menu)
 	pack_grid.item_quick.connect(_quick)
 	pack_grid.drop_validator = _can_drop_in_grid.bind(&"pack")
+	no_pack_label = _label(carried,"No backpack worn · only pockets",Vector2(0,275),920,18)
+	no_pack_label.hide()
 	pack_grid.item_dropped.connect(_drop_in_grid.bind(&"pack"))
 	var footer := _frame(Vector2(24,829),Vector2(1552,60))
 	detail = _label(footer,"Select equipment or supplies to inspect. All equipment belongs to the group.",Vector2(0,-4),1490,17)
@@ -199,6 +209,9 @@ func _refresh() -> void:
 	data = Snapshot.from_state(weapon_state,_appearance,bool(data.demo))
 	pocket_grid.show_items(data.pocket_items)
 	pack_grid.show_items(data.pack_items)
+	pack_grid.visible = data.backpack_id != ""
+	no_pack_label.visible = not pack_grid.visible
+	backpack_button.text = "Backpack\n" + (data.backpack if data.backpack_id != "" else "None worn")
 	rifle_name.text = data.rifle
 	rifle_button.disabled = not data.equipped
 	rifle_art.visible = data.equipped
@@ -222,6 +235,11 @@ func _select(id: StringName) -> void:
 	pack_grid.select(id)
 	var entry := _describe(id)
 	if not entry.is_empty(): detail.text = "%s  /  %s  ·  right-click for actions" % [entry.heading,entry.description]
+
+func _backpack_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT and data.backpack_id != "":
+		backpack_button.accept_event()
+		_open_menu_for(StringName(data.backpack_id),backpack_button.get_screen_transform() * event.position)
 
 func _open_item_menu(item: Dictionary, at: Vector2) -> void:
 	_open_menu_for(StringName(item.id),at)
@@ -249,6 +267,9 @@ func _describe(id: StringName) -> Dictionary:
 	if item is Inventory.MagazineInstance:
 		heading = item.label
 		description = weapon_state.inventory.knowledge(item.id)
+	elif item is Inventory.BackpackInstance:
+		heading = item.label
+		description = "%d × %d pack · %d items inside · contents stay in it when dropped" % [weapon_state.inventory.pack_columns,ceili(float(weapon_state.inventory.pack_capacity)/weapon_state.inventory.pack_columns),weapon_state.inventory.contents_tree(item).size()-1]
 	elif item is Inventory.AmmoStack:
 		heading = "Loose cartridges"
 		description = "%d cartridges · %s · one stack · maximum 32" % [item.quantity,str(weapon_state.inventory.ammo_definitions[item.ammo_type_id].caliber)]
@@ -262,6 +283,8 @@ func _describe(id: StringName) -> Dictionary:
 			choices.append({"id":&"pack","caption":"Fill with compatible cartridges"})
 			choices.append({"id":&"unload","caption":"Unload cartridges"})
 			choices.append({"id":&"drop","caption":"Drop magazine"})
+	elif item is Inventory.BackpackInstance:
+		choices.append({"id":&"drop","caption":"Drop backpack with its contents"})
 	elif item is Inventory.AmmoStack:
 		if item.quantity > 1: choices.append({"id":&"split_prompt","caption":"Split stack…"})
 		choices.append({"id":&"merge","caption":"Merge into a matching partial stack"})
@@ -336,12 +359,14 @@ func _quick(item: Dictionary, kind: StringName) -> void:
 func _can_drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated: bool, split: bool, container: StringName) -> bool:
 	if weapon_state.busy != &"": return false
 	var inventory = weapon_state.inventory
-	if split: return inventory.can_split_stack(id,Inventory.Location.new(container,inventory.owner_id,slot))
+	var destination = inventory.slot_location(container,slot,rotated)
+	if destination == null: return false
+	if split: return inventory.can_split_stack(id,destination)
 	var source = inventory.items.get(id)
 	var target = inventory.items.get(target_id)
 	if source is Inventory.AmmoStack and target is Inventory.MagazineInstance: return inventory.can_load_round(target_id,id)
 	if source is Inventory.AmmoStack and target is Inventory.AmmoStack and target != source: return inventory.can_merge_stacks(id,target_id)
-	return inventory.can_move_item(id,Inventory.Location.new(container,inventory.owner_id,slot,rotated))
+	return inventory.can_move_item(id,destination)
 
 func _drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated: bool, split: bool, container: StringName) -> void:
 	if weapon_state.busy != &"":
@@ -349,7 +374,8 @@ func _drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated: bo
 		return
 	if split:
 		selected_id = id
-		_show_split_dialog(Inventory.Location.new(container,weapon_state.inventory.owner_id,slot))
+		var destination = weapon_state.inventory.slot_location(container,slot)
+		if destination != null: _show_split_dialog(destination)
 		return
 	var source = weapon_state.inventory.items.get(id)
 	var target = weapon_state.inventory.items.get(target_id)

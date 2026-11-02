@@ -152,8 +152,15 @@ Planned chunks, each with a headless check and owner approval before starting:
    (rules: `can_split_stack`, `split_stack` with a destination), Delete drops the
    selected item to the ground.
 
-Requested next (2026-11-02): the pack should be an item itself, as Tarkov's
-backpacks are. Not designed yet; see DECISIONS.md.
+4. Done: the backpack is an item. The kit starts wearing one Rucksack in the
+   Backpack slot; pack cells belong to that backpack (`Location.owner_id` is its ID),
+   so its contents travel with it. Right-click the Backpack slot to drop it whole;
+   F puts it back on, and a teammate recovers it with everything inside. Without a
+   backpack only pockets remain. Backpacks are only worn or on the ground (never
+   inside one another); off the back one takes 4 × 4 (placeholder).
+
+Remaining planned chunks: loading progress and a double-click inspect panel; rifle
+slot drag both ways.
 4. Loading progress on the magazine cell; double-click inspect panel.
 5. Rifle slot drag both ways (stow in pack, drag back to equip).
 
