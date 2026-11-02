@@ -4,6 +4,8 @@ signal defeated(actor)
 signal spotted(actor, at: Vector3)
 signal fired(actor, target, hit: bool)
 const ART = preload("res://assets/characters/training_guard/idle_front_v1.png")
+const HitZones = preload("res://scripts/combat/hit_zones.gd")
+const FIGURE_HEIGHT := 1.75
 @export var use_polygon: bool = false
 @export var character_scene: PackedScene
 var polygon_model
@@ -19,6 +21,8 @@ var targets: Array[Node3D] = []
 var blood_enabled: bool = true
 var visual: Node3D
 var sprite: Sprite3D
+var hit_zones
+var last_hit_zone: StringName = &""
 var _home := Vector3.ZERO
 var _patrol_sign: float = 1.0
 var _alert_cooldown: float = 0.0
@@ -36,6 +40,10 @@ func _ready() -> void:
 	collision.shape = capsule
 	collision.position.y = 0.875
 	add_child(collision)
+	hit_zones = HitZones.new()
+	hit_zones.name = "HitZones"
+	add_child(hit_zones)
+	hit_zones.build(self, FIGURE_HEIGHT)
 	visual = Node3D.new()
 	visual.name = "Visual"
 	visual.position.y = 0.9
@@ -172,9 +180,11 @@ func _shoot(actor: Node3D) -> void:
 	flash.position = Vector3(0.2,1.25,0)
 	get_tree().create_timer(0.06).timeout.connect(flash.queue_free)
 
-func receive_hit(damage: float, at: Vector3, _normal: Vector3, _source = null) -> void:
+func receive_hit(damage: float, at: Vector3, _normal: Vector3, _source = null, zone: StringName = &"") -> void:
 	if state == &"dead" or damage <= 0:
 		return
+	# Recorded only; zone rules replace scalar health in the next chunk.
+	last_hit_zone = zone
 	health = maxf(0, health - damage)
 	_hit_tint = 0.15
 	if blood_enabled:
@@ -190,6 +200,7 @@ func _die() -> void:
 	velocity = Vector3.ZERO
 	set_deferred("collision_layer",0)
 	$Body.set_deferred("disabled",true)
+	hit_zones.disable()
 	# Resolve gameplay before choosing a cosmetic corpse animation.
 	defeated.emit(self)
 	_play_death_visual()
