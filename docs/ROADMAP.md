@@ -1,5 +1,13 @@
 # Development roadmap
 
+Walking sprite follow-up, 2026-11-02: 32 owner-requested low-ready walking frames now animate eight directions from actual distance travelled. Six headless checks passed, including blocked movement and unchanged sprite/MPFB rules. Four GTX 1080 phase captures were inspected and a looping review GIF was created. [Walking art record](../assets/characters/training_guard/walking_v1/PROVENANCE.md). Owner animation acceptance and remaining action/body art are pending.
+
+Firing sprite follow-up, 2026-11-02: owner-authorized eight-direction shot exposure adds small flashes and painted warm highlights, triggered by actual shots with immediate reload/down/death cleanup. Four focused headless checks pass; a GTX 1080 Compatibility sheet was inspected. [Firing art record](../assets/characters/training_guard/firing_v1/PROVENANCE.md). Owner review and remaining action/body animation are pending.
+
+Rifle sprite follow-up, 2026-11-02: owner-authorized holding and aiming poses now have eight directions each, state-based selection and painted muzzle-flash markers. Four focused headless checks pass and both GTX 1080 Compatibility contact sheets were inspected. [Rifle art record](../assets/characters/training_guard/rifle_poses_v1/PROVENANCE.md). Owner visual acceptance, action animation and grounded-body sprites remain pending.
+
+Enemy sprite follow-up, 2026-11-02: the owner authorized standing views first and declined further 3D body work. Eight standing directions are integrated as visual candidates; three focused headless checks pass and a GTX 1080 Compatibility contact sheet was inspected. See [standing sprite provenance](../assets/characters/training_guard/standing_v1/PROVENANCE.md). Owner art review, action animations and grounded-body sprites remain pending; this does not complete the art gate or combat/multiplayer milestones.
+
 This is a proposed order for a first-time developer and early multiplayer validation. The owner has playtested milestone 1 movement, the door, and all three supplies. At the owner's request, the current local training increments cover weapons/movement, camp stations/NPCs, planning/recruitment, and an opponent encounter before the multiplayer milestone. The art feasibility gate and all multiplayer/campaign milestones remain pending.
 
 ## 0 — Agree on the first experiment

@@ -5,6 +5,7 @@ signal spotted(actor, at: Vector3)
 signal fired(actor, target, hit: bool)
 signal reload_started(actor)
 const ART = preload("res://assets/characters/training_guard/idle_front_v1.png")
+const StandingViews = preload("res://scripts/characters/enemy_standing_views.gd")
 const HitZones = preload("res://scripts/combat/hit_zones.gd")
 const BodyHealth = preload("res://scripts/combat/body_health.gd")
 const HitSounds = preload("res://scripts/combat/hit_sounds.gd")
@@ -70,6 +71,7 @@ var _path_goal := Vector3.INF
 var _repath_left: float = 0.0
 var visual: Node3D
 var sprite: Sprite3D
+var standing_views = StandingViews.new()
 ## Placeholder weapon proxy, not character art: shows where the enemy faces and aims.
 var rifle: Node3D
 var hit_zones
@@ -140,6 +142,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if state == &"dead":
 		return
+	standing_views.tick(delta)
 	shot_cooldown = maxf(0, shot_cooldown - delta)
 	if is_reloading() and state != &"downed":
 		reload_left -= delta
@@ -159,14 +162,10 @@ func _physics_process(delta: float) -> void:
 	if state == &"downed":
 		_crawl(delta)
 		return
-	var viewer := get_viewport().get_camera_3d()
-	if viewer != null and polygon_model == null:
-		var facing := viewer.global_position - visual.global_position
-		facing.y = 0
-		if facing.length_squared() > 0.001:
-			visual.global_basis = Basis.looking_at(-facing)
 	_update_rifle(delta)
 	if not active:
+		standing_views.advance_walk(Vector3.ZERO)
+		_update_sprite_views()
 		return
 	var seen: Node3D = null
 	for actor in targets:
@@ -247,7 +246,10 @@ func _physics_process(delta: float) -> void:
 				velocity.x = signf(destination.x - global_position.x) * 0.55
 	if not is_on_floor():
 		velocity.y -= delta * 20
+	var before_move := global_position
 	move_and_slide()
+	standing_views.advance_walk(global_position - before_move)
+	_update_sprite_views()
 	# Patrol keeps the same lane-facing AI heading for every visual.
 	if polygon_model != null:
 		polygon_model.play(&"aim" if state==&"engage" else (&"walk" if Vector2(velocity.x,velocity.z).length()>0.1 else &"idle"))
@@ -305,6 +307,12 @@ func _shoot(actor: Node3D) -> void:
 			actor.near_miss(closest)
 	fired.emit(self, actor, hit)
 	_gunshot(start)
+	if polygon_model == null:
+		standing_views.trigger_shot()
+		_update_sprite_views()
+		# Sprite firing art contains the flash and reflected light. A second sphere
+		# would duplicate the flash and show through the back-facing body.
+		return
 	var flash := MeshInstance3D.new()
 	var sphere := SphereMesh.new()
 	sphere.radius = 0.06
@@ -352,6 +360,8 @@ func _impact_sound(at: Vector3, zone: StringName) -> void:
 	player.play()
 
 func _go_down(source) -> void:
+	standing_views.stop_walk(sprite, FIGURE_HEIGHT)
+	standing_views.stop_shot(sprite, FIGURE_HEIGHT)
 	state = &"downed"
 	cover_phase = &""
 	rifle.hide()
@@ -396,6 +406,8 @@ func _crawl(delta: float) -> void:
 	move_and_slide()
 
 func _die() -> void:
+	standing_views.stop_walk(sprite, FIGURE_HEIGHT)
+	standing_views.stop_shot(sprite, FIGURE_HEIGHT)
 	var was_downed := state == &"downed"
 	state = &"dead"
 	active = false
@@ -503,7 +515,22 @@ func facing_toward(point: Vector3) -> float:
 	return forward.normalized().dot(toward.normalized())
 
 func muzzle_world_position() -> Vector3:
+	if polygon_model == null and standing_views.pose in [&"aiming", &"firing"] and standing_views.sector >= 0:
+		return standing_views.muzzle_position(sprite)
 	return rifle.global_transform * Vector3(0, 0, BARREL_LENGTH)
+
+func _update_sprite_views() -> void:
+	var viewer := get_viewport().get_camera_3d()
+	if viewer == null or polygon_model != null:
+		return
+	var facing := viewer.global_position - visual.global_position
+	facing.y = 0
+	if facing.length_squared() > 0.001:
+		visual.global_basis = Basis.looking_at(-facing)
+	var pose: StringName = &"aiming" if state == &"engage" and not is_reloading() and cover_phase != &"move" else &"holding"
+	if pose == &"holding" and not is_reloading() and standing_views.walking:
+		pose = &"walking"
+	standing_views.update(self, viewer, sprite, FIGURE_HEIGHT, pose)
 
 func _build_rifle() -> void:
 	rifle = Node3D.new()
@@ -512,6 +539,10 @@ func _build_rifle() -> void:
 	rifle.rotation.x = LOWERED_PITCH
 	add_child(rifle)
 	var mesh := MeshInstance3D.new()
+	mesh.name = "ProxyMesh"
+	# Sprite art now includes the weapon. Keep the logical transform for rules and
+	# frozen mesh comparisons, but never draw a second box rifle over the painting.
+	mesh.visible = use_polygon or character_scene != null
 	var box := BoxMesh.new()
 	box.size = Vector3(0.05, 0.07, 0.98)
 	mesh.mesh = box
@@ -552,6 +583,9 @@ func start_reload() -> bool:
 	if best < 0:
 		return false
 	reload_left = reload_seconds
+	standing_views.stop_walk(sprite, FIGURE_HEIGHT)
+	standing_views.stop_shot(sprite, FIGURE_HEIGHT)
+	_update_sprite_views()
 	reload_started.emit(self)
 	_reload_sound()
 	return true
