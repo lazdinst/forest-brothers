@@ -3,6 +3,7 @@ extends CharacterBody3D
 signal defeated(actor)
 signal spotted(actor, at: Vector3)
 signal fired(actor, target, hit: bool)
+signal reload_started(actor)
 const ART = preload("res://assets/characters/training_guard/idle_front_v1.png")
 const HitZones = preload("res://scripts/combat/hit_zones.gd")
 const BodyHealth = preload("res://scripts/combat/body_health.gd")
@@ -13,6 +14,7 @@ const FIGURE_HEIGHT := 1.75
 const SHOULDER := Vector3(0.18, 1.35, 0.0)
 const BARREL_LENGTH := 0.78
 const LOWERED_PITCH := 0.6
+const RELOAD_PITCH := 0.95
 @export var use_polygon: bool = false
 @export var character_scene: PackedScene
 var polygon_model
@@ -39,6 +41,14 @@ var settle_seconds: float = 4.0
 var moving_target_spread_degrees: float = 1.5
 var aim_time: float = 0.0
 var rng := RandomNumberGenerator.new()
+# Finite ammunition, placeholders pending owner tuning. Spare magazines keep their own counts,
+# so a partial magazine swapped out early is retained rather than refilled from a pool.
+var magazine_size: int = 10
+var rounds_in_magazine: int = 10
+var spare_magazines: Array[int] = [10, 10, 10]
+var reload_seconds: float = 3.0
+var reload_left: float = 0.0
+var fire_interval: float = 1.1
 var visual: Node3D
 var sprite: Sprite3D
 ## Placeholder weapon proxy, not character art: shows where the enemy faces and aims.
@@ -95,6 +105,10 @@ func _physics_process(delta: float) -> void:
 	if state == &"dead":
 		return
 	shot_cooldown = maxf(0, shot_cooldown - delta)
+	if is_reloading() and state != &"downed":
+		reload_left -= delta
+		if reload_left <= 0.0:
+			_finish_reload()
 	_alert_cooldown = maxf(0, _alert_cooldown - delta)
 	_hit_tint = maxf(0, _hit_tint - delta)
 	var shade := Color.WHITE
@@ -143,12 +157,17 @@ func _physics_process(delta: float) -> void:
 				_alert_cooldown = 4.0
 			reaction_left -= delta
 			aim_time += delta
-			if reaction_left <= 0.0 and shot_cooldown <= 0.0:
+			if rounds_in_magazine <= 0 and not is_reloading():
+				start_reload()
+			if reaction_left <= 0.0 and shot_cooldown <= 0.0 and rounds_in_magazine > 0 and not is_reloading():
 				_shoot(seen)
 		else:
 			state = &"suspicious"
 	else:
 		aim_time = 0.0
+		# Out of contact, top up a half-empty rifle so the next fight starts loaded.
+		if rounds_in_magazine * 2 <= magazine_size and not is_reloading():
+			start_reload()
 		recognition = maxf(0.0, recognition - delta * 0.5)
 		if search_left > 0.0:
 			state = &"search"
@@ -197,7 +216,8 @@ func receive_alert(at: Vector3) -> void:
 		search_left = 6.0
 
 func _shoot(actor: Node3D) -> void:
-	shot_cooldown = 1.1
+	shot_cooldown = fire_interval
+	rounds_in_magazine -= 1
 	var start := global_transform * SHOULDER
 	var end: Vector3 = actor.center_of_mass() if actor.has_method("center_of_mass") else actor.global_position + Vector3.UP * 1.0
 	var space := get_world_3d().direct_space_state
@@ -432,8 +452,58 @@ func _build_rifle() -> void:
 ## Rifle lowered while calm; raised toward the target while engaging, which is the tell before a shot.
 func _update_rifle(delta: float) -> void:
 	var pitch := LOWERED_PITCH
-	if state == &"engage":
+	if is_reloading():
+		pitch = RELOAD_PITCH
+	elif state == &"engage":
 		var muzzle_height := global_position.y + SHOULDER.y
 		var flat := Vector2(last_known.x - global_position.x, last_known.z - global_position.z).length()
 		pitch = -atan2(last_known.y + 1.0 - muzzle_height, maxf(flat, 0.5))
 	rifle.rotation.x = move_toward(rifle.rotation.x, pitch, delta * 3.0)
+
+func is_reloading() -> bool:
+	return reload_left > 0.0
+
+func total_rounds() -> int:
+	var total := rounds_in_magazine
+	for count in spare_magazines:
+		total += count
+	return total
+
+## Starts a magazine change if a spare holds more rounds than the current one. Returns whether it started.
+func start_reload() -> bool:
+	if is_reloading() or state == &"dead" or state == &"downed":
+		return false
+	var best := -1
+	for index in range(spare_magazines.size()):
+		if spare_magazines[index] > rounds_in_magazine and (best < 0 or spare_magazines[index] > spare_magazines[best]):
+			best = index
+	if best < 0:
+		return false
+	reload_left = reload_seconds
+	reload_started.emit(self)
+	_reload_sound()
+	return true
+
+func _finish_reload() -> void:
+	reload_left = 0.0
+	var best := 0
+	for index in range(spare_magazines.size()):
+		if spare_magazines[index] > spare_magazines[best]:
+			best = index
+	var incoming: int = spare_magazines[best]
+	spare_magazines.remove_at(best)
+	if rounds_in_magazine > 0:
+		spare_magazines.append(rounds_in_magazine)
+	rounds_in_magazine = incoming
+
+## Positional magazine clatter: an audible opening for nearby players.
+func _reload_sound() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var clatter := AudioStreamPlayer3D.new()
+	clatter.stream = GunshotSound.reload_stream()
+	clatter.unit_size = 4.0
+	get_parent().add_child(clatter)
+	clatter.global_position = global_transform * SHOULDER
+	clatter.finished.connect(clatter.queue_free)
+	clatter.play()
