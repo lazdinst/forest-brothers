@@ -51,11 +51,8 @@ func _run() -> void:
 	_check(enemy.state == &"engage" and absf(enemy.rifle.rotation.x) < 0.2, "Engaging enemy raises the rifle toward the target")
 	var muzzle: Vector3 = enemy.muzzle_world_position()
 	enemy._shoot(player)
-	var flash_found := false
-	for child in enemy.get_children():
-		if child is MeshInstance3D and child.mesh is SphereMesh:
-			flash_found = child.global_position.distance_to(muzzle) < 0.05
-	_check(flash_found, "Muzzle flash appears at the rifle's muzzle")
+	_check(enemy.standing_views.pose == &"firing", "Actual shot selects the illuminated firing sprite")
+	_check(enemy.muzzle_world_position().distance_to(muzzle) < 0.05, "Firing flash stays aligned with the aimed muzzle")
 	enemy.active = false
 	enemy.receive_hit(100, enemy.global_position + Vector3.UP, Vector3.FORWARD, player, &"torso")
 	_check(not enemy.rifle.visible, "Downed enemy drops the rifle proxy")

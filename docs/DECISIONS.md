@@ -2,6 +2,16 @@
 
 This is the durable project memory. User-confirmed direction and agent recommendations must remain distinct.
 
+## Enemy sprite standing views — 2026-11-02
+
+Walking follow-up: the owner requested missing walking animations. Eight four-frame low-ready walk sheets are now integrated as candidates. Phase follows actual collision-resolved horizontal distance, with aim/fire/reload priority and no stepping when blocked or inactive. Existing AI heading and speed are unchanged; a provisional 1.4 m per loop controls only presentation. Six headless checks pass, including real patrol/wall-stop and sprite/MPFB rule parity. [Selected art, prompts and motion-review limits](../assets/characters/training_guard/walking_v1/PROVENANCE.md). Owner visual acceptance and separate reload/run/strafe/crawl/death animation remain pending.
+
+Next owner authorization: **firing sprites with slight muzzle flash and illumination**. An eight-direction firing exposure now appears on actual shots, with small painted flashes and warm highlights; it returns to aim after a provisional 75 ms cosmetic interval. Reload/down/death cancel it. No world-lighting, ammunition, damage or cadence changes. [Firing source, prompt and validation](../assets/characters/training_guard/firing_v1/PROVENANCE.md). Full reload/movement/grounded-body animation remains follow-up scope.
+
+Follow-up authorization: the owner requested **holding the rifle** and **aiming the rifle**. Both eight-direction static pose sets are integrated as candidates, switching from holding to aiming on engagement and back to holding for reload/cover movement. The old box rifle is hidden for sprite enemies; muzzle-flash anchors follow the painted aiming barrel. Ammunition and hit rules are unchanged. Full firing/reload/movement and grounded-body animation chunks remain unapproved. [Rifle pose art and checks](../assets/characters/training_guard/rifle_poses_v1/PROVENANCE.md).
+
+The owner requested directional enemy sprites and action animations, rejected further 3D body work, and authorized **standing views first**. This is a narrow exception to the enemy sprite art freeze, not authorization to resume MPFB/mesh production, change outfits or start the later animation chunks. Eight standing views at 45° intervals are now generated and connected to true actor facing as candidates. Both sides use separate artwork. Firing, reload, movement and grounded-body sprite work still require their next owner-directed chunks; no 3D corpse is approved. See [the atlas, prompts and validation](../assets/characters/training_guard/standing_v1/PROVENANCE.md). Owner visual acceptance is pending.
+
 ## Confirmed direction — 2026-11-01
 
 - Working English title: **Forest Brothers**. Latvian spelling: **Mežabrāļi**.
