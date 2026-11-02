@@ -91,4 +91,4 @@ Four-player maximum co-op and individual mission death are confirmed. Do not tre
 - Avoid destructive Git operations. Do not overwrite others' work or rewrite shared history without instruction.
 - Keep concept and roadmap documents current when approved behavior changes.
 - Build maps and scenes only from the environment library in `assets/environment/` (trees, deadwood, boulders, ferns, ground cover, crate, materials). Do not make stand-in nature or prop art. Where the library has no asset (e.g. buildings), use plain shapes with library materials and list the gap for the environment work.
-- Build missions on the shared mission framework (definition resource, map markers, `MissionController`, one summary screen); do not write per-mission HUDs or summary screens. See `docs/MISSION_STRUCTURE.md`.
+- Build missions on the shared mission framework (region and definition resources, map markers, `MissionController`, one summary screen); missions belong to regions, and region worlds extend `scripts/missions/region_world.gd`; do not write per-mission HUDs or summary screens. See `docs/MISSION_STRUCTURE.md`.

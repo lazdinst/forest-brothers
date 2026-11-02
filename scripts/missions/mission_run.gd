@@ -45,9 +45,8 @@ func active_count() -> int:
 	return participants.values().filter(func(entry): return entry.state == ACTIVE).size()
 
 func outcome() -> StringName:
-	if _required_done(): return SUCCESS
-	if participants.values().any(func(entry): return entry.state == EXTRACTED): return RETURNED
-	return FAILED
+	if not participants.values().any(func(entry): return entry.state == EXTRACTED): return FAILED
+	return SUCCESS if _required_done() else RETURNED
 
 func time_left() -> float:
 	return maxf(0.0, definition.time_limit_seconds - elapsed) if definition.time_limit_seconds > 0.0 else INF
@@ -114,6 +113,8 @@ func hud_lines(id: StringName) -> Array[String]:
 	var lines: Array[String] = []
 	if not participants.has(id) or participants[id].state != ACTIVE: return lines
 	var entry: Dictionary = participants[id]
+	if definition.objectives.is_empty():
+		lines.append("Scavenging: take what you can and leave by an exit")
 	for index in range(definition.objectives.size()):
 		var objective = definition.objectives[index]
 		match objective_state(index):

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_definition.gd" id="1_definition"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_objective"]
+
+[sub_resource type="Resource" id="objective"]
+script = ExtResource("2_objective")
+kind = &"carry_out"
+item_id = &"forester_map"
+label = "the forester's map"
+spot_tag = &"forester_map"
+required = true
+
+[resource]
+script = ExtResource("1_definition")
+id = &"forester_map"
+title = "The forester's map"
+briefing = "The old forester drew the safe paths through the bog on a map and hid it in his hut before he was taken away. A search party now uses the hut. Find the map and bring it out."
+objectives = Array[Resource]([SubResource("objective")])
+exit_seconds = 5.0
+enemy_groups = {"hut": 2}
+area_name = "Forester's hut"

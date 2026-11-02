@@ -39,13 +39,19 @@ func start(mission_players: Array, local: Node) -> void:
 	local_player = local
 	for old in get_tree().get_nodes_in_group(ITEM_GROUP):
 		old.queue_free()
+	# Missions sharing a tag on one outing get different spots while there are enough.
+	var used: Array = []
 	for objective in definition.objectives:
 		if objective.kind != &"carry_out": continue
 		var spots := get_tree().get_nodes_in_group(ObjectiveSpot.GROUP).filter(func(spot): return spot.tag == objective.spot_tag)
+		var free := spots.filter(func(spot): return not used.has(spot))
+		if not free.is_empty(): spots = free
 		if spots.is_empty():
 			push_warning("Mission %s: no ObjectiveSpot tagged %s" % [definition.id, objective.spot_tag])
 			continue
-		place_item(objective.item_id, spots.pick_random().global_position)
+		var spot: Node3D = spots.pick_random()
+		used.append(spot)
+		place_item(objective.item_id, spot.global_position)
 	var exits: Array = get_tree().get_nodes_in_group(MissionExit.GROUP).map(func(exit): return exit.area())
 	run = MissionRun.new(definition, exits)
 	for player in players:

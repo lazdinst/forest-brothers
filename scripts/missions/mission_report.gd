@@ -9,17 +9,25 @@ static func build(run, id: StringName) -> Dictionary:
 	var personal: StringName = entry.state
 	var headline := ""
 	match personal:
-		MissionRun.EXTRACTED: headline = "Mission complete" if run.outcome() == MissionRun.SUCCESS else "Returned to camp"
+		MissionRun.EXTRACTED: headline = "Mission complete" if run.outcome() == MissionRun.SUCCESS and not run.definition.objectives.is_empty() else "Returned to camp"
 		MissionRun.KILLED: headline = "Killed in action"
 		MissionRun.TIMED_OUT: headline = "Missing in action: time ran out"
 		_: headline = "Mission in progress"
 	var sections: Array = []
+	# Missions taken on a region outing.
+	if not run.definition.missions.is_empty():
+		var mission_rows: Array = []
+		for mission in run.definition.missions:
+			mission_rows.append([mission.title, "Completed" if run.definition.mission_done(run, mission) else "Not completed"])
+		sections.append({"heading":"Missions","rows":mission_rows})
 	# Objectives.
 	var objective_rows: Array = []
 	for index in range(run.definition.objectives.size()):
 		var objective = run.definition.objectives[index]
 		var status: String = {&"done":"Carried out",&"carried":"Carried by a teammate still out there",&"on_body":"On a fallen body",&"missing":"Not recovered"}[run.objective_state(index)]
 		objective_rows.append([objective.label.left(1).to_upper() + objective.label.substr(1) + ("" if objective.required else " (optional)"), status])
+	if objective_rows.is_empty():
+		objective_rows.append(["Objectives", "None: scavenging"])
 	if not run.is_over():
 		objective_rows.append(["Mission", "Still running: %d still in the area" % run.active_count()])
 	sections.append({"heading":"Objectives","rows":objective_rows})

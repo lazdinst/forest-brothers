@@ -1,0 +1,18 @@
+[gd_resource type="Resource" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_region.gd" id="1_region"]
+[ext_resource type="Resource" path="res://missions/forester_map.tres" id="2_forester_map"]
+[ext_resource type="Resource" path="res://missions/winter_rations.tres" id="3_winter_rations"]
+
+[resource]
+script = ExtResource("1_region")
+id = &"deep_forest"
+title = "Deep forest"
+description = "Close forest with a forester's hut, an old bunker and an open bog. Search parties comb the woods; there is little open ground and few landmarks."
+scene_path = "res://scenes/missions/forest_world.tscn"
+time_limit_seconds = 2400.0
+exit_seconds = 5.0
+enemy_groups = {"patrol": 2}
+exit_names = PackedStringArray("north trail", "logging track")
+board_position = Vector2(0.2, 0.5)
+missions = Array[Resource]([ExtResource("2_forester_map"), ExtResource("3_winter_rations")])

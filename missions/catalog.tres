@@ -1,10 +1,9 @@
-[gd_resource type="Resource" load_steps=5 format=3]
+[gd_resource type="Resource" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/missions/mission_catalog.gd" id="1_catalog"]
-[ext_resource type="Resource" path="res://missions/courier_dispatch.tres" id="2_dispatch"]
-[ext_resource type="Resource" path="res://missions/medicine_run.tres" id="3_medicine"]
-[ext_resource type="Resource" path="res://missions/checkpoint_codebook.tres" id="4_codebook"]
+[ext_resource type="Resource" path="res://missions/region_farm_district.tres" id="2_district"]
+[ext_resource type="Resource" path="res://missions/region_deep_forest.tres" id="3_forest"]
 
 [resource]
 script = ExtResource("1_catalog")
-missions = Array[Resource]([ExtResource("2_dispatch"), ExtResource("3_medicine"), ExtResource("4_codebook")])
+regions = Array[Resource]([ExtResource("2_district"), ExtResource("3_forest")])

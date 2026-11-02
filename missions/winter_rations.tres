@@ -1,0 +1,22 @@
+[gd_resource type="Resource" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission_definition.gd" id="1_definition"]
+[ext_resource type="Script" path="res://scripts/missions/mission_objective.gd" id="2_objective"]
+
+[sub_resource type="Resource" id="objective"]
+script = ExtResource("2_objective")
+kind = &"carry_out"
+item_id = &"ration_cache"
+label = "the wrapped rations"
+spot_tag = &"cache"
+required = true
+
+[resource]
+script = ExtResource("1_definition")
+id = &"winter_rations"
+title = "Rations for the winter"
+briefing = "Food for the camp was hidden for the winter in the old bunker or out in the bog. Patrols have been seen near the bunker. Find the rations and carry them out."
+objectives = Array[Resource]([SubResource("objective")])
+exit_seconds = 5.0
+enemy_groups = {"bunker": 2}
+area_name = "Old bunker"

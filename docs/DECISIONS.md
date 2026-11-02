@@ -422,3 +422,7 @@ Status: owner direction while away ("We need to start with a basic mission scene
 ## Maps use only the environment library — 2026-11-02
 
 Status: owner direction ("We should only be using these assets. Not recreating new ones"), after the first mission world used stand-in trees and props. The mission world now uses only `assets/environment/` scenes, meshes and materials. Missing library pieces (buildings, sandbags, roads, wells, carts) are gaps for the environment work; meanwhile walls, fences and the barrier are plain shapes with the library's weathered wood, and those props are left out.
+
+## Regions on the mission map — 2026-11-02
+
+Status: owner direction ("selecting different regions and doing missions. Kind of like how tarkov works"), with owner choices: several missions per outing, and a second region. The mission map offers regions; each region owns its world scene, time limit, exits and standing enemies, and lists its missions. Players tick any open missions before deploying, or none for a scavenging outing; each mission is completed separately and is then no longer offered. Choices made without the owner, all reversible: open missions start ticked; completed missions drop out for the rest of the game run (no campaign save yet); mission-added enemies stack on the region's; region time limits (60 and 40 minutes) and the Deep forest region's layout and missions are placeholders.

@@ -83,5 +83,10 @@ Then (owner): use only environment-library assets. The mission world now uses li
 deadwood, boulders, ferns, ground cover, crates and moss ground; walls use the library wood texture.
 Gaps for the environment work: buildings, sandbags, roads.
 
+Then (owner): regions, Tarkov-style. The mission map now offers regions (`MissionRegion`); pick one,
+tick any open missions (or none: scavenging), deploy. Second region: Deep forest
+(`scenes/missions/forest_world.tscn`, forester's hut, bunker, bog). World scenes share
+`scripts/missions/region_world.gd`. Missions complete separately and drop off the map.
+
 Open for the owner: link the mission map from the main menu (menu agent) or camp planning table;
-playtest.
+playtest; campaign save for completed missions.
