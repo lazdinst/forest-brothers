@@ -1,5 +1,6 @@
 extends RefCounted
 ## Scene-owned physical item rules. No UI, animation, save-file or network authority.
+const SupplyCatalog = preload("res://scripts/health/supply_catalog.gd")
 signal changed
 
 class AmmoDefinition extends RefCounted:
@@ -68,6 +69,12 @@ class WeaponInstance extends Item:
 class BackpackInstance extends Item:
 	var label := "Rucksack"
 	func _init() -> void: kind = &"backpack"
+
+## A medical or food supply. Its definition lives in SupplyCatalog; uses is what remains.
+class SupplyInstance extends Item:
+	var supply_id: StringName
+	var uses := 1
+	func _init() -> void: kind = &"supply"
 
 const POCKET_CAPACITY := 4
 ## Owner-approved starting footprints (2026-11-02), placeholders rather than final balance.
@@ -183,7 +190,7 @@ func total_rounds() -> int:
 	return count
 
 func footprint(item: Item, rotated := false) -> Vector2i:
-	var base: Vector2i = FOOTPRINTS.get(item.kind,Vector2i.ONE)
+	var base: Vector2i = SupplyCatalog.get_def(item.supply_id).get("size",Vector2i.ONE) if item is SupplyInstance else FOOTPRINTS.get(item.kind,Vector2i.ONE)
 	return Vector2i(base.y,base.x) if rotated else base
 
 ## Cells covered by an item of this size at a pocket/pack location.
@@ -523,6 +530,27 @@ func equip_weapon(id: StringName) -> bool:
 	_notify_changed()
 	return true
 
+## A new supply item at the given location (not yet placed anywhere when null).
+func create_supply(supply_id: StringName, location: Location = null, uses := -1) -> SupplyInstance:
+	if not SupplyCatalog.has(supply_id): return null
+	var supply := SupplyInstance.new()
+	supply.id = new_id("supply")
+	supply.supply_id = supply_id
+	supply.uses = uses if uses > 0 else int(SupplyCatalog.get_def(supply_id).uses)
+	supply.location = location if location != null else Location.new(&"ground",&"world")
+	items[supply.id] = supply
+	_notify_changed()
+	return supply
+
+## Spend uses (or supply points) of a supply; an empty one is gone.
+func consume_supply(id: StringName, amount := 1) -> bool:
+	var supply := items.get(id) as SupplyInstance
+	if supply == null or amount <= 0 or amount > supply.uses: return fail("Not enough supply left")
+	supply.uses -= amount
+	if supply.uses == 0: items.erase(id)
+	_notify_changed()
+	return true
+
 func fail(text: String) -> bool:
 	error = text
 	return false
@@ -537,6 +565,7 @@ func encode() -> Dictionary:
 			for round in item.rounds: rounds.append(str(round.ammo_type_id))
 			record.merge({"magazine_type_id":str(item.magazine_type_id),"capacity":item.capacity,"rounds":rounds,"condition":item.condition,"label":item.label,"inspected":item.inspected,"estimate":item.estimate})
 		elif item is BackpackInstance: record.merge({"label":item.label})
+		elif item is SupplyInstance: record.merge({"supply_id":str(item.supply_id),"uses":item.uses})
 		elif item is WeaponInstance: record.merge({"weapon_type_id":str(item.weapon_type_id),"inserted_magazine_id":str(item.inserted_magazine_id),"chambered_round":str(item.chambered_round.ammo_type_id) if item.chambered_round != null else "","condition":item.condition,"jammed":item.jammed})
 		records.append(record)
 	return {"version":1,"owner_id":str(owner_id),"active_weapon_id":str(active_weapon_id),"pack_capacity":pack_capacity,"initial_magazine_ids":initial_magazine_ids.duplicate(),"items":records}
@@ -598,6 +627,13 @@ func restore(snapshot: Dictionary) -> bool:
 				gun.jammed = record.get("jammed",false)
 				if not is_finite(gun.condition) or gun.condition < 0 or gun.condition > 1: return fail("Invalid weapon condition")
 				item = gun
+			"supply":
+				var supply := SupplyInstance.new()
+				if not record.get("supply_id") is String or not SupplyCatalog.has(StringName(record.supply_id)): return fail("Unknown supply")
+				supply.supply_id = StringName(record.supply_id)
+				if not integral(record.get("uses")) or int(record.uses) < 1 or int(record.uses) > int(SupplyCatalog.get_def(supply.supply_id).uses): return fail("Invalid supply uses")
+				supply.uses = int(record.uses)
+				item = supply
 			"backpack":
 				var pack := BackpackInstance.new()
 				if not record.get("label","Rucksack") is String: return fail("Invalid backpack label")

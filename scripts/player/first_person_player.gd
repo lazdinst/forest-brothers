@@ -6,13 +6,15 @@ extends CharacterBody3D
 const Movement = preload("res://scripts/player/tactical_movement.gd")
 const BodyHealth = preload("res://scripts/combat/body_health.gd")
 const HitZones = preload("res://scripts/combat/hit_zones.gd")
+const PlayerHealth = preload("res://scripts/health/player_health.gd")
 ## Emitted with BodyHealth.DOWNED or BodyHealth.KILLED. The session/drill decides what death means.
 signal casualty(player, outcome: StringName)
 ## Presentation hook: which zone was struck and where the shot came from.
 signal hit_taken(zone: StringName, from: Vector3)
 ## Presentation hook: a bullet passed close by at this point.
 signal bullet_passed(at: Vector3)
-var body = BodyHealth.new()
+## Tarkov-style condition: seven body parts, bleeds, fractures, pain, energy and water.
+var body = PlayerHealth.new()
 var hit_zones
 var last_hit_zone: StringName = &""
 ## Co-op stand-in: solo incapacitation is mission death, so without a nearby teammate a down becomes death.
@@ -148,6 +150,7 @@ func _physics_process(delta: float) -> void:
 		if bleed_left <= 0.0:
 			body.bleed_out()
 			_resolve_casualty(BodyHealth.KILLED)
+	advance_condition(delta)
 	if not active or not Input.is_action_pressed("stance_adjust"):
 		_stance_pressed = false
 		_stance_scrolled = false
@@ -160,8 +163,8 @@ func _physics_process(delta: float) -> void:
 		_advance_vault(delta)
 	else:
 		var axes := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if active else Vector2.ZERO
-		is_sprinting = active and Input.is_action_pressed("sprint") and locomotion.can_sprint() and body_shape.shape.height >= movement_tuning.stance_heights[6] - 0.01 and not is_aiming and axes.y < 0.0
-		var speed: float = movement_tuning.sprint_speed * locomotion.load_speed() if is_sprinting else locomotion.walking_speed(body_shape.shape.height, is_aiming)
+		is_sprinting = active and Input.is_action_pressed("sprint") and locomotion.can_sprint() and body.can_sprint() and body_shape.shape.height >= movement_tuning.stance_heights[6] - 0.01 and not is_aiming and axes.y < 0.0
+		var speed: float = (movement_tuning.sprint_speed * locomotion.load_speed() if is_sprinting else locomotion.walking_speed(body_shape.shape.height, is_aiming)) * body.speed_multiplier()
 		axes.x *= movement_tuning.strafe_multiplier
 		if axes.y > 0.0: axes.y *= movement_tuning.backward_multiplier
 		var direction := global_basis * Vector3(axes.x, 0.0, axes.y)
@@ -376,8 +379,24 @@ func receive_hit(damage: float, at: Vector3, _normal: Vector3, source = null, zo
 	if body.is_dead() or damage <= 0:
 		return
 	last_hit_zone = zone if zone != &"" else BodyHealth.TORSO
-	var outcome: StringName = body.apply_damage(last_hit_zone, damage)
+	var outcome: StringName = body.apply_damage(body_part_at(last_hit_zone, at), damage)
 	hit_taken.emit(last_hit_zone, source.global_position if source is Node3D else at)
+	if outcome == BodyHealth.DOWNED and not has_teammate_nearby:
+		body.bleed_out()
+		outcome = BodyHealth.KILLED
+	if outcome == BodyHealth.DOWNED or outcome == BodyHealth.KILLED:
+		_resolve_casualty(outcome)
+
+## Which of the seven parts a zone hit lands on: the side of the body and, for the torso,
+## chest height (thorax) or below it (stomach).
+func body_part_at(zone: StringName, at: Vector3) -> StringName:
+	var local := global_basis.inverse() * (at - global_position)
+	return PlayerHealth.part_for(zone, local.x >= 0.0, local.y >= body_shape.shape.height * 0.6)
+
+## Bleeding, hunger, thirst, effect timers and treatment. The inventory host also calls this
+## while the world is paused, so wounds keep bleeding with the inventory open, as in Tarkov.
+func advance_condition(delta: float) -> void:
+	var outcome: StringName = body.advance(delta, is_sprinting)
 	if outcome == BodyHealth.DOWNED and not has_teammate_nearby:
 		body.bleed_out()
 		outcome = BodyHealth.KILLED
@@ -386,6 +405,7 @@ func receive_hit(damage: float, at: Vector3, _normal: Vector3, source = null, zo
 
 func near_miss(at: Vector3) -> void:
 	if body.is_alive():
+		body.suppress()
 		bullet_passed.emit(at)
 
 func _resolve_casualty(outcome: StringName) -> void:
@@ -397,7 +417,7 @@ func _resolve_casualty(outcome: StringName) -> void:
 
 ## Drill-only reset after a debrief. Not a medical treatment or a revival.
 func restore_for_drill() -> void:
-	body = BodyHealth.new()
+	body = PlayerHealth.new()
 	last_hit_zone = &""
 	hit_zones.set_layout(&"standing")
 

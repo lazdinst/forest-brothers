@@ -1,0 +1,330 @@
+extends RefCounted
+## Rules-only condition of one player, modelled on Escape from Tarkov: seven body parts with
+## their own health, light and heavy bleeding, fractures, pain, shock, suppression, energy and
+## hydration, and timed treatment with physical supplies. No scene nodes: the player adapter
+## feeds hits and time, presentation reads effects(). Every number is a placeholder, not
+## approved balance. Confirmed rules kept: head at zero kills, thorax (torso) at zero downs,
+## any hit on a downed body kills. Enemies keep the simpler BodyHealth.
+const SupplyCatalog = preload("res://scripts/health/supply_catalog.gd")
+signal changed
+
+# Outcomes shared with BodyHealth so callers treat players and enemies alike.
+const NONE := &"none"
+const LIMB_DISABLED := &"limb_disabled"
+const DOWNED := &"downed"
+const KILLED := &"killed"
+const OUTCOME_RANK := {NONE:0,LIMB_DISABLED:1,DOWNED:2,KILLED:3}
+
+const HEAD := &"head"
+const THORAX := &"thorax"
+const STOMACH := &"stomach"
+const LEFT_ARM := &"left_arm"
+const RIGHT_ARM := &"right_arm"
+const LEFT_LEG := &"left_leg"
+const RIGHT_LEG := &"right_leg"
+const ZONES: Array[StringName] = [HEAD, THORAX, STOMACH, LEFT_ARM, RIGHT_ARM, LEFT_LEG, RIGHT_LEG]
+const ARMS: Array[StringName] = [LEFT_ARM, RIGHT_ARM]
+const LEGS: Array[StringName] = [LEFT_LEG, RIGHT_LEG]
+const LABELS := {HEAD:"Head",THORAX:"Thorax",STOMACH:"Stomach",LEFT_ARM:"Left arm",RIGHT_ARM:"Right arm",LEFT_LEG:"Left leg",RIGHT_LEG:"Right leg"}
+## Tarkov's part pools (440 in total).
+const PLACEHOLDER_MAX := {HEAD:35.0,THORAX:85.0,STOMACH:70.0,LEFT_ARM:60.0,RIGHT_ARM:60.0,LEFT_LEG:65.0,RIGHT_LEG:65.0}
+
+# Placeholder tuning.
+var light_bleed_chance := 0.35
+var heavy_bleed_chance := 0.12
+var fracture_chance := 0.2
+var light_bleed_rate := 0.4 # health per second from the bleeding part
+var heavy_bleed_rate := 1.4
+var destroyed_spread := 0.7 # damage to a destroyed part spreads to the others at this fraction
+var energy_drain := 1.0 / 36.0 # per second: about an hour from full
+var hydration_drain := 1.0 / 24.0
+var sprint_drain_factor := 2.0
+var starvation_damage := 0.12 # per second to thorax and stomach while energy or water is empty
+var pain_after_hit := 25.0 # seconds of pain after a heavy hit
+var shock_after_hit := 6.0
+var suppression_decay := 0.35
+
+var state: StringName = &"alive"
+var max_health := {}
+var health := {}
+var light_bleeding := {}
+var heavy_bleeding := {}
+var fractured := {}
+var energy := 100.0
+var hydration := 100.0
+var painkiller_left := 0.0
+var pain_left := 0.0
+var shock_left := 0.0
+var suppression := 0.0
+var rng := RandomNumberGenerator.new()
+## In-progress treatment, or empty: {item_id, supply_id, part, duration, left}.
+var treatment := {}
+var _treatment_inventory
+
+func _init(max_values: Dictionary = PLACEHOLDER_MAX) -> void:
+	for part in ZONES:
+		max_health[part] = float(max_values.get(part,PLACEHOLDER_MAX[part]))
+		health[part] = max_health[part]
+		light_bleeding[part] = false
+		heavy_bleeding[part] = false
+		fractured[part] = false
+	rng.randomize()
+
+func is_alive() -> bool: return state == &"alive"
+func is_downed() -> bool: return state == &"downed"
+func is_dead() -> bool: return state == &"dead"
+func destroyed(part: StringName) -> bool: return health[part] <= 0.0
+func total_health() -> float:
+	var sum := 0.0
+	for part in ZONES: sum += health[part]
+	return sum
+func total_max() -> float:
+	var sum := 0.0
+	for part in ZONES: sum += max_health[part]
+	return sum
+
+## Hit-zone names from the shared combat zones map onto parts; side and height pick the exact part.
+static func part_for(zone: StringName, right_side := true, upper := true) -> StringName:
+	match zone:
+		&"head": return HEAD
+		&"torso": return THORAX if upper else STOMACH
+		&"arms": return RIGHT_ARM if right_side else LEFT_ARM
+		&"legs": return RIGHT_LEG if right_side else LEFT_LEG
+	return zone if PLACEHOLDER_MAX.has(zone) else THORAX
+
+func apply_damage(part: StringName, amount: float, roll_injuries := true) -> StringName:
+	if not health.has(part): part = part_for(part)
+	if state == &"dead" or amount <= 0.0: return NONE
+	if state == &"downed":
+		state = &"dead"
+		changed.emit()
+		return KILLED
+	var outcome := _damage(part,amount)
+	if state == &"alive" and roll_injuries: _roll_injuries(part,amount)
+	if amount >= 20.0: pain_left = maxf(pain_left,pain_after_hit)
+	if amount >= 30.0: shock_left = maxf(shock_left,shock_after_hit)
+	if outcome != NONE: cancel_treatment()
+	changed.emit()
+	return outcome
+
+func bleed_out() -> StringName:
+	if state != &"downed": return NONE
+	state = &"dead"
+	changed.emit()
+	return KILLED
+
+## A near miss: drives the suppression effect, not damage.
+func suppress(amount := 0.35) -> void:
+	suppression = minf(1.0,suppression+amount)
+
+func _damage(part: StringName, amount: float) -> StringName:
+	# Like Tarkov, damage to a destroyed limb or stomach spreads to every part still standing.
+	if destroyed(part) and part != HEAD and part != THORAX:
+		var others := ZONES.filter(func(other): return other != part and not destroyed(other))
+		if others.is_empty(): return NONE
+		var worst := NONE
+		for other in others: worst = _worse(worst,_hit(other,amount*destroyed_spread/others.size()))
+		return worst
+	return _hit(part,amount)
+
+func _hit(part: StringName, amount: float) -> StringName:
+	if state != &"alive": return NONE
+	health[part] = maxf(0.0,health[part]-amount)
+	if health[part] > 0.0: return NONE
+	if part == HEAD:
+		state = &"dead"
+		return KILLED
+	if part == THORAX:
+		state = &"downed"
+		return DOWNED
+	return LIMB_DISABLED
+
+static func _worse(a: StringName, b: StringName) -> StringName:
+	return a if OUTCOME_RANK[a] >= OUTCOME_RANK[b] else b
+
+func _roll_injuries(part: StringName, amount: float) -> void:
+	var scale := clampf(amount/35.0,0.3,1.5)
+	if rng.randf() < heavy_bleed_chance*scale: heavy_bleeding[part] = true
+	elif rng.randf() < light_bleed_chance*scale: light_bleeding[part] = true
+	if part in ARMS+LEGS and rng.randf() < fracture_chance*scale: fractured[part] = true
+
+## Time passes: bleeding, hunger, thirst, effect timers and treatment. Returns the worst outcome.
+func advance(delta: float, sprinting := false) -> StringName:
+	if state == &"dead" or delta <= 0.0: return NONE
+	var outcome := NONE
+	var flags_before := _flag_signature()
+	if state == &"alive":
+		for part in ZONES:
+			var rate := (heavy_bleed_rate if heavy_bleeding[part] else 0.0) + (light_bleed_rate if light_bleeding[part] else 0.0)
+			if rate > 0.0: outcome = _worse(outcome,_damage(part,rate*delta))
+		var factor := sprint_drain_factor if sprinting else 1.0
+		energy = maxf(0.0,energy-energy_drain*factor*delta)
+		hydration = maxf(0.0,hydration-hydration_drain*factor*delta)
+		if energy <= 0.0 or hydration <= 0.0:
+			for part in [THORAX,STOMACH]: outcome = _worse(outcome,_damage(part,starvation_damage*delta))
+	painkiller_left = maxf(0.0,painkiller_left-delta)
+	pain_left = maxf(0.0,pain_left-delta)
+	shock_left = maxf(0.0,shock_left-delta)
+	suppression = maxf(0.0,suppression-suppression_decay*delta)
+	if not treatment.is_empty():
+		if state != &"alive": cancel_treatment()
+		else:
+			treatment.left -= delta
+			if treatment.left <= 0.0: _finish_treatment()
+	if outcome != NONE or _flag_signature() != flags_before: changed.emit()
+	return outcome
+
+func _flag_signature() -> String:
+	return str([state,light_bleeding.values(),heavy_bleeding.values(),fractured.values(),in_pain(),in_shock(),hungry(),dehydrated(),painkiller_left > 0.0,treatment.get("item_id","")])
+
+# --- Effects read by presentation (HUD, inventory) -------------------------------------------
+
+func bleeding_parts(heavy: bool) -> Array[StringName]:
+	var source := heavy_bleeding if heavy else light_bleeding
+	var parts: Array[StringName] = []
+	for part in ZONES:
+		if source[part]: parts.append(part)
+	return parts
+
+func fractured_parts() -> Array[StringName]:
+	var parts: Array[StringName] = []
+	for part in ZONES:
+		if fractured[part]: parts.append(part)
+	return parts
+
+func in_pain() -> bool:
+	if painkiller_left > 0.0 or state != &"alive": return false
+	if pain_left > 0.0 or not fractured_parts().is_empty(): return true
+	for part in ZONES:
+		if part != HEAD and part != THORAX and destroyed(part): return true
+	return false
+
+## Tunnel vision after a heavy hit or with heavy blood loss.
+func in_shock() -> bool:
+	return state == &"alive" and (shock_left > 0.0 or total_health() < total_max()*0.3)
+func hungry() -> bool: return energy < 20.0
+func dehydrated() -> bool: return hydration < 20.0
+
+## Snapshot for HUD effects and other presentation. Read-only; changing it changes nothing.
+func effects() -> Dictionary:
+	return {
+		"state":state,"light_bleeding":bleeding_parts(false),"heavy_bleeding":bleeding_parts(true),
+		"fractures":fractured_parts(),"pain":in_pain(),"painkiller_seconds":painkiller_left,
+		"shock":in_shock(),"suppression":suppression,"energy":energy,"hydration":hydration,
+		"hungry":hungry(),"dehydrated":dehydrated(),"health":total_health(),"max_health":total_max(),
+		"treating":treatment.get("supply_id",&""),"treatment_progress":treatment_progress(),
+	}
+
+# --- Movement and handling limits ------------------------------------------------------------
+
+func _leg_impaired() -> bool:
+	for part in LEGS:
+		if fractured[part] or destroyed(part): return true
+	return false
+
+func can_sprint() -> bool:
+	return state == &"alive" and hydration > 0.0 and (painkiller_left > 0.0 or not _leg_impaired())
+
+func speed_multiplier() -> float:
+	var multiplier := 1.0
+	if _leg_impaired() and painkiller_left <= 0.0: multiplier *= 0.7
+	if energy <= 0.0 or hydration <= 0.0: multiplier *= 0.85
+	return multiplier
+
+## For weapon presentation: broken or destroyed arms and pain make aim less steady.
+func aim_sway_multiplier() -> float:
+	var multiplier := 1.0
+	for part in ARMS:
+		if (fractured[part] or destroyed(part)) and painkiller_left <= 0.0: multiplier *= 1.4
+	if in_pain(): multiplier *= 1.2
+	return multiplier
+
+# --- Treatment ------------------------------------------------------------------------------
+
+## Why a supply cannot be used on a part right now; empty when it can.
+func treatment_problem(def: Dictionary, part: StringName, uses: int) -> String:
+	if def.is_empty(): return "Not a usable supply"
+	if state != &"alive": return "Cannot treat while incapacitated"
+	if not def.get("targets_part",false):
+		if def.has("painkiller"): return ""
+		if def.get("energy",0.0) > 0.0 and energy >= 100.0: return "Not hungry"
+		if def.get("hydration",0.0) > 0.0 and hydration >= 100.0: return "Not thirsty"
+		return ""
+	if not health.has(part): return "Choose a body part"
+	if def.get("fixes_fracture",false): return "" if fractured[part] else "Nothing broken there"
+	if def.get("heals",false):
+		if destroyed(part) and part != THORAX: return "A destroyed part needs surgery"
+		if heavy_bleeding[part] and uses >= int(def.heavy_cost): return ""
+		if light_bleeding[part] and uses >= int(def.light_cost): return ""
+		if heavy_bleeding[part] or light_bleeding[part]: return "Not enough supply left"
+		return "" if health[part] < max_health[part] else "Already healthy"
+	if def.get("stops_heavy",false) and heavy_bleeding[part]: return ""
+	if def.get("stops_light",false) and light_bleeding[part]: return ""
+	return "No bleeding there"
+
+## The most urgent part this supply can help: heavy bleed, light bleed, fracture, then most hurt.
+func best_part_for(def: Dictionary, uses: int) -> StringName:
+	if not def.get("targets_part",false): return &""
+	var candidates := ZONES.filter(func(part): return treatment_problem(def,part,uses) == "")
+	if candidates.is_empty(): return &""
+	candidates.sort_custom(func(a, b): return _urgency(a) > _urgency(b))
+	return candidates[0]
+
+func _urgency(part: StringName) -> float:
+	return (300.0 if heavy_bleeding[part] else 0.0) + (200.0 if light_bleeding[part] else 0.0) + (100.0 if fractured[part] else 0.0) + (1.0 - health[part]/max_health[part]) * 50.0
+
+## Starts a timed treatment with a carried supply. An empty part picks the most urgent one.
+func start_treatment(inventory, item_id: StringName, part: StringName = &"") -> String:
+	if not treatment.is_empty(): return "Already treating"
+	var item = inventory.items.get(item_id)
+	if item == null or item.kind != &"supply" or not inventory.carried(item): return "Not a carried supply"
+	var def := SupplyCatalog.get_def(item.supply_id)
+	if def.get("targets_part",false) and part == &"": part = best_part_for(def,item.uses)
+	var problem := treatment_problem(def,part,item.uses)
+	if problem != "": return problem
+	treatment = {"item_id":item_id,"supply_id":item.supply_id,"part":part,"duration":float(def.seconds),"left":float(def.seconds)}
+	_treatment_inventory = inventory
+	changed.emit()
+	return ""
+
+func treatment_progress() -> float:
+	return -1.0 if treatment.is_empty() else clampf(1.0-treatment.left/treatment.duration,0.0,1.0)
+
+func cancel_treatment() -> void:
+	if treatment.is_empty(): return
+	treatment = {}
+	_treatment_inventory = null
+	changed.emit()
+
+func _finish_treatment() -> void:
+	var inventory = _treatment_inventory
+	var record := treatment
+	treatment = {}
+	_treatment_inventory = null
+	var item = inventory.items.get(record.item_id) if inventory != null else null
+	# The supply must still be on the person when the treatment completes.
+	if item == null or not inventory.carried(item): return
+	var def := SupplyCatalog.get_def(record.supply_id)
+	if treatment_problem(def,record.part,item.uses) != "": return
+	var part: StringName = record.part
+	var cost := 1
+	if def.get("fixes_fracture",false): fractured[part] = false
+	elif def.has("painkiller"): painkiller_left = float(def.painkiller)
+	elif SupplyCatalog.is_food(def):
+		energy = clampf(energy+float(def.get("energy",0.0)),0.0,100.0)
+		hydration = clampf(hydration+float(def.get("hydration",0.0)),0.0,100.0)
+	elif def.get("heals",false):
+		if heavy_bleeding[part]:
+			heavy_bleeding[part] = false
+			cost = int(def.heavy_cost)
+		elif light_bleeding[part]:
+			light_bleeding[part] = false
+			cost = int(def.light_cost)
+		else:
+			cost = mini(item.uses,ceili(max_health[part]-health[part]))
+			health[part] = minf(max_health[part],health[part]+cost)
+	else:
+		if heavy_bleeding[part] and def.get("stops_heavy",false): heavy_bleeding[part] = false
+		else: light_bleeding[part] = false
+	inventory.consume_supply(record.item_id,cost)
+	changed.emit()

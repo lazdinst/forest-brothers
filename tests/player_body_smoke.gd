@@ -30,7 +30,7 @@ func _run() -> void:
 	await _frames(10)
 	_check(player.hit_zones.zones().size() == 5, "Player carries the standing hit zones")
 	# Solo: torso at zero is mission death, never a downed state.
-	player.receive_hit(80, player.global_position, Vector3.FORWARD, null, &"torso")
+	player.receive_hit(90, player.global_position + Vector3.UP * 1.4, Vector3.FORWARD, null, &"torso")
 	_check(player.body.is_dead() and events == [&"killed"], "Solo torso incapacitation resolves as death")
 	_check(not player.controls_active(), "Dead player cannot act")
 	player.restore_for_drill()
@@ -41,7 +41,7 @@ func _run() -> void:
 	player.restore_for_drill()
 	player.has_teammate_nearby = true
 	events.clear()
-	player.receive_hit(80, player.global_position, Vector3.FORWARD, null, &"torso")
+	player.receive_hit(90, player.global_position + Vector3.UP * 1.4, Vector3.FORWARD, null, &"torso")
 	_check(player.body.is_downed() and events == [&"downed"], "With a teammate nearby, torso at zero downs")
 	_check(not player.controls_active() and player.hit_zones.layout == &"downed", "Downed player cannot act and lies flat for shots")
 	await _frames(90)
@@ -53,7 +53,7 @@ func _run() -> void:
 	player.restore_for_drill()
 	player.bleed_out_seconds = 0.5
 	events.clear()
-	player.receive_hit(80, player.global_position, Vector3.FORWARD, null, &"torso")
+	player.receive_hit(90, player.global_position + Vector3.UP * 1.4, Vector3.FORWARD, null, &"torso")
 	await _frames(45)
 	_check(player.body.is_dead() and events == [&"downed", &"killed"], "Bleed-out kills a downed player")
 	# A real enemy ray resolves a player zone.
@@ -68,7 +68,7 @@ func _run() -> void:
 	await _frames(3)
 	enemy.aim_spread_degrees = 0.0
 	enemy._shoot(player)
-	_check(player.last_hit_zone == &"torso" and player.body.health[&"torso"] < 80, "Enemy shot at centre mass hits the player's torso zone")
+	_check(player.last_hit_zone == &"torso" and player.body.health[&"thorax"] + player.body.health[&"stomach"] < 155, "Enemy shot at centre mass hits the player's thorax or stomach")
 	for failure in failures:
 		push_error(failure)
 	if failures.is_empty():
