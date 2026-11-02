@@ -171,6 +171,13 @@ Planned chunks, each with a headless check and owner approval before starting:
    Ctrl-click the rifle slot stows the rifle; alt-click a stowed rifle equips it.
    The slot drags with a rifle-sized picture.
 
+7. Done: the inventory is no longer training-only. `ui/inventory/inventory_host.gd`
+   owns opening/closing over any scene with a player (Tab, suspending only that
+   scene's world, freeing and restoring the mouse, world drops). The startup router
+   uses it for training (keeping its own Tab/pause precedence) and the combat arena
+   adds one, so Tab works there too. New scenes with a player add a host the same way.
+   Check: `tests/inventory_host_smoke.gd`.
+
 All planned Tarkov-style chunks are done. Open: final pack and item sizes, more
 backpack sizes, a nearby-loot panel (needs owner approval) and network authority.
 4. Loading progress on the magazine cell; double-click inspect panel.
