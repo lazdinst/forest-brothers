@@ -8,6 +8,8 @@ const BodyHealth = preload("res://scripts/combat/body_health.gd")
 const HitZones = preload("res://scripts/combat/hit_zones.gd")
 const PlayerHealth = preload("res://scripts/health/player_health.gd")
 const BloodDripper = preload("res://scripts/combat/blood_dripper.gd")
+const Hotkeys = preload("res://scripts/player/hotkeys.gd")
+const SupplyCatalog = preload("res://scripts/health/supply_catalog.gd")
 ## Emitted with BodyHealth.DOWNED or BodyHealth.KILLED. The session/drill decides what death means.
 signal casualty(player, outcome: StringName)
 ## Presentation hook: which zone was struck and where the shot came from.
@@ -18,6 +20,9 @@ signal bullet_passed(at: Vector3)
 signal revived(player)
 ## Tarkov-style condition: seven body parts, bleeds, fractures, pain, energy and water.
 var body = PlayerHealth.new()
+## Quick-use keys 1 to 0 (1 is the rifle; 2 to 0 bound in the inventory).
+var hotkeys = Hotkeys.new()
+var hotkey_hud
 var hit_zones
 var last_hit_zone: StringName = &""
 ## Dev stand-in for a teammate who is not in the scene. Real teammates are the other members
@@ -88,6 +93,10 @@ func _ready() -> void:
 	treatment_loader.name = "TreatmentProgress"
 	add_child(treatment_loader)
 	treatment_loader.attach(self)
+	hotkey_hud = load("res://ui/components/hotkey_hud.gd").new()
+	hotkey_hud.name = "HotkeyBar"
+	add_child(hotkey_hud)
+	hotkey_hud.attach(self)
 	if use_polygon_body:
 		body_visual = load("res://scripts/characters/polygon_character.gd").new()
 		body_visual.name = "BodyVisual"
@@ -156,6 +165,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		weapon.command(&"inspect")
 	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_K:
 		weapon.command(&"chamber")
+	elif event is InputEventKey and event.pressed and not event.echo and Hotkeys.slot_for_key(event.physical_keycode) > 0:
+		use_hotkey(Hotkeys.slot_for_key(event.physical_keycode))
 	elif event.is_action_pressed("reset_position"):
 		global_position = _spawn_position
 		velocity = Vector3.ZERO
@@ -362,6 +373,47 @@ func _advance_vault(delta: float) -> void:
 	elif progress >= 3.0:
 		is_vaulting = false
 
+
+## Uses what is on a quick-use key: 1 takes the rifle in hand; a bound supply treats the most
+## urgent wound it can (or is eaten or drunk), a magazine is loaded, another rifle is equipped.
+## Returns what happened; the weapon status line shows it too.
+func use_hotkey(slot: int) -> String:
+	var state = weapon.state
+	var inventory = state.inventory
+	if hotkey_hud != null: hotkey_hud.flash(slot)
+	if not body.is_alive(): return _hotkey_says("Cannot do that while down")
+	if state.busy != &"" or not body.treatment.is_empty(): return _hotkey_says("Finish or cancel the current action first")
+	var item = null
+	if slot == 1:
+		item = inventory.weapon()
+		if item == null or not inventory.carried(item):
+			var carried: Array = inventory.items.values().filter(func(other): return other.kind == &"weapon" and inventory.carried(other))
+			item = carried[0] if not carried.is_empty() else null
+		if item == null: return _hotkey_says("No rifle carried")
+	else:
+		item = hotkeys.item_on(slot, inventory)
+		if item == null: return _hotkey_says("Nothing on %s" % Hotkeys.key_label(slot))
+	match item.kind:
+		&"weapon":
+			if item.location.kind == &"equipped": return _hotkey_says("Rifle in hand")
+			return _hotkey_says("Rifle equipped" if inventory.equip_weapon(item.id) else "That rifle cannot be equipped")
+		&"magazine":
+			if not inventory.equipped(): return _hotkey_says("Equip a rifle first")
+			if item.location.kind == &"magwell": return _hotkey_says("That magazine is already in the rifle")
+			state.request_action(&"reload", item.id)
+			return state.message
+		&"supply":
+			var def: Dictionary = SupplyCatalog.get_def(item.supply_id)
+			var part: StringName = body.best_part_for(def, item.uses) if def.get("targets_part", false) else &""
+			if def.get("targets_part", false) and part == &"": return _hotkey_says("Nothing for %s to treat" % def.name.to_lower())
+			var problem: String = body.start_treatment(inventory, item.id, part)
+			return _hotkey_says(problem if problem != "" else ("%s: %s" % [def.name, PlayerHealth.LABELS[part].to_lower()] if part != &"" else def.name))
+	return _hotkey_says("That cannot be used")
+
+func _hotkey_says(text: String) -> String:
+	weapon.state.message = text
+	weapon.state.revision += 1
+	return text
 
 func refresh_interaction_target() -> void:
 	interaction_ray.force_raycast_update()

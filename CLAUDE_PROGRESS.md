@@ -106,6 +106,8 @@ Then (owner): old man trade window (buy, and sell items cheaply); goods chest 1,
 Then (owner brief): generic NPC system (`scripts/npc/`, `ui/npc/`, `npcs/`, `docs/NPC_DIALOGUE.md`):
 Ģirts Ozoliņš with 129 authored nodes, relationship/memory saved per world, limited trade; test NPC
 Arvīds (`npc_dialogue_smoke`).
+Then (owner): Tarkov-style quick-use keys: 1 rifle, 2-0 bound by hovering an item in the inventory and
+pressing the number; bar along the bottom; supplies treat the most urgent wound (`hotkeys_smoke`).
 
 Open for the owner: playtest; bribes; delete/rename characters and worlds; save character health;
 network joining (two-instance check); camp issue of weapons after a death.

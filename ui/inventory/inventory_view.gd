@@ -26,6 +26,8 @@ var pocket_grid
 var detail: Label
 var close_button: Button
 var weapon_state
+## The carrier's quick-use keys (Hotkeys); hovering over an item and pressing 2 to 0 binds it.
+var hotkeys
 var context
 var split_amount: SpinBox
 var selected_id: StringName
@@ -313,6 +315,7 @@ func _build() -> void:
 	column.add_child(split_amount)
 	column.move_child(split_amount,2)
 	split_amount.hide()
+	_mark_hotkeys.call_deferred()
 	item_menu = PopupMenu.new()
 	item_menu.add_theme_font_size_override("font_size",16)
 	item_menu.add_theme_color_override("font_color",JournalTheme.INK)
@@ -343,6 +346,7 @@ func _refresh() -> void:
 	ammunition_status.text = "Inserted: %s\nChamber: %s\nLoose cartridges: %d\n%s" % [data.magazine_knowledge,"loaded" if data.chamber else "empty",data.loose,"K chamber · R swap · I inspect"]
 	detail.text = weapon_state.message + (" · " + String(weapon_state.busy) if weapon_state.busy != &"" else "")
 	_seen_revision = weapon_state.revision
+	_mark_hotkeys()
 
 func _refresh_health() -> void:
 	if health == null or health_summary == null: return
@@ -785,7 +789,62 @@ func rotate_drag() -> bool:
 	pack_grid.refresh_hover(payload)
 	return true
 
+## Hovering over a carried item and pressing 2 to 0 puts it on that quick-use key (pressing the
+## same key again takes it off). 1 is always the rifle.
+func bind_hovered(slot: int, at: Vector2 = Vector2.INF) -> bool:
+	if hotkeys == null: return false
+	var hovered := hovered_item(at)
+	if hovered == &"": return false
+	if slot == 1:
+		weapon_state.reject("1 is always the rifle")
+	elif hotkeys.bind(slot, hovered, weapon_state.inventory):
+		var on: int = hotkeys.slot_of(hovered)
+		weapon_state.message = "On key %s" % hotkeys.key_label(on) if on > 0 else "Taken off the quick-use key"
+		weapon_state.revision += 1
+	else:
+		weapon_state.reject("Only supplies, magazines and rifles go on quick-use keys")
+	_refresh()
+	return true
+
+## The carried item under the mouse (or under `at`) in the pockets or pack, or &"".
+func hovered_item(at: Vector2 = Vector2.INF) -> StringName:
+	if at == Vector2.INF: at = get_viewport().get_mouse_position()
+	for grid in [pocket_grid, pack_grid]:
+		if not grid.is_visible_in_tree(): continue
+		for card in grid.cards:
+			if is_instance_valid(card) and card.get_global_rect().has_point(at): return card.item_id
+	return &""
+
+## A small key number in the corner of every bound item's card.
+func _mark_hotkeys() -> void:
+	if hotkeys == null or pocket_grid == null: return
+	for grid in [pocket_grid, pack_grid]:
+		for card in grid.cards:
+			if not is_instance_valid(card): continue
+			var badge: Label = card.get_node_or_null("HotkeyBadge")
+			var slot: int = hotkeys.slot_of(card.item_id)
+			if slot == 0:
+				if badge != null: badge.queue_free()
+				continue
+			if badge == null:
+				badge = Label.new()
+				badge.name = "HotkeyBadge"
+				badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				badge.add_theme_font_size_override("font_size", 13)
+				badge.add_theme_color_override("font_color", JournalTheme.PAPER)
+				var plate := StyleBoxFlat.new()
+				plate.bg_color = JournalTheme.BURGUNDY
+				plate.set_content_margin_all(2)
+				badge.add_theme_stylebox_override("normal", plate)
+				card.add_child(badge)
+			badge.text = " %s " % hotkeys.key_label(slot)
+			badge.position = Vector2(card.size.x - 18, card.size.y - 20)
+
 func _input(event: InputEvent) -> void:
+	if visible and event is InputEventKey and event.pressed and not event.echo and hotkeys != null and not context.visible and hotkeys.slot_for_key(event.physical_keycode) > 0:
+		if bind_hovered(hotkeys.slot_for_key(event.physical_keycode)):
+			get_viewport().set_input_as_handled()
+			return
 	if visible and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R and rotate_drag():
 		get_viewport().set_input_as_handled()
 		return

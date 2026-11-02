@@ -41,6 +41,7 @@ func open(loot = null) -> bool:
 	view.data = InventorySnapshot.from_training(player)
 	view.loot = loot
 	view.health = player.body
+	view.hotkeys = player.get("hotkeys")
 	view.owns_health = false
 	view.drop_requested.connect(player.weapon.drop_inventory_item)
 	_layer.add_child(view)

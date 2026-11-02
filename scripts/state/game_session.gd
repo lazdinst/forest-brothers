@@ -41,7 +41,9 @@ static func end() -> void:
 ## Gives the player the character's saved equipment; a character without one keeps the standard
 ## kit the player scene starts with.
 static func apply_equipment(player: Node) -> void:
-	if not active() or character.get("equipment", {}).is_empty(): return
+	if not active(): return
+	if player.get("hotkeys") != null: player.hotkeys.restore(character.get("hotkeys", {}))
+	if character.get("equipment", {}).is_empty(): return
 	if not player.weapon.state.restore(character.equipment):
 		push_warning("Saved equipment could not be restored; issuing the standard kit")
 
@@ -50,6 +52,7 @@ static func apply_equipment(player: Node) -> void:
 static func save_equipment(player: Node) -> bool:
 	if not active(): return false
 	character.equipment = carried_snapshot(player.weapon.state)
+	if player.get("hotkeys") != null: character.hotkeys = player.hotkeys.encode()
 	return SaveStore.write("characters", character)
 
 ## Mission death: carried gear stays on the body, so the character returns with the standard kit.
