@@ -395,3 +395,9 @@ Status: owner direction ("different aggression levels, sometimes they fully retr
 - Three temperaments, shown once an enemy is hurt (30 damage): timid flees far and hides, steady keeps to cover and peeks, aggressive leaves cover and pushes while firing. The arena draws one at random per enemy each reset; archetypes may later fix them per enemy type.
 - Wounded enemies and bleeding (or downed) players leave visible blood drops that fade after 10 minutes. Players follow an enemy's trail by eye; enemies follow a player's trail drop by drop when they see fresh blood within 7 m. Stopping a player's bleed stops their trail. Enemy wounds bleed for 120 s as a trail only and do not drain enemy health (open question whether they should).
 - Not built: enemies following each other's blood, scent or dogs, weather or ground type affecting trails.
+
+## Enemies crouch behind low cover — 2026-11-02
+
+Status: owner approved ("Yes" to crouching enemies so crates count as cover). Third of the smarter-enemy chunks. Numbers are placeholders.
+
+Enemies may take a crate as cover when it hides a crouched body; full-height cover is preferred unless low cover is clearly closer. They crouch while holding and stand up in place to peek and fire over it. There is no crouch art: the standing sprite is drawn at crouched height as a stand-in, chosen so what the player sees matches what can be hit. Real crouch frames remain a sprite follow-up needing owner direction.

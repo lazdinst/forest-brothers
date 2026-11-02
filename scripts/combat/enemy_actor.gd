@@ -21,6 +21,14 @@ const AGGRESSIVE := &"aggressive"
 const FIGURE_HEIGHT := 1.75
 # Rules-side firing geometry in actor space (+z is the true facing). The rifle proxy matches it.
 const SHOULDER := Vector3(0.18, 1.35, 0.0)
+## Crouched figure height: low enough that a 1 m crate hides it from a standing shooter.
+const CROUCH_HEIGHT := 0.9
+const STANDING_EYE := 1.55
+const CROUCHED_EYE := 0.8
+const CROUCHED_SHOULDER := Vector3(0.18, 0.68, 0.0)
+## Heights checked for shelter: chest and head standing, or the crouched body.
+const STANDING_COVER_HEIGHTS: Array[float] = [1.0, 1.55]
+const CROUCHED_COVER_HEIGHTS: Array[float] = [0.45, 0.85]
 const BARREL_LENGTH := 0.78
 const LOWERED_PITCH := 0.6
 const RELOAD_PITCH := 0.95
@@ -101,6 +109,11 @@ var max_peeks: int = 2
 var peek_speed: float = 1.6
 var peek_seconds: float = 2.5
 var peek_reaction: float = 0.45
+## The current cover only shelters a crouched body (a crate): crouch while holding it.
+var cover_crouch: bool = false
+## Low cover is used only when it is no more than this much further than full cover.
+var crouch_cover_penalty: float = 1.5
+var crouched: bool = false
 ## Sidestep beside the cover point that sees the threat; INF when not peeking.
 var peek_point := Vector3.INF
 var _peeks_left: int = 0
@@ -307,6 +320,7 @@ func _physics_process(delta: float) -> void:
 				if global_position.distance_to(destination) < 0.2:
 					_patrol_sign *= -1
 				velocity.x = signf(destination.x - global_position.x) * 0.55
+	set_crouched(cover_phase == &"hold" and cover_crouch)
 	if not is_on_floor():
 		velocity.y -= delta * 20
 	var before_move := global_position
@@ -317,8 +331,29 @@ func _physics_process(delta: float) -> void:
 	if polygon_model != null:
 		polygon_model.play(&"aim" if state==&"engage" else (&"walk" if Vector2(velocity.x,velocity.z).length()>0.1 else &"idle"))
 
+func eye_height() -> float:
+	return CROUCHED_EYE if crouched else STANDING_EYE
+
+func shoulder() -> Vector3:
+	return CROUCHED_SHOULDER if crouched else SHOULDER
+
+## Crouches or stands: the movement capsule, hit zones, eye and shoulder follow. No crouch art
+## exists yet, so the sprite is drawn at crouched height as a placeholder; behind low cover it
+## then hides exactly as the hit zones do.
+func set_crouched(on: bool) -> void:
+	if on == crouched or state == &"downed" or state == &"dead":
+		return
+	crouched = on
+	var height := CROUCH_HEIGHT if on else FIGURE_HEIGHT
+	var capsule := $Body.shape as CapsuleShape3D
+	if capsule != null:
+		capsule.height = height
+		$Body.position.y = height / 2.0
+	hit_zones.set_height(height)
+	rifle.position = shoulder()
+
 func can_see(actor: Node3D) -> bool:
-	var eye := global_position + Vector3.UP * 1.55
+	var eye := global_position + Vector3.UP * eye_height()
 	var chest: Vector3 = actor.global_position + Vector3.UP * (actor.body_shape.shape.height * 0.6)
 	var toward := chest-eye
 	toward.y = 0.0
@@ -352,7 +387,7 @@ func receive_alert(at: Vector3, reporter: Node3D = null) -> void:
 func _shoot(actor: Node3D) -> void:
 	shot_cooldown = fire_interval
 	rounds_in_magazine -= 1
-	var start := global_transform * SHOULDER
+	var start := global_transform * shoulder()
 	var end: Vector3 = actor.center_of_mass() if actor.has_method("center_of_mass") else actor.global_position + Vector3.UP * 1.0
 	var space := get_world_3d().direct_space_state
 	var direction := _spread_direction((end - start).normalized(), shot_spread_degrees(actor))
@@ -437,6 +472,8 @@ func _impact_sound(at: Vector3, zone: StringName) -> void:
 func _go_down(source) -> void:
 	standing_views.stop_walk(sprite, FIGURE_HEIGHT)
 	standing_views.stop_shot(sprite, FIGURE_HEIGHT)
+	if crouched:
+		set_crouched(false)
 	state = &"downed"
 	cover_phase = &""
 	rifle.hide()
@@ -607,7 +644,7 @@ func _update_sprite_views() -> void:
 	var pose: StringName = &"aiming" if (state == &"engage" or cover_phase == &"peek") and not is_reloading() and cover_phase != &"move" else &"holding"
 	if pose == &"holding" and not is_reloading() and standing_views.walking:
 		pose = &"walking"
-	standing_views.update(self, viewer, sprite, FIGURE_HEIGHT, pose)
+	standing_views.update(self, viewer, sprite, CROUCH_HEIGHT if crouched else FIGURE_HEIGHT, pose)
 
 func _build_rifle() -> void:
 	rifle = Node3D.new()
@@ -635,7 +672,7 @@ func _update_rifle(delta: float) -> void:
 	if is_reloading():
 		pitch = RELOAD_PITCH
 	elif state == &"engage" or cover_phase == &"peek":
-		var muzzle_height := global_position.y + SHOULDER.y
+		var muzzle_height := global_position.y + shoulder().y
 		var flat := Vector2(last_known.x - global_position.x, last_known.z - global_position.z).length()
 		pitch = -atan2(last_known.y + 1.0 - muzzle_height, maxf(flat, 0.5))
 	rifle.rotation.x = move_toward(rifle.rotation.x, pitch, delta * 3.0)
@@ -782,6 +819,7 @@ func try_take_cover(threat: Vector3) -> bool:
 	var point := find_cover(threat)
 	if point == Vector3.INF:
 		return false
+	cover_crouch = _found_cover_crouch
 	cover_point = point
 	cover_phase = &"move"
 	_cover_left = 6.0
@@ -790,8 +828,12 @@ func try_take_cover(threat: Vector3) -> bool:
 	_path_goal = Vector3.INF
 	return true
 
-## Nearest reachable navigation point within max_cover_path where walls hide both chest and head
-## from the threat's eye. Crates only hide crouched bodies, so they do not count until enemies crouch.
+## Whether the last find_cover result only shelters a crouched body.
+var _found_cover_crouch := false
+
+## Nearest reachable navigation point within max_cover_path that hides the body from the threat's
+## eye: walls hiding chest and head standing, or low cover (crates) hiding a crouched body, which
+## must be crouch_cover_penalty shorter to win. Sets _found_cover_crouch for the result.
 func find_cover(threat: Vector3) -> Vector3:
 	var map := get_world_3d().navigation_map
 	if NavigationServer3D.map_get_regions(map).is_empty():
@@ -800,7 +842,8 @@ func find_cover(threat: Vector3) -> Vector3:
 	var eye := threat + Vector3.UP * 1.5
 	var best := Vector3.INF
 	var best_length := INF
-	for radius in [2.5, 4.0, 6.0, 8.0]:
+	_found_cover_crouch = false
+	for radius in [1.5, 2.5, 4.0, 6.0, 8.0]:
 		for step in range(16):
 			var angle := TAU * step / 16.0
 			var probe := global_position + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
@@ -809,24 +852,33 @@ func find_cover(threat: Vector3) -> Vector3:
 				continue
 			if Vector2(spot.x - threat.x, spot.z - threat.z).length() < 4.0:
 				continue
+			# Navigation points float above the floor; shelter is measured from this enemy's floor.
+			var foot := Vector3(spot.x, global_position.y, spot.z)
 			# Margin: the spot must stay hidden half a metre to either side, so arriving slightly off still shelters.
-			var across := (spot - threat).cross(Vector3.UP)
+			var across := (foot - threat).cross(Vector3.UP)
 			across.y = 0.0
 			across = across.normalized() * 0.5
-			if not (hidden_from(space, eye, spot) and hidden_from(space, eye, spot + across) and hidden_from(space, eye, spot - across)):
-				continue
+			var low := false
+			if not (hidden_from(space, eye, foot) and hidden_from(space, eye, foot + across) and hidden_from(space, eye, foot - across)):
+				if not (hidden_from(space, eye, foot, CROUCHED_COVER_HEIGHTS) and hidden_from(space, eye, foot + across, CROUCHED_COVER_HEIGHTS) and hidden_from(space, eye, foot - across, CROUCHED_COVER_HEIGHTS)):
+					continue
+				low = true
 			var path := NavigationServer3D.map_get_path(map, global_position, spot, true)
 			var length := 0.0
 			for index in range(1, path.size()):
 				length += path[index - 1].distance_to(path[index])
-			if path.is_empty() or length > max_cover_path or length >= best_length:
+			if path.is_empty() or length > max_cover_path:
 				continue
-			best = spot
-			best_length = length
+			var cost := length + (crouch_cover_penalty if low else 0.0)
+			if cost >= best_length:
+				continue
+			best = foot
+			best_length = cost
+			_found_cover_crouch = low
 	return best
 
-func hidden_from(space: PhysicsDirectSpaceState3D, eye: Vector3, spot: Vector3) -> bool:
-	for height in [1.0, 1.55]:
+func hidden_from(space: PhysicsDirectSpaceState3D, eye: Vector3, spot: Vector3, heights: Array[float] = STANDING_COVER_HEIGHTS) -> bool:
+	for height in heights:
 		var query := PhysicsRayQueryParameters3D.create(eye, spot + Vector3.UP * height, 1, [get_rid()])
 		if space.intersect_ray(query).is_empty():
 			return false
@@ -945,6 +997,10 @@ func find_peek_point(threat: Vector3) -> Vector3:
 	across = across.normalized()
 	var space := get_world_3d().direct_space_state
 	var aim := threat + Vector3.UP * 1.0
+	# Behind low cover, standing up in place is the peek.
+	var here := Vector3(cover_point.x, global_position.y, cover_point.z)
+	if cover_crouch and _clear_view(space, here, aim):
+		return here
 	var first := 1.0 if rng.randf() < 0.5 else -1.0
 	for distance in [0.7, 1.1, 1.5, 2.0]:
 		for side in [first, -first]:
@@ -1050,7 +1106,7 @@ func follow_blood() -> bool:
 	if trail == null:
 		return false
 	var space := get_world_3d().direct_space_state
-	var eye := global_position + Vector3.UP * 1.55
+	var eye := global_position + Vector3.UP * eye_height()
 	for actor in targets:
 		if not is_instance_valid(actor):
 			continue

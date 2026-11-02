@@ -55,4 +55,8 @@ Done:
   and peeks, aggressive pushes while hurt; players and wounded enemies drip blood; enemies follow a
   player's fresh blood. `enemy_encounter_smoke` now waits for the first hit instead of a fixed 4 s.
 
-Next: crouching enemies so crates count as cover. Open: should enemy wounds drain enemy health?
+- Chunk 18, crouching behind crates (`enemy_crouch_smoke`). Cover is now measured from the floor
+  (navigation points float 0.5 m up). Crouch sprite is the standing art drawn at 0.9 m (placeholder).
+
+Smarter-enemy chunks done. Next proposed: the arena loop (supply-recovery goal, exit, debrief).
+Open: should enemy wounds drain enemy health? Crouch/peek sprite art needs owner direction.
