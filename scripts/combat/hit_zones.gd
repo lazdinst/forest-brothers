@@ -13,10 +13,12 @@ const LAYOUTS := {
 		[BodyHealth.LEGS, &"box", Vector3(0, 0.25, 0), Vector3(0.44, 0.5, 0.24)],
 	],
 	# Any hit on a downed body kills, so one flat shape is enough.
+	# Absolute metres: a lying body keeps its length whatever the standing height was.
 	&"downed": [
-		[BodyHealth.TORSO, &"box", Vector3(0, 0.07, 0), Vector3(0.5, 0.14, 1.0)],
+		[BodyHealth.TORSO, &"box", Vector3(0, 0.1225, 0), Vector3(0.5, 0.245, 1.75)],
 	],
 }
+const ABSOLUTE_LAYOUTS: Array[StringName] = [&"downed"]
 var actor: Node3D
 var height: float = 1.75
 var layout: StringName = &""
@@ -30,25 +32,35 @@ func set_layout(next: StringName) -> void:
 	if next == layout or not LAYOUTS.has(next):
 		return
 	layout = next
+	_rebuild()
+
+## Rescales the current layout, e.g. when a player's stance changes height.
+func set_height(figure_height: float) -> void:
+	if absf(figure_height - height) < 0.02:
+		return
+	height = figure_height
+	_rebuild()
+
+func _rebuild() -> void:
+	var scale_y: float = 1.0 if ABSOLUTE_LAYOUTS.has(layout) else height
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
-	for entry in LAYOUTS[next]:
+	for entry in LAYOUTS[layout]:
 		var area = HitZone.new(entry[0], actor)
 		var collision := CollisionShape3D.new()
 		var centre: Vector3 = entry[2]
 		var size: Vector3 = entry[3]
 		if entry[1] == &"sphere":
 			var sphere := SphereShape3D.new()
-			sphere.radius = size.y * height
+			sphere.radius = size.y * scale_y
 			collision.shape = sphere
 		else:
 			var box := BoxShape3D.new()
-			# The downed shape lies along the body, so its length scales with height too.
-			box.size = Vector3(size.x, size.y * height, size.z * (height if next == &"downed" else 1.0))
+			box.size = Vector3(size.x, size.y * scale_y, size.z)
 			collision.shape = box
 		area.add_child(collision)
-		area.position = Vector3(centre.x, centre.y * height, centre.z)
+		area.position = Vector3(centre.x, centre.y * scale_y, centre.z)
 		add_child(area)
 
 func disable() -> void:

@@ -43,12 +43,12 @@ var planning: bool = false
 var _planner_hint: Label
 var _map_labels: Array[Label] = []
 var _bout_active: bool = false
-var vitality: float = 100.0
 var blood_enabled: bool = true
 
 func _ready() -> void:
 	world = get_parent()
 	player = world.get_node("Player")
+	player.casualty.connect(_player_casualty)
 	runtime = Runtime.new(world.stock)
 	runtime.can_complete = _completion_clear
 	runtime.can_player_work = _can_player_work
@@ -255,15 +255,23 @@ func _enemy_spotted(source, at: Vector3) -> void:
 		if enemy != source and enemy.global_position.distance_to(source.global_position) <= 12:
 			enemy.receive_alert(at)
 
-func _enemy_fired(_source, target, hit: bool) -> void:
-	if _bout_active and target == player and hit:
-		vitality = maxf(0,vitality-20)
-		if vitality <= 0:
-			_bout_active = false
-			for enemy in enemies:
-				enemy.active = false
-			_teleport(Vector3(0,0.02,17))
-			runtime.message = "Training bout ended at zero vitality. Camp/mission casualty rules are not active in this drill."
+func _enemy_fired(_source, _target, _hit: bool) -> void:
+	# Enemy rays now apply zone damage themselves; the drill only reacts to casualties.
+	pass
+
+func _player_casualty(_player, outcome: StringName) -> void:
+	if outcome == &"downed":
+		runtime.message = "Downed (simulated teammate nearby). Any further hit kills; bleed-out %.0f s." % player.bleed_out_seconds
+		refresh_panel()
+		return
+	_bout_active = false
+	for enemy in enemies:
+		enemy.active = false
+	var cause: String = "head hit" if player.last_hit_zone == &"head" and player.body.health[&"head"] <= 0 else "torso, finishing hit or bleed-out"
+	_teleport(Vector3(0,0.02,17))
+	player.restore_for_drill()
+	runtime.message = "Drill debrief: killed (%s). Campaign gear-loss and mission-death rules are not active in this drill." % cause
+	refresh_panel()
 
 func _ui() -> void:
 	_layer = CanvasLayer.new()
@@ -424,7 +432,7 @@ func refresh_panel() -> void:
 			_details.text += "\nTest patient: bleeding %s / fracture %s / recovery %.0fs" % [runtime.patient.bleeding,runtime.patient.fracture,runtime.patient.recovery]
 			for recipe in [&"bandage",&"splint",&"recover"]:
 				_recipe_button(recipe,_panel_station)
-			_button("Reset training vitality to 100 (debug)",_reset_vitality)
+			_button("Restore training body (debug)",_restore_player)
 		&"shelter": _recipe_button(&"upgrade",_panel_station)
 		&"trench": _recipe_button(&"dig",_panel_station)
 		&"planning":
@@ -442,11 +450,12 @@ func refresh_panel() -> void:
 			_button("Safe return (secures pending civilians)",runtime.resolve_exercise.bind(true))
 			_button("Group-death result (lose pending civilians)",runtime.resolve_exercise.bind(false))
 		&"combat":
-			_details.text += "\nVitality %.0f / 100. Enemy hits count only while the bout is armed.\nEnemy weapons are flash proxies. Sprite default; MPFB comparison has frozen pose/clothing issues." % vitality
+			_details.text += "\nBody %s. Enemies fire only while the bout is armed.\nEnemy weapons are flash proxies. Sprite default; MPFB comparison has frozen pose/clothing issues." % _body_text()
 			_button("Arm enemies / start exposure test",arm_bout)
 			_button("Reset enemies / corpses / blood",reset_enemies)
 			_button("Compare first enemy: %s (resets bout)" % ("MPFB" if use_mpfb_enemy else "Sprite"),_toggle_enemy_comparison)
 			_button("Toggle non-graphic blood: %s" % blood_enabled,_toggle_blood)
+			_button("Simulate nearby teammate (dev, allows downed state): %s" % player.has_teammate_nearby,_toggle_teammate)
 	if runtime.jobs.has(_panel_station):
 		if runtime.jobs[_panel_station].worker != &"":
 			_button("Foreman assistance (once per civilian job)",runtime.assist.bind(_panel_station))
@@ -468,9 +477,13 @@ func _can_player_work(player_id: StringName, station_id: StringName) -> bool:
 	var work_station: StringName = &"planning" if runtime.plans.has(station_id) else station_id
 	return _panel_station == work_station and stations.has(work_station) and player.global_position.distance_to(stations[work_station].global_position) <= 3.0
 
-func _reset_vitality() -> void:
-	vitality = 100
-	runtime.message = "Training vitality reset; not a campaign medical treatment"
+func _restore_player() -> void:
+	player.restore_for_drill()
+	runtime.message = "Training body restored; not a campaign medical treatment"
+	refresh_panel()
+
+func _toggle_teammate() -> void:
+	player.has_teammate_nearby = not player.has_teammate_nearby
 	refresh_panel()
 
 func arm_bout() -> void:
@@ -550,7 +563,7 @@ func _process(delta: float) -> void:
 		var states: Array[String] = []
 		for enemy in enemies:
 			states.append("%s: torso %.0f / %s" % [enemy.name,enemy.body.health[&"torso"],enemy.state])
-		_summary.text = runtime.message+"\nVitality %.0f | Jobs %d | Residents %d | Pending %d\n" % [vitality,runtime.jobs.size(),runtime.residents.size(),runtime.pending_recruits.size()] + " / ".join(states)
+		_summary.text = runtime.message+"\nBody %s | Jobs %d | Residents %d | Pending %d\n" % [_body_text(),runtime.jobs.size(),runtime.residents.size(),runtime.pending_recruits.size()] + " / ".join(states)
 
 func _sync_world() -> void:
 	for id in runtime.residents:
@@ -661,3 +674,9 @@ func _completion_clear(recipe: StringName, station: StringName) -> bool:
 	query.transform = Transform3D(Basis.IDENTITY,global_position+center)
 	query.collision_mask = 3
 	return get_world_3d().direct_space_state.intersect_shape(query,1).is_empty()
+
+func _body_text() -> String:
+	var parts: Array[String] = [String(player.body.state)]
+	for zone in player.body.ZONES:
+		parts.append("%s %.0f" % [zone, player.body.health[zone]])
+	return " ".join(parts)

@@ -24,6 +24,8 @@ var reaction_left: float = 0.0
 var shot_cooldown: float = 0.0
 var targets: Array[Node3D] = []
 var blood_enabled: bool = true
+# Placeholder pending owner tuning; matches the training rifle.
+var shot_damage: float = 40.0
 var visual: Node3D
 var sprite: Sprite3D
 var hit_zones
@@ -172,9 +174,18 @@ func receive_alert(at: Vector3) -> void:
 func _shoot(actor: Node3D) -> void:
 	shot_cooldown = 1.1
 	var start := global_position + Vector3(0.2,1.25,0)
-	var end := actor.global_position + Vector3.UP * 1.0
-	var result := get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(start,end,3,[get_rid()]))
+	var end: Vector3 = actor.center_of_mass() if actor.has_method("center_of_mass") else actor.global_position + Vector3.UP * 1.0
+	var space := get_world_3d().direct_space_state
+	var result := space.intersect_ray(PhysicsRayQueryParameters3D.create(start,end,3,[get_rid()]))
 	var hit: bool = not result.is_empty() and result.collider == actor
+	# Damage goes to whatever the ray met, including other actors (friendly fire).
+	if not result.is_empty() and result.collider.has_method("receive_hit"):
+		var zone: StringName = &""
+		if "hit_zones" in result.collider and result.collider.hit_zones != null:
+			zone = HitZones.zone_along(space, result.collider, result.position, (end - start).normalized())
+			hit = hit and zone != &""
+		if zone != &"" or not ("hit_zones" in result.collider):
+			result.collider.receive_hit(shot_damage, result.position, result.normal, self, zone)
 	fired.emit(self, actor, hit)
 	var flash := MeshInstance3D.new()
 	var sphere := SphereMesh.new()

@@ -70,16 +70,21 @@ func _run() -> void:
 	annex.reset_enemies()
 	await _frames(3)
 	var carried_before: int = player.weapon.state.total_rounds()
+	var casualties := {"hits":0,"killed":0}
+	for enemy in annex.enemies:
+		enemy.fired.connect(func(_e,actor,hit): if hit and actor==player: casualties.hits += 1)
+	player.casualty.connect(func(_p,outcome): if outcome==&"killed": casualties.killed += 1)
 	annex.arm_bout()
 	await _frames(240)
-	_check(annex.vitality < 100,"Armed enemy rays reduce training vitality")
+	_check(casualties.hits > 0,"Armed enemy rays reach player hit zones")
 	await _frames(360)
-	_check(annex.vitality==0 and not annex._bout_active and player.global_position.z > 10,"Zero training vitality stops enemies and returns only the test player to camp")
+	_check(casualties.killed==1 and not annex._bout_active and player.global_position.z > 10,"Solo player death stops enemies and returns only the test player to camp")
+	_check(player.body.is_alive() and player.controls_active(),"Drill debrief restores the training body")
 	_check(player.weapon.state.total_rounds()==carried_before,"Bout reset does not silently refill or consume carried ammunition")
 	for failure in failures:
 		push_error(failure)
 	if failures.is_empty():
-		print("PASS: rifle damage, death/corpse animation, blood/reset, cover LOS, finite sound search, recognition/reaction delay, local alert, enemy firing/vitality/bout return")
+		print("PASS: rifle damage, death/corpse animation, blood/reset, cover LOS, finite sound search, recognition/reaction delay, local alert, enemy firing/player death/bout return")
 	world.queue_free()
 	await process_frame
 	quit(0 if failures.is_empty() else 1)
