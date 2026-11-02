@@ -3,7 +3,8 @@ extends Button
 ## orientation; the rule owner validates every drop.
 ## Left click selects (Button.pressed); right click asks for the item's action menu.
 signal menu_requested(at: Vector2)
-## Ctrl-click quick-moves between pockets and pack; alt-click uses the item (insert a magazine).
+## Ctrl-click quick-moves between pockets and pack; alt-click uses the item (insert a magazine);
+## double-click inspects it.
 signal quick_requested(kind: StringName)
 const Symbol = preload("res://ui/inventory/item_symbol.gd")
 const AmmunitionArt = preload("res://ui/inventory/ammunition_art.gd")
@@ -11,6 +12,9 @@ const JournalTheme = preload("res://ui/themes/field_journal_theme.gd")
 var item_id: StringName
 var item: Dictionary
 var selected := false
+## Timed action progress on this item (0-1), or negative when idle. Action time only,
+## never a fill level.
+var progress := -1.0
 
 static func style(fill: Color, border: Color, width := 1) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
@@ -66,6 +70,20 @@ func setup(record: Dictionary, dimensions: Vector2) -> void:
 	quantity.position = Vector2(3,dimensions.y-17)
 	add_child(quantity)
 
+static func draw_progress(canvas: CanvasItem, area: Vector2, value: float) -> void:
+	if value < 0: return
+	var bar := Rect2(4,area.y-6,area.x-8,3)
+	canvas.draw_rect(bar,Color("29251d40"))
+	canvas.draw_rect(Rect2(bar.position,Vector2(bar.size.x*value,bar.size.y)),JournalTheme.BURGUNDY)
+
+func set_progress(value: float) -> void:
+	if is_equal_approx(value,progress): return
+	progress = value
+	queue_redraw()
+
+func _draw() -> void:
+	draw_progress(self,size,progress)
+
 func set_selected(value: bool) -> void:
 	selected = value
 	_apply_selection()
@@ -77,6 +95,9 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
 		accept_event()
 		menu_requested.emit(get_screen_transform() * event.position)
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and event.double_click:
+		accept_event()
+		quick_requested.emit(&"inspect")
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and (event.ctrl_pressed or event.alt_pressed):
 		accept_event()
 		quick_requested.emit(&"move" if event.ctrl_pressed else &"use")

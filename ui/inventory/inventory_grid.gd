@@ -71,6 +71,15 @@ func show_items(items: Array) -> bool:
 	if _highlight != null: move_child(_highlight,-1)
 	return true
 
+## Show timed-action progress on one item's cell and clear it elsewhere. True if shown here.
+func show_progress(id: StringName, value: float) -> bool:
+	var shown := false
+	for card in cards:
+		var mine: bool = card.item_id == id and id != &""
+		card.set_progress(value if mine else -1.0)
+		shown = shown or mine
+	return shown
+
 func select(id: StringName) -> void:
 	selected_id = id
 	for card in cards: card.set_selected(card.item_id == id and id != &"")

@@ -53,6 +53,8 @@ Shortcuts: **Ctrl-click** moves an item between pockets and pack; **Alt-click** 
 magazine to insert/swap it into the rifle; **Shift-drag** a cartridge stack to split
 it, choosing the amount, with the new stack placed where it is dropped; **Delete**
 drops the selected item to the ground, where it stays recoverable with **F**.
+**Double-click** an item to read it in the inspect panel; a thin line on the busy
+item's cell shows how far a timed action has progressed.
 
 Dropped items have world collision and the existing **F** interaction. Recovery
 keeps the same IDs and nested weapon contents. Local carriers can change custody

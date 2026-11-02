@@ -33,6 +33,10 @@ var rifle_status: Label
 var ammunition_status: Label
 var item_menu: PopupMenu
 var backpack_button: Button
+var inspect_title: Label
+var inspect_body: Label
+var inspect_icon: Control
+var inspected_id: StringName
 var no_pack_label: Label
 var _menu_actions: Array[StringName] = []
 var _split_destination
@@ -55,6 +59,15 @@ func _physics_process(delta: float) -> void:
 	# advances the same weapon rules. Drawing/animation callbacks never award rounds.
 	weapon_state.advance(delta)
 	if _seen_revision != weapon_state.revision: _refresh()
+	_show_action_progress()
+
+## The busy magazine's cell shows how far the timed action is; rifle actions show on the rifle slot.
+func _show_action_progress() -> void:
+	var id: StringName = weapon_state.target_magazine_id if weapon_state.busy != &"" else &""
+	var value: float = weapon_state.action_progress() if weapon_state.busy != &"" else -1.0
+	var shown: bool = pocket_grid.show_progress(id,value)
+	shown = pack_grid.show_progress(id,value) or shown
+	rifle_button.set_progress(value if weapon_state.busy != &"" and not shown else -1.0)
 
 func _fit() -> void:
 	var factor := minf(size.x/1600, size.y/900)
@@ -140,6 +153,7 @@ func _build() -> void:
 	rifle_button.set("weapon_state",weapon_state)
 	rifle_button.set_process(true)
 	rifle_button.menu_requested.connect(func(at: Vector2): _open_menu_for(weapon_state.inventory.active_weapon_id,at))
+	rifle_button.inspect_requested.connect(func(): _show_inspect(weapon_state.inventory.active_weapon_id))
 	rifle_name = _label(rifle_button,data.rifle,Vector2(20,5),460,16)
 	rifle_art = AmmunitionArt.new()
 	rifle_art.kind = "rifle"
@@ -177,6 +191,21 @@ func _build() -> void:
 	pack_grid.drop_validator = _can_drop_in_grid.bind(&"pack")
 	no_pack_label = _label(carried,"No backpack worn · only pockets",Vector2(0,275),920,18)
 	no_pack_label.hide()
+	# Inspect panel beside the pack: double-click any item to read it here.
+	var inspect := Panel.new()
+	inspect.add_theme_stylebox_override("panel",ItemCard.style(Color("efe2c880"),Color("29251d66")))
+	inspect.position = Vector2(600,265)
+	inspect.size = Vector2(364,384)
+	inspect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	carried.add_child(inspect)
+	_label(inspect,"04  /  INSPECT",Vector2(14,10),336,16)
+	inspect_title = _label(inspect,"Double-click an item",Vector2(14,36),336,20)
+	inspect_icon = Control.new()
+	inspect_icon.position = Vector2(14,72)
+	inspect_icon.size = Vector2(336,110)
+	inspect_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inspect.add_child(inspect_icon)
+	inspect_body = _label(inspect,"",Vector2(14,192),336,15)
 	pack_grid.item_dropped.connect(_drop_in_grid.bind(&"pack"))
 	var footer := _frame(Vector2(24,829),Vector2(1552,60))
 	detail = _label(footer,"Select equipment or supplies to inspect. All equipment belongs to the group.",Vector2(0,-4),1490,17)
@@ -212,6 +241,7 @@ func _refresh() -> void:
 	pack_grid.visible = data.backpack_id != ""
 	no_pack_label.visible = not pack_grid.visible
 	backpack_button.text = "Backpack\n" + (data.backpack if data.backpack_id != "" else "None worn")
+	if inspected_id != &"": _show_inspect(inspected_id)
 	rifle_name.text = data.rifle
 	rifle_button.disabled = not data.equipped
 	rifle_art.visible = data.equipped
@@ -237,7 +267,10 @@ func _select(id: StringName) -> void:
 	if not entry.is_empty(): detail.text = "%s  /  %s  ·  right-click for actions" % [entry.heading,entry.description]
 
 func _backpack_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT and data.backpack_id != "":
+	if event is InputEventMouseButton and event.pressed and event.double_click and event.button_index == MOUSE_BUTTON_LEFT and data.backpack_id != "":
+		backpack_button.accept_event()
+		_show_inspect(StringName(data.backpack_id))
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT and data.backpack_id != "":
 		backpack_button.accept_event()
 		_open_menu_for(StringName(data.backpack_id),backpack_button.get_screen_transform() * event.position)
 
@@ -339,6 +372,47 @@ func _inventory_action(action: StringName) -> void:
 	else: weapon_state.request_action(action,selected_id if action in [&"inspect",&"reload",&"pack",&"unload"] else &"",&"",action in [&"pack",&"unload"])
 	_refresh()
 
+## Facts the carrier can see by looking: never an exact magazine count, only earned knowledge.
+func _show_inspect(id: StringName) -> void:
+	var inventory = weapon_state.inventory
+	var item = inventory.items.get(id)
+	for child in inspect_icon.get_children(): child.queue_free()
+	if item == null or not inventory.carried(item):
+		inspected_id = &""
+		inspect_title.text = "Double-click an item"
+		inspect_body.text = ""
+		return
+	inspected_id = id
+	var lines: Array[String] = []
+	var where := {&"pocket":"In a pocket",&"pack":"In the backpack",&"magwell":"Inserted in the rifle",&"equipped":"Equipped",&"worn":"Worn on the back"}
+	if item is Inventory.MagazineInstance:
+		inspect_title.text = item.label
+		var definition = inventory.magazine_definitions[item.magazine_type_id]
+		lines.append("%d-round %s detachable magazine" % [definition.capacity,str(definition.caliber)])
+		lines.append("Contents: " + inventory.knowledge(item.id))
+		lines.append("Condition %d%%" % roundi(item.condition*100))
+		if not item.inspected: lines.append("Right-click · Inspect magazine to check its fill.")
+	elif item is Inventory.AmmoStack:
+		var ammo = inventory.ammo_definitions[item.ammo_type_id]
+		inspect_title.text = ammo.display_name.capitalize()
+		lines.append("%d loose cartridges · %s" % [item.quantity,str(ammo.caliber)])
+		lines.append("One stack holds at most 32.")
+	elif item is Inventory.WeaponInstance:
+		inspect_title.text = data.rifle
+		lines.append("Chamber: " + ("loaded" if item.chambered_round != null else "empty"))
+		lines.append("Magazine: " + (inventory.knowledge(item.inserted_magazine_id) if item.inserted_magazine_id != &"" else "none inserted"))
+		lines.append("Condition %d%%%s" % [roundi(item.condition*100)," · jammed" if item.jammed else ""])
+	elif item is Inventory.BackpackInstance:
+		inspect_title.text = item.label
+		lines.append("%d × %d pack · %d items inside" % [inventory.pack_columns,ceili(float(inventory.pack_capacity)/inventory.pack_columns),inventory.contents_tree(item).size()-1])
+		lines.append("Everything inside stays in it when dropped.")
+	lines.append(where.get(item.location.kind,""))
+	lines.append("Belongs to the group; you are carrying it.")
+	inspect_body.text = "\n".join(lines)
+	var record := Snapshot.record(item,inventory)
+	record.rotated = false
+	inspect_icon.add_child(ItemCard.icon(record,Rect2(Vector2.ZERO,inspect_icon.size)))
+
 ## Ctrl-click: pockets <-> pack. Alt-click: insert a carried magazine into the rifle.
 func _quick(item: Dictionary, kind: StringName) -> void:
 	var id := StringName(item.id)
@@ -346,6 +420,9 @@ func _quick(item: Dictionary, kind: StringName) -> void:
 	var source = inventory.items.get(id)
 	if source == null: return
 	_select(id)
+	if kind == &"inspect":
+		_show_inspect(id)
+		return
 	if weapon_state.busy != &"": weapon_state.reject("Finish or cancel the current action first")
 	elif kind == &"use" and source is Inventory.MagazineInstance: weapon_state.request_action(&"reload",id)
 	elif kind == &"move" and source.location.kind in [&"pocket",&"pack"]:

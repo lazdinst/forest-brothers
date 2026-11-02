@@ -159,8 +159,14 @@ Planned chunks, each with a headless check and owner approval before starting:
    backpack only pockets remain. Backpacks are only worn or on the ground (never
    inside one another); off the back one takes 4 × 4 (placeholder).
 
-Remaining planned chunks: loading progress and a double-click inspect panel; rifle
-slot drag both ways.
+5. Done: a thin burgundy line on the busy item's cell shows timed-action progress
+   (loading, unloading, inspecting, inserting); actions on the inserted magazine or
+   chamber show it on the rifle slot. This is action time, never a fill level.
+   Double-click any item, the rifle slot or the Backpack slot to read it in the
+   inspect panel beside the pack: picture, type, earned magazine knowledge only,
+   condition and where it is. Cancel stays in the right-click menu.
+
+Remaining planned chunk: rifle slot drag both ways.
 4. Loading progress on the magazine cell; double-click inspect panel.
 5. Rifle slot drag both ways (stow in pack, drag back to equip).
 

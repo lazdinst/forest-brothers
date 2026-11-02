@@ -197,6 +197,42 @@ func _run() -> void:
 	check(placed.location.kind == &"ground" and state.total_rounds() == 52,"Delete drops the selected item to the ground")
 	check(inv.pickup(placed.id),"Dropped stack can be picked back up")
 	preview._refresh()
+	# Timed-action progress on the busy item, and the double-click inspect panel.
+	var loose_mag: StringName = inv.initial_magazine_ids[0] if inv.weapon().inserted_magazine_id == b else b
+	preview._refresh()
+	check(state.request_action(&"inspect",loose_mag),"Inspecting a carried magazine starts")
+	await create_timer(0.2).timeout
+	var loose_card: Button = find_card.call(preview.pocket_grid,loose_mag)
+	check(loose_card.progress > 0.0 and loose_card.progress < 1.0 and preview.rifle_button.progress < 0.0,"The busy magazine's cell shows action progress")
+	for wait in range(60):
+		if state.busy == &"": break
+		await create_timer(0.05).timeout
+	await process_frame
+	check(find_card.call(preview.pocket_grid,loose_mag).progress < 0.0,"Progress clears when the action ends")
+	check(state.request_action(&"inspect",inv.weapon().inserted_magazine_id),"Inspecting the inserted magazine starts")
+	await create_timer(0.2).timeout
+	check(preview.rifle_button.progress > 0.0,"Actions on the inserted magazine show progress on the rifle slot")
+	for wait in range(60):
+		if state.busy == &"": break
+		await create_timer(0.05).timeout
+	var double := InputEventMouseButton.new()
+	double.button_index = MOUSE_BUTTON_LEFT
+	double.pressed = true
+	double.double_click = true
+	find_card.call(preview.pocket_grid,loose_mag)._gui_input(double)
+	check(preview.inspect_title.text == inv.magazine(loose_mag).label and preview.inspect_body.text.contains(inv.knowledge(loose_mag)) and preview.inspect_icon.get_child_count() == 1,"Double-click inspects a magazine with its picture and earned knowledge only")
+	var loose_stack: StringName
+	for item in inv.items.values():
+		if item is Inventory.AmmoStack and inv.carried(item): loose_stack = item.id
+	find_card.call(preview.pocket_grid if inv.items[loose_stack].location.kind == &"pocket" else preview.pack_grid,loose_stack)._gui_input(double)
+	check(preview.inspect_body.text.contains("%d loose cartridges" % inv.items[loose_stack].quantity),"Double-click inspects a stack with its exact count")
+	preview.rifle_button._gui_input(double)
+	check(preview.inspect_title.text == preview.data.rifle and preview.inspect_body.text.contains("Chamber"),"Double-click on the rifle slot inspects the rifle")
+	find_card.call(preview.pocket_grid,loose_mag)._gui_input(double)
+	if "--capture-inventory" in OS.get_cmdline_user_args():
+		await process_frame
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png(OS.get_environment("TEMP").path_join("forest-brothers-inventory-inspect.png"))
 	# Backpack as an item: its cells belong to it, so contents travel with it.
 	var pack = inv.backpack()
 	var spare: StringName = inv.initial_magazine_ids[0] if inv.weapon().inserted_magazine_id == b else b
