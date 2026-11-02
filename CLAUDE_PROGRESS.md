@@ -23,3 +23,23 @@ Open questions for the owner:
 2. Should the environment_proof_check failure be investigated, or left to the environment agent?
 3. Other contributors' uncommitted changes (docs, `assets/props/`, `project.godot`) are in the working
    tree; they are left uncommitted. OK?
+
+## 2026-11-02 — health work and branches combined on `claude/work`
+
+Done:
+- Player health (seven parts, bleeds, fractures, pain, energy/water, eight supplies), body looting,
+  arm-injury aim sway, tourniquet, surgical kit, infection + sulfa powder, teammate treatment and
+  revival (60 s bleed-out, bandage/dressing, 8 s), and a HUD treatment loader. See DECISIONS.md.
+- Combined everything on `claude/work` (fast-forward to the merged `health/tarkov-condition`, which
+  contains `inventory/body-looting`). The menu, body-zones and enemy-sprite branches were already in
+  `main`. Other contributors' uncommitted changes were stashed and re-applied without conflicts.
+- The HUD agent's uncommitted `tests/condition_hud_smoke.gd` assumed the old four-zone health; one
+  check line now uses `body_part_at(&"arms", ...)`. Their other files are untouched.
+
+Checks: all pass except the known `environment_proof_check`; `enemy_encounter_smoke` still flaky.
+
+Next / open:
+- Merge `claude/work` into `main` by pull request when the owner wants.
+- Choosing a specific supply/part for a teammate in the inventory; show `care_message` on the HUD;
+  lower the rifle during treatment until animations exist; balance numbers; period provenance.
+- Old worktrees (`forest-brothers-health`, `-loot`, `-inventory`) can be removed once the owner agrees.
