@@ -40,11 +40,30 @@ func _run() -> void:
 	var rubles: int = camp.stock.count(&"rubles")
 	reach.interact(player)
 	await _frames(1)
-	_check(camp.trade_panel.visible and camp.trade_panel.actions.get_child_count() > 2, "He offers trades")
-	camp.trade_panel.action_selected.emit(&"medicine:rubles")
+	var window = camp.trade_panel
+	_check(window.visible and window.buy_list.get_child_count() == camp.Runtime.PRICES.size() and player.process_mode == Node.PROCESS_MODE_DISABLED, "His trade window lists what he can get; the player stands still")
+	window.buy(&"medicine", &"rubles")
 	_check(camp.stock.count(&"medicine") == medicine + 1 and camp.stock.count(&"rubles") == rubles - int(camp.Runtime.PRICES.medicine.rubles), "Buying from him spends the treasury")
-	camp.trade_panel.action_selected.emit(&"close")
-	_check(not camp.trade_panel.visible, "Leave closes the trade")
+	rubles = camp.stock.count(&"rubles")
+	# Selling: a carried magazine with its rounds, cheaply; the rubles go to the cash chest.
+	var carried_inventory = player.weapon.state.inventory
+	var spare: StringName = carried_inventory.initial_magazine_ids[1]
+	var value: int = camp.runtime.sell_value(carried_inventory, carried_inventory.items[spare])
+	_check(value > 0 and value < int(camp.Runtime.PRICES.rounds.rubles), "A spare magazine sells for less than buying cartridges costs (%d rubles)" % value)
+	_check(camp.runtime.sell_value(carried_inventory, carried_inventory.weapon()) == 0 and camp.runtime.sell_value(carried_inventory, carried_inventory.backpack()) == 0, "He will not take the equipped rifle or the worn backpack")
+	window.refresh()
+	_check(window.sell_list.get_child_count() > 0, "His window lists what can be sold")
+	window.sell(carried_inventory, spare)
+	_check(not carried_inventory.items.has(spare) and camp.stock.count(&"rubles") == rubles + value, "Selling removes the item and pays the treasury")
+	rubles = camp.stock.count(&"rubles")
+	var stored = camp.goods_chest.inventory.create_supply(&"morphine", camp.goods_chest.inventory.empty_location_in(&"pack"))
+	window.refresh()
+	window.sell(camp.goods_chest.inventory, stored.id)
+	_check(not camp.goods_chest.inventory.items.has(stored.id) and camp.stock.count(&"rubles") == rubles + int(camp.Runtime.SELL_SUPPLIES.morphine), "Goods in the chest can be sold too")
+	rubles = camp.stock.count(&"rubles") + int(camp.Runtime.PRICES.medicine.rubles)
+	window.closed.emit()
+	_check(not window.visible and player.process_mode == Node.PROCESS_MODE_INHERIT, "Leave closes the trade")
+	_check(camp.goods_chest.inventory.pack_capacity >= 1000, "The goods chest holds a thousand squares")
 	# The goods chest takes goods, not money.
 	var inventory = player.weapon.state.inventory
 	var dressing = inventory.create_supply(&"field_dressing", inventory.empty_location(&"", Vector2i.ONE))

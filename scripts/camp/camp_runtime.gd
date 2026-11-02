@@ -14,6 +14,12 @@ const PRICES = {
 	&"cloth": {"label":"Cloth","amount":2,"rubles":10,"lats":1},
 	&"food": {"label":"Food","amount":3,"rubles":15,"lats":1},
 }
+## What the trader pays for a full supply item, in rubles; partly used items pay in proportion.
+## Placeholder amounts, kept well under buying prices.
+const SELL_SUPPLIES = {&"cloth_bandage":3,&"field_dressing":5,&"tourniquet":6,&"splint":5,&"morphine":15,
+	&"medical_satchel":20,&"sulfa_powder":8,&"surgical_kit":25,&"canteen":4,&"rye_bread":2,&"tinned_meat":4}
+const SELL_WEAPON := 60
+const SELL_MAGAZINE := 5
 const RECIPES = {
 	&"water": {"label":"Draw water", "cost":{}, "output":{&"water":2}, "seconds":2.0, "role":&""},
 	&"cook": {"label":"Cook communal meal", "cost":{&"food":1,&"water":1}, "output":{&"meals":1}, "seconds":4.0, "role":&"cook"},
@@ -229,6 +235,39 @@ func buy(good: StringName, currency: StringName) -> bool:
 	if not stock.try_exchange({currency: int(offer[currency])}, {good: int(offer.amount)}):
 		return _fail("The treasury is short of %s" % currency)
 	message = "Bought %d %s for %d %s" % [offer.amount, good, offer[currency], currency]
+	changed.emit()
+	return true
+
+## What the trader pays, in rubles, for an item with everything inside it (a rifle with its
+## magazine, a magazine with its rounds). Cheap: well under what buying costs. 0 means he will
+## not take it (money, mission items, a worn backpack, the equipped rifle).
+func sell_value(inventory, item) -> int:
+	if item == null or not inventory.carried(item): return 0
+	if item.kind == &"backpack" or item.location.kind in [&"equipped", &"worn"]: return 0
+	var total := 0
+	for member in inventory.contents_tree(item):
+		match member.kind:
+			&"weapon": total += SELL_WEAPON
+			&"magazine": total += SELL_MAGAZINE + int(member.rounds.size() / 2.0)
+			&"ammo_stack": total += maxi(1, int(member.quantity / 2.0))
+			&"supply":
+				if SupplyCatalog.is_money(member.supply_id) or SupplyCatalog.is_objective(member.supply_id): return 0
+				var full := int(SupplyCatalog.get_def(member.supply_id).uses)
+				total += maxi(1, int(float(SELL_SUPPLIES.get(member.supply_id, 2)) * member.uses / maxi(1, full)))
+	return total
+
+## Sells an item (with everything inside it) to the trader; the rubles go to the treasury.
+func sell(inventory, id: StringName) -> bool:
+	var item = inventory.items.get(id)
+	var value := sell_value(inventory, item)
+	if value <= 0:
+		return _fail("The old man will not take that")
+	for member in inventory.contents_tree(item):
+		inventory.items.erase(member.id)
+		if inventory.active_weapon_id == member.id: inventory.active_weapon_id = &""
+	inventory._notify_changed()
+	stock.try_exchange({}, {&"rubles": value})
+	message = "Sold for %d rubles" % value
 	changed.emit()
 	return true
 

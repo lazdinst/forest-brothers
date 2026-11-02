@@ -10,6 +10,7 @@ var _syncing := false
 func _init(camp_stock = null) -> void:
 	stock = camp_stock
 	title = "CASH CHEST"
+	cell = 48
 
 func _ready() -> void:
 	super._ready()

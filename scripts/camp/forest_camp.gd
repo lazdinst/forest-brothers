@@ -17,8 +17,7 @@ const MissionLaunch = preload("res://scripts/missions/mission_launch.gd")
 const InventoryHost = preload("res://ui/inventory/inventory_host.gd")
 const MovementHud = preload("res://ui/components/tactical_movement_hud.gd")
 const ResourceStrip = preload("res://ui/components/resource_strip.gd")
-const MenuModal = preload("res://ui/components/menu_modal.gd")
-const JournalTheme = preload("res://ui/themes/field_journal_theme.gd")
+const TraderWindow = preload("res://ui/camp/trader_window.gd")
 const ENV := "res://assets/environment/"
 const TREES: Array[PackedScene] = [preload(ENV + "scenes/forest_pine_v1.tscn"), preload(ENV + "scenes/forest_spruce_v1.tscn"), preload(ENV + "scenes/forest_birch_v1.tscn")]
 const BOULDER: PackedScene = preload(ENV + "scenes/boulder_v1.tscn")
@@ -59,6 +58,7 @@ var _time := 0.0
 func _ready() -> void:
 	_rng.seed = 1944
 	runtime = Runtime.new(stock)
+	runtime.message = ""
 	stock.try_exchange({}, STARTING_STOCK)
 	_lighting()
 	_ground()
@@ -130,28 +130,21 @@ func _process(delta: float) -> void:
 func open_mission_map(_actor = null) -> void:
 	MissionLaunch.leave_camp(get_tree(), MISSION_MAP)
 
-## The old man knows people in the village: he trades from the treasury at fixed prices.
+## The old man knows people in the village: his trade window buys from him at fixed prices and
+## sells him what you carry or keep in the goods chest, cheaply. The player stands still meanwhile.
 func open_trade(_actor = null) -> void:
-	var choices: Array = []
-	for good in Runtime.PRICES:
-		var offer: Dictionary = Runtime.PRICES[good]
-		choices.append({"id":StringName("%s:rubles" % good), "caption":"%d %s for %d rubles" % [offer.amount, offer.label.to_lower(), offer.rubles]})
-		choices.append({"id":StringName("%s:lats" % good), "caption":"%d %s for %d lats" % [offer.amount, offer.label.to_lower(), offer.lats]})
-	choices.append({"id":&"close", "caption":"Leave"})
-	trade_panel.present("The old man", "\"I know people in the village. Bring money and I can get things.\"\n\nPaid from the cash chest: %d rubles, %d lats. Goods go to the camp stores.\n%s" % [stock.count(&"rubles"), stock.count(&"lats"), runtime.message], choices)
+	trade_panel.sources = [{"label":"carried","inventory":player.weapon.state.inventory}, {"label":"goods chest","inventory":goods_chest.inventory}]
+	trade_panel.refresh()
+	trade_panel.show()
+	$HUD.hide()
+	player.process_mode = Node.PROCESS_MODE_DISABLED
 	if DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
-func _trade_action(action_id: StringName) -> void:
-	if action_id == &"close":
-		_close_trade()
-		return
-	var parts := String(action_id).split(":")
-	runtime.buy(StringName(parts[0]), StringName(parts[1]))
-	open_trade()
-
 func _close_trade() -> void:
-	trade_panel.dismiss()
+	trade_panel.hide()
+	$HUD.show()
+	player.process_mode = Node.PROCESS_MODE_INHERIT
 	if DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -452,8 +445,8 @@ func _hud() -> void:
 	var modal_layer := CanvasLayer.new()
 	modal_layer.layer = 30
 	add_child(modal_layer)
-	trade_panel = MenuModal.new()
-	trade_panel.theme = JournalTheme.create()
+	trade_panel = TraderWindow.new()
+	trade_panel.runtime = runtime
+	trade_panel.hide()
 	modal_layer.add_child(trade_panel)
-	trade_panel.action_selected.connect(_trade_action)
-	trade_panel.canceled.connect(_close_trade)
+	trade_panel.closed.connect(_close_trade)

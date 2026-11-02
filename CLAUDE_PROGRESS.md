@@ -102,6 +102,7 @@ fixed-price contact station, money in regions/on enemies/in rewards; `money_smok
 Then: camp cash chest, a two-way money container in the inventory view (`cash_chest_smoke`).
 Then (owner): new forest camp for Play (`scenes/camp/forest_camp.tscn`): fire, old man trader, tent,
 cash and goods chests, map barrel to the mission map (`forest_camp_smoke`). Training is a sandbox again.
+Then (owner): old man trade window (buy, and sell items cheaply); goods chest 1,000 squares, scrolling.
 
 Open for the owner: playtest; bribes; delete/rename characters and worlds; save character health;
 network joining (two-instance check); camp issue of weapons after a death.

@@ -248,8 +248,17 @@ func _build() -> void:
 		grid.item_dropped.connect(_store)
 	var looting: bool = loot != null
 	if looting and _is_storage():
-		# A storage container shows one grid laid out like its own pack space.
-		body_pocket_grid.position = Vector2(455,80)
+		# A storage container (camp chest) takes the right-hand column in place of the inspect
+		# panel: one grid laid out like its own pack space, scrolling when it is large.
+		loot_heading.position = Vector2(600,45)
+		var stash := ScrollContainer.new()
+		stash.position = Vector2(600,80)
+		stash.size = Vector2(384,570)
+		stash.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		carried.add_child(stash)
+		carried.remove_child(body_pocket_grid)
+		stash.add_child(body_pocket_grid)
+		body_pocket_grid.position = Vector2.ZERO
 		body_pocket_grid.configure(loot.inventory.pack_columns,ceili(float(loot.inventory.pack_capacity)/loot.inventory.pack_columns),int(loot.get("cell") if loot.get("cell") != null else 64))
 	loot_heading.visible = looting
 	body_rifle_grid.visible = looting and not _is_storage()
@@ -285,6 +294,8 @@ func _build() -> void:
 	inspect_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	inspect.add_child(inspect_icon)
 	inspect_body = _label(inspect,"",Vector2(14,192),336,15)
+	# An open camp chest uses this column.
+	inspect.visible = not (loot != null and _is_storage())
 	pack_grid.item_dropped.connect(_drop_in_grid.bind(&"pack"))
 	var footer := _frame(Vector2(24,829),Vector2(1552,60))
 	detail = _label(footer,"Select equipment or supplies to inspect. All equipment belongs to the group.",Vector2(0,-4),1490,17)
@@ -426,7 +437,7 @@ func _refresh_loot() -> void:
 func _refresh_loot_heading() -> void:
 	if loot == null: return
 	if _is_storage():
-		loot_heading.text = "05  /  %s  ·  %s" % [loot.title, "empty" if loot.visible_items().is_empty() else "drag items in or out"]
+		loot_heading.text = "05  /  %s  ·  %s" % [loot.title, "empty" if loot.visible_items().is_empty() else "drag in or out"]
 		return
 	if loot.searching(): loot_heading.text = "05  /  BODY  ·  searching %d of %d…" % [loot.revealed+1,loot.order.size()]
 	else: loot_heading.text = "05  /  BODY  ·  searched" + ("" if not loot.visible_items().is_empty() else " · nothing left")
