@@ -69,10 +69,20 @@ func _run() -> void:
 	enemy.aim_spread_degrees = 0.0
 	enemy._shoot(player)
 	_check(player.last_hit_zone == &"torso" and player.body.health[&"thorax"] + player.body.health[&"stomach"] < 155, "Enemy shot at centre mass hits the player's thorax or stomach")
+	# Arm injuries reach the aim: a broken arm sways even with rested arms; morphine steadies it.
+	player.restore_for_drill()
+	player.is_aiming = true
+	var rested: float = player.aim_unsteadiness()
+	player.body.fractured[&"right_arm"] = true
+	var broken: float = player.aim_unsteadiness()
+	player.body.painkiller_left = 60.0
+	var dulled: float = player.aim_unsteadiness()
+	_check(broken > rested + 0.2 and dulled < broken, "Broken arm makes aiming unsteady; morphine steadies it (%.2f, %.2f, %.2f)" % [rested, broken, dulled])
+	player.is_aiming = false
 	for failure in failures:
 		push_error(failure)
 	if failures.is_empty():
-		print("PASS: player zones, solo down = death, head kill, simulated co-op down, helpless/flat, finish once, bleed-out, enemy ray zone")
+		print("PASS: player zones, solo down = death, head kill, simulated co-op down, helpless/flat, finish once, bleed-out, enemy ray zone, arm injury sway")
 	world.queue_free()
 	await process_frame
 	quit(0 if failures.is_empty() else 1)

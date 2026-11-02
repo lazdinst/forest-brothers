@@ -254,14 +254,20 @@ func _update_noise(distance: float) -> void:
 		_step_distance = 0.0
 		movement_noise.emit(global_position, movement_loudness())
 
+## Aiming sway as a multiple of fatigue_sway_radians: tired arms, plus a steady floor from
+## broken or destroyed arms, pain and fever, which also amplify the fatigue part.
+func aim_unsteadiness() -> float:
+	if not is_aiming: return 0.0
+	var injury: float = body.aim_sway_multiplier()
+	return pow(1.0 - locomotion.arm_fraction(), 2.0) * injury + (injury - 1.0) * 0.6
+
 func _update_camera(delta: float, active: bool) -> void:
 	var eye_height: float = body_shape.shape.height - 0.2
 	camera.position.y = minf(move_toward(camera.position.y, eye_height, delta * movement_tuning.height_change_speed), eye_height)
 	camera.rotation.x -= _sway.x
 	camera.rotation.y -= _sway.y
 	_sway_time += delta
-	var fatigue: float = pow(1.0 - locomotion.arm_fraction(), 2.0) if is_aiming else 0.0
-	_sway = Vector2(sin(_sway_time * 2.1), sin(_sway_time * 1.7)) * fatigue * movement_tuning.fatigue_sway_radians
+	_sway = Vector2(sin(_sway_time * 2.1), sin(_sway_time * 1.7)) * aim_unsteadiness() * movement_tuning.fatigue_sway_radians
 	camera.rotation.x += _sway.x
 	camera.rotation.y += _sway.y
 	var lean_input := Input.get_axis("lean_left", "lean_right") if active and not is_vaulting else 0.0
