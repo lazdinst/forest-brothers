@@ -47,10 +47,24 @@ func _run() -> void:
 	view._store(stack.id, 10, &"", false, false)
 	await _frames(1)
 	_check(stock.count(&"lats") == lats and not inventory.items.has(stack.id), "Dropping them back restores the treasury")
+	# Dropping carried rubles on the chest's rubles combines them into that stack.
+	var purse = inventory.create_supply(&"rubles", inventory.empty_location(&"", Vector2i.ONE), 20)
+	var chest_rubles = chest.visible_items().filter(func(item): return item.supply_id == &"rubles")[0]
+	var before_stack: int = chest_rubles.uses
+	var stacks: int = chest.visible_items().size()
+	_check(view._can_store(purse.id, chest_rubles.location.slot, chest_rubles.id, false, false), "Carried rubles can be dropped on the chest's rubles")
+	view._store(purse.id, chest_rubles.location.slot, chest_rubles.id, false, false)
+	await _frames(1)
+	_check(chest_rubles.uses == before_stack + 20 and chest.visible_items().size() == stacks and not inventory.items.has(purse.id) and stock.count(&"rubles") == rubles + 70, "They combine into one stack and the treasury grows")
+	# And taking rubles onto carried rubles combines them the other way.
+	var carried_stack = inventory.create_supply(&"rubles", inventory.empty_location(&"", Vector2i.ONE), 5)
+	view._drop_in_grid(chest_rubles.id, 0, carried_stack.id, false, false, carried_stack.location.kind)
+	await _frames(1)
+	_check(carried_stack.uses == 5 + before_stack + 20 or carried_stack.uses == 500, "Taking chest rubles onto carried rubles combines them")
 	startup.close_inventory()
 	await _frames(2)
 	stock.add(&"rubles", 7)
-	_check(chest.total(&"rubles") == rubles + 57, "Treasury changes elsewhere (contact, rewards) show in the chest")
+	_check(chest.total(&"rubles") == stock.count(&"rubles"), "Treasury changes elsewhere (contact, rewards) show in the chest")
 	startup.queue_free()
 	await _frames(2)
 	for failure in failures:

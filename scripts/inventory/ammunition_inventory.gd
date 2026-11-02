@@ -247,6 +247,27 @@ func can_merge_stacks(source_id: StringName, target_id: StringName) -> bool:
 	var target := items.get(target_id) as AmmoStack
 	return source != null and target != null and source != target and carried(source) and carried(target) and source.ammo_type_id == target.ammo_type_id and target.quantity < 32
 
+## Money of one currency combines into one stack, up to a full item's worth (rubles with
+## rubles, lats with lats), within one carrier or across two (a chest and its user).
+func can_merge_money_into(source_id: StringName, recipient, target_id: StringName) -> bool:
+	var source := items.get(source_id) as SupplyInstance
+	var target := recipient.items.get(target_id) as SupplyInstance if recipient != null else null
+	if source == null or target == null or source == target or not carried(source) or not recipient.carried(target): return false
+	return SupplyCatalog.is_money(source.supply_id) and source.supply_id == target.supply_id and target.uses < int(SupplyCatalog.get_def(target.supply_id).uses)
+
+## Moves as much of a money stack onto another as fits; what does not fit stays where it was.
+func merge_money_into(source_id: StringName, recipient, target_id: StringName) -> bool:
+	if not can_merge_money_into(source_id, recipient, target_id): return fail("Only the same money combines, up to a full stack")
+	var source: SupplyInstance = items[source_id]
+	var target: SupplyInstance = recipient.items[target_id]
+	var amount := mini(source.uses, int(SupplyCatalog.get_def(target.supply_id).uses) - target.uses)
+	target.uses += amount
+	source.uses -= amount
+	if source.uses == 0: items.erase(source.id)
+	_notify_changed()
+	if recipient != self: recipient._notify_changed()
+	return true
+
 func can_load_round(magazine_id: StringName, stack_id: StringName) -> bool:
 	var mag := magazine(magazine_id)
 	var stack := items.get(stack_id) as AmmoStack

@@ -447,8 +447,11 @@ func _is_storage() -> bool:
 	return loot != null and loot.get("storage") == true
 
 ## Preview: a carried item may go into a storage container's grid.
-func _can_store(id: StringName, slot: int, _target_id: StringName, rotated: bool, split: bool) -> bool:
+func _can_store(id: StringName, slot: int, target_id: StringName, rotated: bool, split: bool) -> bool:
 	if not _is_storage() or split or weapon_state.busy != &"": return false
+	# Money dropped on the same money in the chest combines into that stack.
+	if loot.inventory.items.has(id): return loot.inventory.can_merge_money_into(id,loot.inventory,target_id)
+	if weapon_state.inventory.can_merge_money_into(id,loot.inventory,target_id): return true
 	var item = weapon_state.inventory.items.get(id)
 	if item == null or not loot.accepts(item): return false
 	return loot.inventory.can_receive(item,loot.inventory.slot_location(&"pack",slot,rotated))
@@ -456,6 +459,12 @@ func _can_store(id: StringName, slot: int, _target_id: StringName, rotated: bool
 func _store(id: StringName, slot: int, target_id: StringName = &"", rotated := false, split := false) -> void:
 	if not _can_store(id,slot,target_id,rotated,split):
 		if _is_storage(): weapon_state.reject("That does not go in the " + String(loot.title).to_lower())
+		return
+	var holder = loot.inventory if loot.inventory.items.has(id) else weapon_state.inventory
+	if holder.can_merge_money_into(id,loot.inventory,target_id):
+		holder.merge_money_into(id,loot.inventory,target_id)
+		weapon_state.revision += 1
+		_refresh()
 		return
 	_put_in_storage(id,loot.inventory.slot_location(&"pack",slot,rotated))
 
@@ -718,7 +727,9 @@ func _can_drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated
 	var inventory = weapon_state.inventory
 	var destination = inventory.slot_location(container,slot,rotated)
 	if loot != null and loot.inventory.items.has(id):
+		if not split and loot.is_revealed(id) and loot.inventory.can_merge_money_into(id,inventory,target_id): return true
 		return not split and loot.is_revealed(id) and inventory.can_receive(loot.inventory.items[id],destination)
+	if not split and inventory.can_merge_money_into(id,inventory,target_id): return true
 	if destination == null: return false
 	if split: return inventory.can_split_stack(id,destination)
 	var source = inventory.items.get(id)
@@ -732,7 +743,16 @@ func _drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated: bo
 		weapon_state.reject("Finish or cancel the current action first")
 		return
 	if loot != null and loot.inventory.items.has(id):
+		if not split and loot.is_revealed(id) and loot.inventory.can_merge_money_into(id,weapon_state.inventory,target_id):
+			loot.inventory.merge_money_into(id,weapon_state.inventory,target_id)
+			weapon_state.revision += 1
+			_refresh()
+			return
 		_take(id,weapon_state.inventory.slot_location(container,slot,rotated))
+		return
+	if not split and weapon_state.inventory.can_merge_money_into(id,weapon_state.inventory,target_id):
+		weapon_state.inventory.merge_money_into(id,weapon_state.inventory,target_id)
+		_refresh()
 		return
 	if split:
 		selected_id = id

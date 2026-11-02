@@ -28,6 +28,16 @@ func _run() -> void:
 	_check(SupplyCatalog.is_money(&"rubles") and SupplyCatalog.is_money(&"lats") and not SupplyCatalog.is_money(&"field_dressing"), "Rubles and lats are money")
 	var health := PlayerHealth.new()
 	_check(health.treatment_problem(SupplyCatalog.get_def(&"rubles"), &"", 10) != "", "Money is never used like a supply")
+	# Same money combines into one stack, up to a full stack; different money does not.
+	var purse = Inventory.new()
+	var first = purse.create_supply(&"rubles", purse.empty_location(&"", Vector2i.ONE), 300)
+	var second = purse.create_supply(&"rubles", purse.empty_location(&"", Vector2i.ONE), 300)
+	var coins = purse.create_supply(&"lats", purse.empty_location(&"", Vector2i.ONE), 4)
+	var more_coins = purse.create_supply(&"lats", purse.empty_location(&"", Vector2i.ONE), 6)
+	_check(not purse.can_merge_money_into(first.id, purse, coins.id), "Rubles and lats stay apart")
+	_check(purse.merge_money_into(more_coins.id, purse, coins.id) and coins.uses == 10 and not purse.items.has(more_coins.id), "Lats combine into one stack")
+	_check(purse.merge_money_into(first.id, purse, second.id) and second.uses == 500 and first.uses == 100 and purse.items.has(first.id), "Rubles combine up to a full stack; the rest stays")
+	_check(not purse.can_merge_money_into(first.id, purse, second.id), "A full stack takes no more")
 	# Deposit and buy.
 	var runtime := Runtime.new()
 	var holder := Holder.new()
