@@ -1,5 +1,6 @@
 extends Button
-## Compact flat item cell. Drag payload carries only an item ID; the rule owner validates every drop.
+## Compact flat item cell. Drag payload carries the item ID plus view-only grab point and
+## orientation; the rule owner validates every drop.
 ## Left click selects (Button.pressed); right click asks for the item's action menu.
 signal menu_requested(at: Vector2)
 const Symbol = preload("res://ui/inventory/item_symbol.gd")
@@ -16,13 +17,19 @@ static func style(fill: Color, border: Color, width := 1) -> StyleBoxFlat:
 	box.set_border_width_all(width)
 	return box
 
-## Icon used both by the cell and by its drag preview.
-static func icon(record: Dictionary, dimensions: Vector2) -> Control:
+## Icon used both by the cell and by its drag preview, turned a quarter for rotated items.
+static func icon(record: Dictionary, area: Rect2) -> Control:
 	var symbol = AmmunitionArt.new() if record.get("kind","") in ["magazine","rounds","rifle"] else Symbol.new()
 	symbol.kind = record.get("kind","parts")
 	if symbol is AmmunitionArt: symbol.status = str(record.get("quantity",""))
-	symbol.size = dimensions
 	symbol.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if record.get("rotated",false):
+		symbol.size = Vector2(area.size.y,area.size.x)
+		symbol.rotation = PI/2
+		symbol.position = area.position + Vector2(area.size.x,0)
+	else:
+		symbol.size = area.size
+		symbol.position = area.position
 	return symbol
 
 static func _small_label(text: String, font_size: int, width: float) -> Label:
@@ -48,9 +55,7 @@ func setup(record: Dictionary, dimensions: Vector2) -> void:
 	add_theme_stylebox_override("hover",style(Color("f1e6cf"),JournalTheme.INK))
 	add_theme_stylebox_override("pressed",style(Color("e2d2b2"),JournalTheme.INK))
 	_apply_selection()
-	var symbol := icon(record,dimensions-Vector2(10,26))
-	symbol.position = Vector2(5,13)
-	add_child(symbol)
+	add_child(icon(record,Rect2(Vector2(5,13),dimensions-Vector2(10,26))))
 	# Short name top-right and count bottom-right.
 	var title := _small_label(record.get("title","Item"),10,dimensions.x-6)
 	title.position = Vector2(3,0)
@@ -71,21 +76,30 @@ func _gui_input(event: InputEvent) -> void:
 		accept_event()
 		menu_requested.emit(get_screen_transform() * event.position)
 
-func drag_preview() -> Control:
-	var preview := Panel.new()
-	preview.add_theme_stylebox_override("panel",style(Color("e9dcc2b0"),JournalTheme.INK))
-	preview.size = size * get_global_transform().get_scale()
-	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var symbol := icon(item,preview.size-Vector2(10,10))
-	symbol.position = Vector2(5,5)
-	preview.add_child(symbol)
-	preview.modulate.a = 0.85
-	return preview
+## The preview root sits at the cursor, so turning it rotates the item about the grab point.
+func drag_preview(grab: Vector2) -> Control:
+	var factor := get_global_transform().get_scale()
+	var root := Control.new()
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var panel := Panel.new()
+	panel.add_theme_stylebox_override("panel",style(Color("e9dcc2b0"),JournalTheme.INK))
+	panel.size = size * factor
+	panel.position = -grab * factor
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(icon(item,Rect2(Vector2(5,5),panel.size-Vector2(10,10))))
+	root.add_child(panel)
+	root.modulate.a = 0.85
+	return root
 
-func _get_drag_data(_at: Vector2) -> Variant:
+func drag_payload(grab: Vector2) -> Dictionary:
+	return {"inventory_item_id":str(item_id),"grab":grab,"cells":item.get("size",Vector2i.ONE),"rotated":item.get("rotated",false),"turned":false}
+
+func _get_drag_data(at: Vector2) -> Variant:
 	if item_id == &"": return null
-	set_drag_preview(drag_preview())
-	return {"inventory_item_id":str(item_id)}
+	var payload := drag_payload(at)
+	payload.preview = drag_preview(at)
+	set_drag_preview(payload.preview)
+	return payload
 
 func _can_drop_data(at: Vector2, data: Variant) -> bool:
 	return get_parent()._can_drop_data(position+at,data)

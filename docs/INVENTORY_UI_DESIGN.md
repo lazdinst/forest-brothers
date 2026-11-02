@@ -141,8 +141,12 @@ Planned chunks, each with a headless check and owner approval before starting:
    checks (`can_move_item`, `can_merge_stacks`, `can_load_round`), left-click
    selects, right-click opens a small cursor menu. Only splitting keeps the paper
    dialog because it needs an amount.
-2. Multi-square items and rotation (R while dragging). Approved placeholder sizes:
-   rifle 5 × 2, magazine 1 × 1, cartridge stack 1 × 1. Pockets stay 1 × 1.
+2. Done: multi-square items and rotation. Rules own footprints (`FOOTPRINTS`,
+   `footprint`, `area`), overlap checks and the saved `rotated` flag; the grid draws
+   each item across its cells and the drop tint covers the whole footprint, anchored
+   at the grabbed cell. R while dragging turns the item about the cursor. Approved
+   placeholder sizes: rifle 5 × 2, magazine 1 × 1, cartridge stack 1 × 1; pockets
+   stay 1 × 1. The 9 × 4 pack cannot hold a turned rifle; pack size is still open.
 3. Shortcuts: ctrl-click pocket ↔ pack, alt-click insert magazine, shift-drag split,
    Delete drop.
 4. Loading progress on the magazine cell; double-click inspect panel.

@@ -164,9 +164,9 @@ func try_fire(roll: float) -> bool:
 	revision += 1
 	return true
 
-func move_item(id: StringName, kind: StringName, slot: int) -> bool:
+func move_item(id: StringName, kind: StringName, slot: int, rotated := false) -> bool:
 	if busy != &"": return reject("Finish or cancel the current action first")
-	if not inventory.move_item(id,Inventory.Location.new(kind,inventory.owner_id,slot)): return reject(inventory.error)
+	if not inventory.move_item(id,Inventory.Location.new(kind,inventory.owner_id,slot,rotated)): return reject(inventory.error)
 	message = "Item moved"
 	return true
 

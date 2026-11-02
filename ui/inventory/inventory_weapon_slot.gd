@@ -11,7 +11,8 @@ func _get_drag_data(_at: Vector2) -> Variant:
 	label.text = "Rifle"
 	preview.add_child(label)
 	set_drag_preview(preview)
-	return {"inventory_item_id":str(weapon_state.inventory.active_weapon_id)}
+	var gun = weapon_state.inventory.weapon()
+	return {"inventory_item_id":str(gun.id),"cells":weapon_state.inventory.footprint(gun),"rotated":false,"turned":false,"preview":preview}
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT and not disabled:

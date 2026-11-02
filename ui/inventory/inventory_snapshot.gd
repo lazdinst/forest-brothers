@@ -4,7 +4,7 @@ const WeaponState = preload("res://scripts/weapons/prototype_weapon_state.gd")
 const Inventory = preload("res://scripts/inventory/ammunition_inventory.gd")
 
 static func record(item, inventory) -> Dictionary:
-	var result := {"id":str(item.id),"slot":item.location.slot,"title":"Item","quantity":"","kind":"parts"}
+	var result := {"id":str(item.id),"slot":item.location.slot,"title":"Item","quantity":"","kind":"parts","size":inventory.footprint(item,item.location.rotated),"rotated":item.location.rotated}
 	if item is Inventory.MagazineInstance:
 		result.merge({"title":item.label,"quantity":inventory.knowledge(item.id),"kind":"magazine"},true)
 	elif item is Inventory.AmmoStack:

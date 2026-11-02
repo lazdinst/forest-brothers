@@ -309,18 +309,16 @@ func _inventory_action(action: StringName) -> void:
 	_refresh()
 
 ## Preview only: the same checks the drop below will make, without changing anything.
-func _can_drop_in_grid(id: StringName, slot: int, target_id: StringName, container: StringName) -> bool:
+func _can_drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated: bool, container: StringName) -> bool:
 	if weapon_state.busy != &"": return false
 	var inventory = weapon_state.inventory
-	if target_id == id: return true
 	var source = inventory.items.get(id)
 	var target = inventory.items.get(target_id)
 	if source is Inventory.AmmoStack and target is Inventory.MagazineInstance: return inventory.can_load_round(target_id,id)
-	if source is Inventory.AmmoStack and target is Inventory.AmmoStack: return inventory.can_merge_stacks(id,target_id)
-	return inventory.can_move_item(id,Inventory.Location.new(container,inventory.owner_id,slot))
+	if source is Inventory.AmmoStack and target is Inventory.AmmoStack and target != source: return inventory.can_merge_stacks(id,target_id)
+	return inventory.can_move_item(id,Inventory.Location.new(container,inventory.owner_id,slot,rotated))
 
-func _drop_in_grid(id: StringName, slot: int, target_id: StringName, container: StringName) -> void:
-	if target_id == id: return
+func _drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated: bool, container: StringName) -> void:
 	if weapon_state.busy != &"":
 		weapon_state.reject("Finish or cancel the current action first")
 		return
@@ -328,15 +326,32 @@ func _drop_in_grid(id: StringName, slot: int, target_id: StringName, container: 
 	var target = weapon_state.inventory.items.get(target_id)
 	if source is Inventory.AmmoStack and target is Inventory.MagazineInstance:
 		weapon_state.request_action(&"pack",target_id,id,true)
-	elif source is Inventory.AmmoStack and target is Inventory.AmmoStack:
+	elif source is Inventory.AmmoStack and target is Inventory.AmmoStack and target != source:
 		weapon_state.inventory.merge_stacks(id,target_id)
-	else: weapon_state.move_item(id,container,slot)
+	else: weapon_state.move_item(id,container,slot,rotated)
 	_refresh()
 
 func _inspect(title: String, description: String) -> void:
 	detail.text = title + "  /  " + description
 
+## R while dragging turns the carried item a quarter, as in Tarkov. Square items stay as they are.
+func rotate_drag() -> bool:
+	if not get_viewport().gui_is_dragging(): return false
+	var payload = get_viewport().gui_get_drag_data()
+	if not payload is Dictionary or not payload.has("inventory_item_id"): return false
+	var cells: Vector2i = payload.get("cells",Vector2i.ONE)
+	if cells.x == cells.y: return false
+	payload.turned = not payload.get("turned",false)
+	var preview = payload.get("preview")
+	if is_instance_valid(preview): preview.rotation = PI/2 if payload.turned else 0.0
+	pocket_grid.refresh_hover(payload)
+	pack_grid.refresh_hover(payload)
+	return true
+
 func _input(event: InputEvent) -> void:
+	if visible and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R and rotate_drag():
+		get_viewport().set_input_as_handled()
+		return
 	if visible and event.is_action_pressed("ui_cancel") and not event.is_echo():
 		get_viewport().set_input_as_handled()
 		closed.emit()

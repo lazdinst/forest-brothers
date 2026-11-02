@@ -42,8 +42,11 @@ Drag an item to a free pocket/pack square to move it. While dragging, the square
 under the cursor turns green if the drop would be accepted and red if not. Drop cartridges on a carried
 magazine to fill it, matching cartridge stacks onto one another to merge, and a
 magazine on the rifle slot to insert/swap. Occupied incompatible destinations reject.
-Each item uses one square. Pockets hold four items; pack capacity remains the
-existing configurable training draft of 36, not final balance.
+Items cover footprint cells: rifle 5 × 2, magazine and cartridge stack 1 × 1
+(owner-approved placeholders). Press **R** while dragging to turn a non-square item.
+Pockets are four single cells; the pack is a 9 × 4 grid (configurable training draft
+of 36 cells, not final balance), so a turned 2 × 5 rifle does not fit it yet. Saves
+store each item's top-left cell and rotation and reject overlaps.
 
 Dropped items have world collision and the existing **F** interaction. Recovery
 keeps the same IDs and nested weapon contents. Local carriers can change custody
