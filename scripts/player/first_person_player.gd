@@ -81,6 +81,10 @@ func _ready() -> void:
 	feedback.name = "HitFeedback"
 	add_child(feedback)
 	feedback.attach(self)
+	var treatment_loader = load("res://ui/components/treatment_progress_hud.gd").new()
+	treatment_loader.name = "TreatmentProgress"
+	add_child(treatment_loader)
+	treatment_loader.attach(self)
 	if use_polygon_body:
 		body_visual = load("res://scripts/characters/polygon_character.gd").new()
 		body_visual.name = "BodyVisual"

@@ -65,6 +65,9 @@ func _run() -> void:
 	var dressing = _give(medic, &"field_dressing")
 	medic.body.revive_seconds = 0.5
 	_check(medic.care_for(patient) == "" and medic.body.treatment.revive and medic.body.treatment.item_id == bandage.id, "Revival starts with the plainest carried supply, the bandage")
+	var medic_loader = medic.get_node("TreatmentProgress")
+	var patient_loader = patient.get_node("TreatmentProgress")
+	_check(medic_loader.status().get("title", "").begins_with("Reviving teammate") and patient_loader.status().get("title", "") == "Being revived", "Both players see a revival loader")
 	await _frames(45)
 	_check(patient.body.is_alive() and revivals.size() == 1 and patient.hit_zones.layout == &"standing", "The downed teammate is revived and stands back up")
 	_check(not medic.weapon.state.inventory.items.has(bandage.id), "Revival uses up the bandage")
@@ -83,6 +86,17 @@ func _run() -> void:
 	await _frames(6)
 	_check(not patient.body.light_bleeding[&"left_arm"] and not medic.weapon.state.inventory.items.has(dressing.id), "The medic's dressing stops the teammate's bleeding")
 	_check(medic.body.light_bleeding.values().all(func(flag): return not flag), "Treatment changes the patient, not the medic")
+	# Own treatment shows the loader with supply, part and time; it hides when done.
+	_check(medic_loader.status().is_empty(), "No loader when nobody is treating")
+	medic.body.light_bleeding[&"right_leg"] = true
+	var own_bandage = _give(medic, &"cloth_bandage")
+	_check(medic.body.start_treatment(medic.weapon.state.inventory, own_bandage.id, &"right_leg") == "", "The medic bandages their own leg")
+	await _frames(30)
+	var loader: Dictionary = medic_loader.status()
+	_check(loader.get("title", "") == "Cloth bandage · right leg" and loader.progress > 0.0 and loader.progress < 1.0 and loader.seconds > 0.0, "Own treatment shows a loader with supply, part, progress and time: %s" % [loader])
+	_check(patient_loader.status().is_empty(), "A teammate's own treatment does not show on the other player")
+	await _frames(240)
+	_check(not medic.body.light_bleeding[&"right_leg"] and medic_loader.status().is_empty(), "The loader hides once the treatment is done")
 	# Everyone down: mission death for all.
 	events.clear()
 	patient.receive_hit(90, patient.global_position + Vector3.UP * 1.4, Vector3.FORWARD, null, &"torso")
@@ -93,7 +107,7 @@ func _run() -> void:
 	for failure in failures:
 		push_error(failure)
 	if failures.is_empty():
-		print("PASS: teammate targeting, downed with a teammate, revival with a bandage, reduced capability, treating a teammate, reach, group incapacitation")
+		print("PASS: teammate targeting, downed with a teammate, revival with a bandage, reduced capability, treating a teammate, reach, treatment loader, group incapacitation")
 	world.queue_free()
 	await process_frame
 	quit(0 if failures.is_empty() else 1)
