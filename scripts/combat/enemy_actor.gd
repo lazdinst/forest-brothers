@@ -75,6 +75,14 @@ var _home := Vector3.ZERO
 ## Watch direction at the post, restored after returning from a search.
 var _home_yaw: float = 0.0
 var _returning: bool = false
+# Cover, placeholders pending owner tuning. Only scenes with a navigation map use it.
+var cover_speed: float = 2.6
+var cover_hold_seconds: float = 2.5
+var max_cover_path: float = 12.0
+## &"move" while running to cover, &"hold" while sheltering, &"" otherwise.
+var cover_phase: StringName = &""
+var cover_point := Vector3.INF
+var _cover_left: float = 0.0
 var _patrol_sign: float = 1.0
 var _alert_cooldown: float = 0.0
 var _hit_tint: float = 0.0
@@ -159,7 +167,16 @@ func _physics_process(delta: float) -> void:
 			break
 	velocity.x = 0
 	velocity.z = 0
-	if seen != null:
+	if cover_phase != &"":
+		state = &"cover"
+		if seen != null:
+			last_known = seen.global_position
+			# Shelter that turned out exposed is abandoned once the rifle is ready.
+			if cover_phase == &"hold" and not is_reloading():
+				cover_phase = &""
+		if cover_phase != &"":
+			_update_cover(delta)
+	elif seen != null:
 		var stance_factor: float = lerpf(0.4, 1.0, seen.locomotion.height_fraction(seen.body_shape.shape.height))
 		stance_factor *= 1.0 + minf(Vector2(seen.velocity.x, seen.velocity.z).length() / 10.0, 0.5)
 		var distance_factor := clampf(1.8-global_position.distance_to(seen.global_position)/18.0,0.5,1.5)
@@ -179,7 +196,8 @@ func _physics_process(delta: float) -> void:
 			reaction_left -= delta
 			aim_time += delta
 			if rounds_in_magazine <= 0 and not is_reloading():
-				start_reload()
+				if start_reload():
+					try_take_cover(last_known)
 			if reaction_left <= 0.0 and shot_cooldown <= 0.0 and rounds_in_magazine > 0 and not is_reloading():
 				_shoot(seen)
 		else:
@@ -301,7 +319,11 @@ func receive_hit(damage: float, at: Vector3, _normal: Vector3, source = null, zo
 	elif outcome == BodyHealth.DOWNED:
 		_go_down(source)
 	elif active:
-		hear_noise(at)
+		var threat: Vector3 = source.global_position if source is Node3D else at
+		if state == &"engage" or source is Node3D:
+			last_known = threat
+		if not try_take_cover(threat):
+			hear_noise(at)
 
 ## Positional zone sound so the shooter can hear what they hit.
 func _impact_sound(at: Vector3, zone: StringName) -> void:
@@ -317,6 +339,7 @@ func _impact_sound(at: Vector3, zone: StringName) -> void:
 
 func _go_down(source) -> void:
 	state = &"downed"
+	cover_phase = &""
 	rifle.hide()
 	if source is Node3D:
 		last_known = source.global_position
@@ -609,3 +632,85 @@ func _start_looking() -> void:
 func _look_around(delta: float) -> void:
 	look_left -= delta
 	rotation.y = _look_yaw + sin((look_seconds - look_left) * 1.3) * 1.2
+
+## Runs for a nearby point the threat cannot see. Returns false when there is no such point
+## (or no navigation map), leaving the caller's behaviour unchanged.
+func try_take_cover(threat: Vector3) -> bool:
+	if cover_phase == &"move" or state == &"dead" or state == &"downed":
+		return cover_phase == &"move"
+	var point := find_cover(threat)
+	if point == Vector3.INF:
+		return false
+	cover_point = point
+	cover_phase = &"move"
+	_cover_left = 6.0
+	_path_goal = Vector3.INF
+	return true
+
+## Nearest reachable navigation point within max_cover_path where walls hide both chest and head
+## from the threat's eye. Crates only hide crouched bodies, so they do not count until enemies crouch.
+func find_cover(threat: Vector3) -> Vector3:
+	var map := get_world_3d().navigation_map
+	if NavigationServer3D.map_get_regions(map).is_empty():
+		return Vector3.INF
+	var space := get_world_3d().direct_space_state
+	var eye := threat + Vector3.UP * 1.5
+	var best := Vector3.INF
+	var best_length := INF
+	for radius in [2.5, 4.0, 6.0, 8.0]:
+		for step in range(16):
+			var angle := TAU * step / 16.0
+			var probe := global_position + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+			var spot := NavigationServer3D.map_get_closest_point(map, probe)
+			if Vector2(spot.x - probe.x, spot.z - probe.z).length() > 0.5:
+				continue
+			if Vector2(spot.x - threat.x, spot.z - threat.z).length() < 4.0:
+				continue
+			# Margin: the spot must stay hidden half a metre to either side, so arriving slightly off still shelters.
+			var across := (spot - threat).cross(Vector3.UP)
+			across.y = 0.0
+			across = across.normalized() * 0.5
+			if not (hidden_from(space, eye, spot) and hidden_from(space, eye, spot + across) and hidden_from(space, eye, spot - across)):
+				continue
+			var path := NavigationServer3D.map_get_path(map, global_position, spot, true)
+			var length := 0.0
+			for index in range(1, path.size()):
+				length += path[index - 1].distance_to(path[index])
+			if path.is_empty() or length > max_cover_path or length >= best_length:
+				continue
+			best = spot
+			best_length = length
+	return best
+
+func hidden_from(space: PhysicsDirectSpaceState3D, eye: Vector3, spot: Vector3) -> bool:
+	for height in [1.0, 1.55]:
+		var query := PhysicsRayQueryParameters3D.create(eye, spot + Vector3.UP * height, 1, [get_rid()])
+		if space.intersect_ray(query).is_empty():
+			return false
+	return true
+
+func _update_cover(delta: float) -> void:
+	if cover_phase == &"move":
+		_cover_left -= delta
+		var remaining := cover_point - global_position
+		remaining.y = 0.0
+		var direction := route_toward(cover_point, delta)
+		if remaining.length() < 0.5 or direction.length_squared() <= 0.0001 or _cover_left <= 0.0:
+			cover_phase = &"hold"
+			_cover_left = cover_hold_seconds
+			return
+		direction = direction.normalized()
+		velocity.x = direction.x * cover_speed
+		velocity.z = direction.z * cover_speed
+		rotation.y = atan2(direction.x, direction.z)
+		return
+	# Holding: face the threat from shelter until the hold ends and the rifle is loaded.
+	var toward := last_known - global_position
+	toward.y = 0.0
+	if toward.length_squared() > 0.01:
+		rotation.y = rotate_toward(rotation.y, atan2(toward.x, toward.z), delta * 4.0)
+	_cover_left -= delta
+	if _cover_left <= 0.0 and not is_reloading():
+		cover_phase = &""
+		# Leave cover by moving to where the threat was last seen, which re-exposes this enemy.
+		begin_search(last_known)
