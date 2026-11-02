@@ -67,7 +67,7 @@ func reset_enemies() -> void:
 func _enemy_spotted(source, at: Vector3) -> void:
 	for enemy in enemies:
 		if is_instance_valid(enemy) and enemy != source and enemy.global_position.distance_to(source.global_position) <= 20:
-			enemy.receive_alert(at)
+			enemy.receive_alert(at, source)
 
 func _bake_navigation() -> void:
 	var mesh := NavigationMesh.new()

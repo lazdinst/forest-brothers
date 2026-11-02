@@ -86,6 +86,11 @@ var max_cover_path: float = 12.0
 var cover_phase: StringName = &""
 var cover_point := Vector3.INF
 var _cover_left: float = 0.0
+# Flanking, placeholders pending owner tuning. Only scenes with a navigation map use it.
+var flank_speed: float = 2.0
+var max_flank_path: float = 35.0
+## Side position an alerted ally is heading for; INF when not flanking.
+var flank_point := Vector3.INF
 var _patrol_sign: float = 1.0
 var _alert_cooldown: float = 0.0
 var _hit_tint: float = 0.0
@@ -265,9 +270,15 @@ func hear_noise(at: Vector3, loudness: float = 1.0) -> void:
 	begin_search(Vector3(snappedf(at.x,2), global_position.y, snappedf(at.z,2)))
 	state = &"search"
 
-func receive_alert(at: Vector3) -> void:
-	if active and state != &"dead" and state != &"downed" and state != &"engage":
-		begin_search(at)
+## A nearby ally reports a target. With a reporting ally and a navigation map, approach from
+## the side instead of along the ally's line of fire; otherwise walk straight to the report.
+func receive_alert(at: Vector3, reporter: Node3D = null) -> void:
+	if not active or state == &"dead" or state == &"downed" or state == &"engage" or cover_phase != &"":
+		return
+	begin_search(at)
+	state = &"search"
+	if reporter != null and reporter != self:
+		flank_point = find_flank_point(at, reporter.global_position)
 
 func _shoot(actor: Node3D) -> void:
 	shot_cooldown = fire_interval
@@ -603,14 +614,17 @@ func _reset_search() -> void:
 	search_left = max_search_seconds + look_seconds
 	search_phase = &"travel"
 	look_left = look_seconds
+	flank_point = Vector3.INF
 	_returning = true
 	_stuck_left = 1.5
 	_stuck_from = global_position
 
 func _search_travel(delta: float) -> void:
-	var remaining := last_known - global_position
+	var flanking := flank_point != Vector3.INF
+	var goal := flank_point if flanking else last_known
+	var remaining := goal - global_position
 	remaining.y = 0
-	var direction := route_toward(last_known, delta)
+	var direction := route_toward(goal, delta)
 	_stuck_left -= delta
 	if _stuck_left <= 0.0:
 		# Barely moved for a while: blocked or at the end of the walkable area.
@@ -619,12 +633,13 @@ func _search_travel(delta: float) -> void:
 			return
 		_stuck_left = 1.5
 		_stuck_from = global_position
-	if remaining.length() <= 1.2 or direction.length_squared() <= 0.0001 or search_left <= look_seconds:
+	if remaining.length() <= (0.6 if flanking else 1.2) or direction.length_squared() <= 0.0001 or search_left <= look_seconds:
 		_start_looking()
 		return
 	direction = direction.normalized()
-	velocity.x = direction.x * search_speed
-	velocity.z = direction.z * search_speed
+	var speed := flank_speed if flanking else search_speed
+	velocity.x = direction.x * speed
+	velocity.z = direction.z * speed
 	rotation.y = atan2(direction.x, direction.z)
 
 func _start_looking() -> void:
@@ -632,6 +647,12 @@ func _start_looking() -> void:
 	look_left = look_seconds
 	search_left = minf(search_left, look_seconds)
 	_look_yaw = rotation.y
+	if flank_point != Vector3.INF:
+		# Arrived on the flank: scan around the reported target, not the walking direction.
+		var toward := last_known - global_position
+		_look_yaw = atan2(toward.x, toward.z)
+		rotation.y = _look_yaw
+		flank_point = Vector3.INF
 
 ## Sweeps the body (and so the rifle and sight cone) left and right around the arrival heading.
 func _look_around(delta: float) -> void:
@@ -719,3 +740,41 @@ func _update_cover(delta: float) -> void:
 		cover_phase = &""
 		# Leave cover by moving to where the threat was last seen, which re-exposes this enemy.
 		begin_search(last_known)
+
+## A reachable spot beside the target, roughly square to the reporting ally's line, with a clear
+## view of the target, so the two enemies catch it from different sides. INF when none exists.
+func find_flank_point(target: Vector3, ally: Vector3) -> Vector3:
+	var map := get_world_3d().navigation_map
+	if NavigationServer3D.map_get_regions(map).is_empty():
+		return Vector3.INF
+	var space := get_world_3d().direct_space_state
+	var ally_line := ally - target
+	ally_line.y = 0.0
+	if ally_line.length_squared() < 0.01:
+		return Vector3.INF
+	ally_line = ally_line.normalized()
+	var aim := target + Vector3.UP * 1.0
+	var best := Vector3.INF
+	var best_length := INF
+	for radius in [7.0, 10.0, 13.0]:
+		for step in range(24):
+			var angle := TAU * step / 24.0
+			var offset := Vector3(cos(angle), 0.0, sin(angle))
+			if absf(offset.dot(ally_line)) > 0.5:
+				continue
+			var probe: Vector3 = target + offset * radius
+			var spot := NavigationServer3D.map_get_closest_point(map, probe)
+			if Vector2(spot.x - probe.x, spot.z - probe.z).length() > 0.5:
+				continue
+			var view := PhysicsRayQueryParameters3D.create(spot + Vector3.UP * 1.55, aim, 1, [get_rid()])
+			if not space.intersect_ray(view).is_empty():
+				continue
+			var path := NavigationServer3D.map_get_path(map, global_position, spot, true)
+			var length := 0.0
+			for index in range(1, path.size()):
+				length += path[index - 1].distance_to(path[index])
+			if path.is_empty() or length > max_flank_path or length >= best_length:
+				continue
+			best = spot
+			best_length = length
+	return best
