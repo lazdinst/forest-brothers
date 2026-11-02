@@ -49,6 +49,7 @@ func _run() -> void:
 	enemy.position = origin + Vector3(0, 0, 8)
 	world.add_child(enemy)
 	await _frames(3)
+	enemy.aim_spread_degrees = 0.0
 	enemy._shoot(player)
 	_check(feedback.indicators.size() == 1 and absf(absf(feedback.indicators[0].bearing) - PI) < 0.1, "Real enemy shot from behind shows a rear indicator")
 	var lengths := {}

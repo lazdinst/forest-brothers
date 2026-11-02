@@ -5,6 +5,7 @@ signal shot_fired(origin: Vector3)
 const WeaponState = preload("res://scripts/weapons/prototype_weapon_state.gd")
 const GroundEquipment = preload("res://scripts/inventory/ground_equipment.gd")
 const HitZones = preload("res://scripts/combat/hit_zones.gd")
+const GunshotSound = preload("res://scripts/combat/gunshot_sound.gd")
 const DEFAULT_DEFINITION = preload("res://weapons/svt_inspired_training.tres")
 const MAGAZINE_SHADER = preload("res://scripts/weapons/weapon_magazine.gdshader")
 @export var definition: Resource = DEFAULT_DEFINITION
@@ -285,16 +286,4 @@ func status_text() -> String:
 
 
 func _make_test_shot_sound() -> AudioStreamWAV:
-	var stream := AudioStreamWAV.new()
-	stream.format = AudioStreamWAV.FORMAT_16_BITS
-	stream.mix_rate = 22050
-	var bytes := PackedByteArray()
-	bytes.resize(2646 * 2)
-	var noise := RandomNumberGenerator.new()
-	noise.seed = 7331
-	for index in range(2646):
-		var t := float(index) / 22050.0
-		var sample := (noise.randf_range(-1.0, 1.0) * 0.65 + sin(t * TAU * 95.0) * 0.35) * exp(-t * 55.0)
-		bytes.encode_s16(index * 2, int(sample * 24000.0))
-	stream.data = bytes
-	return stream
+	return GunshotSound.stream()

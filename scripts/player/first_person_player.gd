@@ -10,6 +10,8 @@ const HitZones = preload("res://scripts/combat/hit_zones.gd")
 signal casualty(player, outcome: StringName)
 ## Presentation hook: which zone was struck and where the shot came from.
 signal hit_taken(zone: StringName, from: Vector3)
+## Presentation hook: a bullet passed close by at this point.
+signal bullet_passed(at: Vector3)
 var body = BodyHealth.new()
 var hit_zones
 var last_hit_zone: StringName = &""
@@ -381,6 +383,10 @@ func receive_hit(damage: float, at: Vector3, _normal: Vector3, source = null, zo
 		outcome = BodyHealth.KILLED
 	if outcome == BodyHealth.DOWNED or outcome == BodyHealth.KILLED:
 		_resolve_casualty(outcome)
+
+func near_miss(at: Vector3) -> void:
+	if body.is_alive():
+		bullet_passed.emit(at)
 
 func _resolve_casualty(outcome: StringName) -> void:
 	if outcome == BodyHealth.DOWNED:

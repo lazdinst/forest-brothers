@@ -22,6 +22,7 @@ func attach(owner_player: Node3D) -> void:
 	_sound.volume_db = -10.0
 	add_child(_sound)
 	player.hit_taken.connect(on_hit)
+	player.bullet_passed.connect(on_near_miss)
 
 ## Angle of a world point around the player: 0 ahead, positive to the right, ±PI behind.
 func bearing_to(world_position: Vector3) -> float:
@@ -34,6 +35,21 @@ func on_hit(zone: StringName, from: Vector3) -> void:
 		_sound.stream = HitSounds.stream(zone)
 		_sound.play()
 	_canvas.queue_redraw()
+
+var near_misses: int = 0
+
+## A positional crack at the closest point, so the player hears which side the shot passed.
+func on_near_miss(at: Vector3) -> void:
+	near_misses += 1
+	if DisplayServer.get_name() == "headless":
+		return
+	var crack := AudioStreamPlayer3D.new()
+	crack.stream = HitSounds.stream(&"crack")
+	crack.unit_size = 3.0
+	player.get_parent().add_child(crack)
+	crack.global_position = at
+	crack.finished.connect(crack.queue_free)
+	crack.play()
 
 func _process(delta: float) -> void:
 	if indicators.is_empty():

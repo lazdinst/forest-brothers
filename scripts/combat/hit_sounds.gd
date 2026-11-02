@@ -8,6 +8,8 @@ const PROFILES := {
 	&"torso": [68.0, 140.0, 0.55, 26.0, 0.2],
 	&"arms": [150.0, 310.0, 0.6, 40.0, 0.12],
 	&"legs": [120.0, 250.0, 0.6, 36.0, 0.14],
+	# Not a zone: the supersonic crack of a bullet passing close by.
+	&"crack": [2600.0, 5200.0, 0.85, 90.0, 0.06],
 }
 static var _cache := {}
 

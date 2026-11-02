@@ -7,6 +7,7 @@ const ART = preload("res://assets/characters/training_guard/idle_front_v1.png")
 const HitZones = preload("res://scripts/combat/hit_zones.gd")
 const BodyHealth = preload("res://scripts/combat/body_health.gd")
 const HitSounds = preload("res://scripts/combat/hit_sounds.gd")
+const GunshotSound = preload("res://scripts/combat/gunshot_sound.gd")
 const FIGURE_HEIGHT := 1.75
 @export var use_polygon: bool = false
 @export var character_scene: PackedScene
@@ -27,6 +28,13 @@ var targets: Array[Node3D] = []
 var blood_enabled: bool = true
 # Placeholder pending owner tuning; matches the training rifle.
 var shot_damage: float = 40.0
+# Aim limits, placeholders pending owner tuning. Spread is a cone half-angle in degrees.
+var aim_spread_degrees: float = 3.0
+var settled_spread_fraction: float = 0.35
+var settle_seconds: float = 4.0
+var moving_target_spread_degrees: float = 1.5
+var aim_time: float = 0.0
+var rng := RandomNumberGenerator.new()
 var visual: Node3D
 var sprite: Sprite3D
 var hit_zones
@@ -120,11 +128,13 @@ func _physics_process(delta: float) -> void:
 				spotted.emit(self, last_known)
 				_alert_cooldown = 4.0
 			reaction_left -= delta
+			aim_time += delta
 			if reaction_left <= 0.0 and shot_cooldown <= 0.0:
 				_shoot(seen)
 		else:
 			state = &"suspicious"
 	else:
+		aim_time = 0.0
 		recognition = maxf(0.0, recognition - delta * 0.5)
 		if search_left > 0.0:
 			state = &"search"
@@ -177,17 +187,25 @@ func _shoot(actor: Node3D) -> void:
 	var start := global_position + Vector3(0.2,1.25,0)
 	var end: Vector3 = actor.center_of_mass() if actor.has_method("center_of_mass") else actor.global_position + Vector3.UP * 1.0
 	var space := get_world_3d().direct_space_state
-	var result := space.intersect_ray(PhysicsRayQueryParameters3D.create(start,end,3,[get_rid()]))
+	var direction := _spread_direction((end - start).normalized(), shot_spread_degrees(actor))
+	var reach := start + direction * (start.distance_to(end) + 40.0)
+	var result := space.intersect_ray(PhysicsRayQueryParameters3D.create(start,reach,3,[get_rid()]))
 	var hit: bool = not result.is_empty() and result.collider == actor
 	# Damage goes to whatever the ray met, including other actors (friendly fire).
 	if not result.is_empty() and result.collider.has_method("receive_hit"):
 		var zone: StringName = &""
 		if "hit_zones" in result.collider and result.collider.hit_zones != null:
-			zone = HitZones.zone_along(space, result.collider, result.position, (end - start).normalized())
+			zone = HitZones.zone_along(space, result.collider, result.position, direction)
 			hit = hit and zone != &""
 		if zone != &"" or not ("hit_zones" in result.collider):
 			result.collider.receive_hit(shot_damage, result.position, result.normal, self, zone)
+	if not hit and actor.has_method("near_miss"):
+		var stop: Vector3 = reach if result.is_empty() else result.position
+		var closest := Geometry3D.get_closest_point_to_segment(end, start, stop)
+		if closest.distance_to(end) < 2.0:
+			actor.near_miss(closest)
 	fired.emit(self, actor, hit)
+	_gunshot(start)
 	var flash := MeshInstance3D.new()
 	var sphere := SphereMesh.new()
 	sphere.radius = 0.06
@@ -331,3 +349,37 @@ func _blood(at: Vector3, lethal: bool) -> void:
 		pool.global_position = Vector3(global_position.x,0.012,global_position.z)
 		pool.add_to_group("training_blood")
 		get_tree().create_timer(30).timeout.connect(pool.queue_free)
+
+## Current cone half-angle: wide on first exposure, tighter as the enemy keeps aiming, wider at a moving target.
+func shot_spread_degrees(actor: Node3D) -> float:
+	var settle := clampf(aim_time / settle_seconds, 0.0, 1.0)
+	var spread := aim_spread_degrees * lerpf(1.0, settled_spread_fraction, settle)
+	if "velocity" in actor:
+		spread += moving_target_spread_degrees * clampf(Vector2(actor.velocity.x, actor.velocity.z).length() / 5.0, 0.0, 1.0)
+	return spread
+
+func _spread_direction(aim: Vector3, degrees: float) -> Vector3:
+	if degrees <= 0.0:
+		return aim
+	var side := aim.cross(Vector3.UP)
+	if side.length_squared() < 0.0001:
+		side = aim.cross(Vector3.RIGHT)
+	side = side.normalized()
+	var up := side.cross(aim).normalized()
+	# Uniform over the cone's disc, so most shots land near the centre but some go wide.
+	var radius := tan(deg_to_rad(degrees)) * sqrt(rng.randf())
+	var turn := rng.randf() * TAU
+	return (aim + (side * cos(turn) + up * sin(turn)) * radius).normalized()
+
+## Positional report so players can locate the shooter by ear.
+func _gunshot(at: Vector3) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var report := AudioStreamPlayer3D.new()
+	report.stream = GunshotSound.stream()
+	report.unit_size = 18.0
+	report.max_distance = 200.0
+	get_parent().add_child(report)
+	report.global_position = at
+	report.finished.connect(report.queue_free)
+	report.play()

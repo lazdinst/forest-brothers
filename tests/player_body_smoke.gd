@@ -66,6 +66,7 @@ func _run() -> void:
 	enemy.position = Vector3(0, 0, -8)
 	world.add_child(enemy)
 	await _frames(3)
+	enemy.aim_spread_degrees = 0.0
 	enemy._shoot(player)
 	_check(player.last_hit_zone == &"torso" and player.body.health[&"torso"] < 80, "Enemy shot at centre mass hits the player's torso zone")
 	for failure in failures:
