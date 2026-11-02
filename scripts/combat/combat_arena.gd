@@ -3,12 +3,17 @@ extends Node3D
 ## The navigation map belongs to this scene only. Layout is a placeholder for owner review.
 const PlayerScene = preload("res://scenes/player/first_person_player.tscn")
 const Enemy = preload("res://scripts/combat/enemy_actor.gd")
+const AmmoCrate = preload("res://scripts/combat/ammo_crate.gd")
+const MovementHud = preload("res://ui/components/tactical_movement_hud.gd")
 const SIZE := 70.0
 const PLAYER_SPAWN := Vector3(0, 0.02, 28)
 const ENEMY_SPAWNS: Array[Vector3] = [Vector3(-6, 0, -12), Vector3(8, 0, -20)]
 var player
 var enemies: Array = []
 var navigation: NavigationRegion3D
+var ammo_crate: StaticBody3D
+var _prompt: Label
+var _crosshair: Label
 
 func _ready() -> void:
 	_lighting()
@@ -27,11 +32,17 @@ func _ready() -> void:
 	# Low cover: crouch height, so it hides a crouched body but not a standing one.
 	for spot in [Vector3(-12, 0.5, 14), Vector3(-4, 0.5, 18), Vector3(7, 0.5, 12), Vector3(-15, 0.5, -6), Vector3(4, 0.5, -6), Vector3(-2, 0.5, -24)]:
 		_box("Crate", spot, Vector3(1.6, 1.0, 1.0), Color(0.42, 0.33, 0.22))
+	ammo_crate = AmmoCrate.new()
+	ammo_crate.name = "AmmoCrate"
+	ammo_crate.position = Vector3(3, 0.35, 26)
+	_dress_box(ammo_crate, Vector3(0.9, 0.7, 0.6), Color(0.3, 0.36, 0.22))
+	navigation.add_child(ammo_crate)
 	_bake_navigation()
 	player = PlayerScene.instantiate()
 	player.name = "Player"
 	player.position = PLAYER_SPAWN
 	add_child(player)
+	_hud()
 	reset_enemies()
 
 func reset_enemies() -> void:
@@ -72,19 +83,7 @@ func _box(box_name: String, at: Vector3, size: Vector3, color: Color) -> StaticB
 	body.name = box_name
 	body.collision_layer = 1
 	body.position = at
-	var collision := CollisionShape3D.new()
-	var shape := BoxShape3D.new()
-	shape.size = size
-	collision.shape = shape
-	body.add_child(collision)
-	var mesh := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = size
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	box.material = material
-	mesh.mesh = box
-	body.add_child(mesh)
+	_dress_box(body, size, color)
 	# Children of the region are its baking source.
 	navigation.add_child(body)
 	return body
@@ -101,3 +100,52 @@ func _lighting() -> void:
 	environment.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.environment.ambient_light_color = Color(0.55, 0.55, 0.52)
 	add_child(environment)
+
+func _dress_box(body: StaticBody3D, size: Vector3, color: Color) -> void:
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	collision.shape = shape
+	body.add_child(collision)
+	var mesh := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = size
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	box.material = material
+	mesh.mesh = box
+	body.add_child(mesh)
+
+## Same compact movement instrument as the training yard, plus crosshair and interaction prompt.
+func _hud() -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "HUD"
+	add_child(layer)
+	var instrument = MovementHud.new()
+	instrument.name = "TacticalMovement"
+	instrument.player = player
+	layer.add_child(instrument)
+	_crosshair = Label.new()
+	_crosshair.text = "+"
+	_crosshair.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	_crosshair.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_crosshair.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_crosshair.size = Vector2(16, 32)
+	_crosshair.position -= _crosshair.size / 2.0
+	layer.add_child(_crosshair)
+	_prompt = Label.new()
+	_prompt.set_anchors_preset(Control.PRESET_CENTER)
+	_prompt.offset_left = -300
+	_prompt.offset_right = 300
+	_prompt.offset_top = 40
+	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_prompt.add_theme_color_override("font_outline_color", Color.BLACK)
+	_prompt.add_theme_constant_override("outline_size", 4)
+	layer.add_child(_prompt)
+
+func _process(_delta: float) -> void:
+	if player == null or _prompt == null:
+		return
+	var mouse_free := Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and DisplayServer.get_name() != "headless"
+	_prompt.text = "Click to look around" if mouse_free else player.get_interaction_prompt()
+	_crosshair.visible = not player.is_aiming and player.weapon.aim_fraction < 0.05

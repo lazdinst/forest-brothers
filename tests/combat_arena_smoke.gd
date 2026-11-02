@@ -16,6 +16,15 @@ func _run() -> void:
 	_check(arena.navigation.navigation_mesh.get_polygon_count() > 0, "Arena bakes a navigation map")
 	_check(arena.player != null and arena.enemies.size() == 2, "Arena spawns a player and two enemies")
 	_check(arena.enemies.all(func(e): return e.active), "Arena enemies are active by default")
+	_check(arena.get_node("HUD/TacticalMovement") != null, "Arena shows the stance and stamina instrument")
+	var crate = arena.ammo_crate
+	var carried: int = arena.player.weapon.state.loose_rounds
+	var before: int = crate.rounds + carried
+	var moved: int = crate.take(arena.player)
+	_check(moved == 10 and arena.player.weapon.state.loose_rounds == carried + 10, "Ammo crate moves a handful of loose cartridges")
+	_check(crate.rounds + arena.player.weapon.state.loose_rounds == before, "Crate rounds are conserved, not created")
+	crate.rounds = 0
+	_check(crate.take(arena.player) == 0 and crate.get_prompt().contains("empty"), "Empty crate gives nothing")
 	# Pathing: send one enemy to a point straight behind the screening wall.
 	var walker = arena.enemies[0]
 	arena.enemies[1].active = false
@@ -44,7 +53,7 @@ func _run() -> void:
 	for failure in failures:
 		push_error(failure)
 	if failures.is_empty():
-		print("PASS: arena navigation bake, spawns, active enemies, bent route, reaches goal around the wall")
+		print("PASS: arena navigation bake, spawns, active enemies, HUD, finite ammo crate, bent route, reaches goal around the wall")
 	arena.queue_free()
 	await process_frame
 	quit(0 if failures.is_empty() else 1)
