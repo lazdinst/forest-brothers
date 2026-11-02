@@ -49,6 +49,11 @@ var spare_magazines: Array[int] = [10, 10, 10]
 var reload_seconds: float = 3.0
 var reload_left: float = 0.0
 var fire_interval: float = 1.1
+var search_speed: float = 0.8
+var _path := PackedVector3Array()
+var _path_index: int = 0
+var _path_goal := Vector3.INF
+var _repath_left: float = 0.0
 var visual: Node3D
 var sprite: Sprite3D
 ## Placeholder weapon proxy, not character art: shows where the enemy faces and aims.
@@ -172,12 +177,14 @@ func _physics_process(delta: float) -> void:
 		if search_left > 0.0:
 			state = &"search"
 			search_left -= delta
-			var direction := last_known - global_position
-			direction.y = 0
-			if direction.length() > 1.0:
+			var remaining := last_known - global_position
+			remaining.y = 0
+			var direction := route_toward(last_known, delta)
+			if remaining.length() > 1.0 and direction.length_squared() > 0.0001:
 				direction = direction.normalized()
-				velocity.x = direction.x * 0.8
-				velocity.z = direction.z * 0.8
+				velocity.x = direction.x * search_speed
+				velocity.z = direction.z * search_speed
+				rotation.y = atan2(direction.x, direction.z)
 		else:
 			state = &"patrol"
 			var destination := _home + Vector3(_patrol_sign * 1.7,0,0)
@@ -507,3 +514,28 @@ func _reload_sound() -> void:
 	clatter.global_position = global_transform * SHOULDER
 	clatter.finished.connect(clatter.queue_free)
 	clatter.play()
+
+## Flat heading toward the next waypoint on this scene's navigation map,
+## or straight at the goal in scenes without one (the camp annex keeps its old behaviour).
+func route_toward(goal: Vector3, delta: float) -> Vector3:
+	var straight := goal - global_position
+	straight.y = 0.0
+	var map := get_world_3d().navigation_map
+	if NavigationServer3D.map_get_regions(map).is_empty():
+		return straight
+	_repath_left -= delta
+	if _path_goal.distance_to(goal) > 0.5 or _repath_left <= 0.0:
+		_path = NavigationServer3D.map_get_path(map, global_position, goal, true)
+		_path_index = 0
+		_path_goal = goal
+		_repath_left = 1.0
+	if _path.is_empty():
+		return straight
+	while _path_index < _path.size():
+		var leg := _path[_path_index] - global_position
+		leg.y = 0.0
+		if leg.length() > 0.35:
+			return leg
+		_path_index += 1
+	# Path finished; the goal itself may be off the walkable area (inside a wall), so stop here.
+	return Vector3.ZERO

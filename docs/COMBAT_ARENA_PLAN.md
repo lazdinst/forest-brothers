@@ -45,10 +45,11 @@ Each chunk has a headless check under `tests/`. Headless checks do not establish
 | 6 | Enemy aim cone: 3° on first exposure, tightening to 35% over 4 s, +1.5° against a moving target. Positional enemy gunfire and near-miss cracks within 2 m. | `enemy_aim_smoke` |
 | 7 | Placeholder rifle proxy on the true facing: lowered while calm, raised while engaging. Shots leave from a facing-relative shoulder; flash at the muzzle. Sprite dims when the body faces away. | `enemy_readability_smoke` |
 | 8 | Finite magazines (10 rounds, 3 spares, 3 s reload). Reload lowers the rifle and plays a positional clatter. Partial magazines are retained; empty enemies stop firing; rounds are conserved. | `enemy_reload_smoke` |
+| 9 | Blockout arena `scenes/combat/combat_arena.tscn` (grey boxes: screening wall, farmhouse shell with doorway, crate cover) with a navigation map baked at load. Two enemies, active by default. Searching enemies follow navigation paths and face their route; scenes without a navigation map (the camp annex) keep straight-line movement. Launch directly: `<godot> --path . res://scenes/combat/combat_arena.tscn`. No menu or route entry yet (open question 9). | `combat_arena_smoke` |
 
 Placeholder values: zone maximums head 35, torso 80, arms 60, legs 65; rifle and enemy damage 40; enemy bleed-out 30 s; player bleed-out 60 s. Arms and legs are each one zone (left/right still open).
 
-Not yet built: revival, limb effects, lean-following player zones, the arena scene and navigation, cover/flank/search AI, archetypes, loot drops, real sprites.
+Not yet built: revival, limb effects, lean-following player zones, cover/flank/search AI, archetypes, loot drops, real sprites.
 
 ## 4. What makes the fight feel like Tarkov (proposed)
 
