@@ -13,6 +13,7 @@ const AmmunitionArt = preload("res://ui/inventory/ammunition_art.gd")
 const WeaponSlot = preload("res://ui/inventory/inventory_weapon_slot.gd")
 const MenuModal = preload("res://ui/components/menu_modal.gd")
 const Inventory = preload("res://scripts/inventory/ammunition_inventory.gd")
+const ItemCard = preload("res://ui/inventory/inventory_item_card.gd")
 
 var data: Dictionary
 var composition: Control
@@ -30,6 +31,8 @@ var rifle_name: Label
 var rifle_art
 var rifle_status: Label
 var ammunition_status: Label
+var item_menu: PopupMenu
+var _menu_actions: Array[StringName] = []
 var _seen_revision := -1
 var _appearance
 
@@ -126,6 +129,8 @@ func _build() -> void:
 	rifle_button = _button(character,"",Vector2(0,520),Vector2(498,114),_select_weapon)
 	rifle_button.set_script(WeaponSlot)
 	rifle_button.set("weapon_state",weapon_state)
+	rifle_button.set_process(true)
+	rifle_button.menu_requested.connect(func(at: Vector2): _open_menu_for(weapon_state.inventory.active_weapon_id,at))
 	rifle_name = _label(rifle_button,data.rifle,Vector2(20,5),460,16)
 	rifle_art = AmmunitionArt.new()
 	rifle_art.kind = "rifle"
@@ -140,21 +145,25 @@ func _build() -> void:
 	_label(carried,"Four slots · up to four items",Vector2(0,75),420,16)
 	pocket_grid = Grid.new()
 	pocket_grid.position = Vector2(0,110)
-	pocket_grid.configure(4,1,96)
+	pocket_grid.configure(4,1,64)
 	carried.add_child(pocket_grid)
 	var pockets_fit: bool = pocket_grid.show_items(data.pocket_items)
 	pocket_grid.item_selected.connect(_select_item)
+	pocket_grid.item_menu_requested.connect(_open_item_menu)
+	pocket_grid.drop_validator = _can_drop_in_grid.bind(&"pocket")
 	pocket_grid.item_dropped.connect(_drop_in_grid.bind(&"pocket"))
 	_label(carried,"RIFLE & AMMUNITION",Vector2(455,45),470,20)
 	ammunition_status = _label(carried,"",Vector2(455,87),470,18)
 	_label(carried,"03  /  PACK SPACE",Vector2(0,238),920,20)
-	_label(carried,"One item per square · total pack capacity under review",Vector2(0,269),920,16)
+	_label(carried,"Pack space · total capacity under review",Vector2(0,269),920,16)
 	pack_grid = Grid.new()
 	pack_grid.position = Vector2(0,305)
-	pack_grid.configure(9,4,90)
+	pack_grid.configure(9,4,64)
 	carried.add_child(pack_grid)
 	var pack_fits: bool = pack_grid.show_items(data.pack_items)
 	pack_grid.item_selected.connect(_select_item)
+	pack_grid.item_menu_requested.connect(_open_item_menu)
+	pack_grid.drop_validator = _can_drop_in_grid.bind(&"pack")
 	pack_grid.item_dropped.connect(_drop_in_grid.bind(&"pack"))
 	var footer := _frame(Vector2(24,829),Vector2(1552,60))
 	detail = _label(footer,"Select equipment or supplies to inspect. All equipment belongs to the group.",Vector2(0,-4),1490,17)
@@ -172,6 +181,14 @@ func _build() -> void:
 	column.add_child(split_amount)
 	column.move_child(split_amount,2)
 	split_amount.hide()
+	item_menu = PopupMenu.new()
+	item_menu.add_theme_font_size_override("font_size",16)
+	item_menu.add_theme_color_override("font_color",JournalTheme.INK)
+	item_menu.add_theme_color_override("font_hover_color",JournalTheme.PAPER)
+	item_menu.add_theme_stylebox_override("panel",ItemCard.style(Color("efe2c8"),JournalTheme.INK))
+	item_menu.add_theme_stylebox_override("hover",ItemCard.style(JournalTheme.BURGUNDY,JournalTheme.BURGUNDY))
+	item_menu.id_pressed.connect(func(index: int): _inventory_action(_menu_actions[index]))
+	add_child(item_menu)
 
 func _refresh() -> void:
 	data = Snapshot.from_state(weapon_state,_appearance,bool(data.demo))
@@ -188,22 +205,51 @@ func _refresh() -> void:
 	_seen_revision = weapon_state.revision
 
 func _select_weapon() -> void:
-	selected_id = weapon_state.inventory.active_weapon_id
-	_show_context()
+	_select(weapon_state.inventory.active_weapon_id)
 
-func _show_context() -> void:
-	var item = weapon_state.inventory.items.get(selected_id)
-	if item == null: return
+func _select_item(item: Dictionary) -> void:
+	_select(StringName(item.id))
+
+## Left click only marks the item and describes it in the lower strip.
+func _select(id: StringName) -> void:
+	selected_id = id
+	pocket_grid.select(id)
+	pack_grid.select(id)
+	var entry := _describe(id)
+	if not entry.is_empty(): detail.text = "%s  /  %s  ·  right-click for actions" % [entry.heading,entry.description]
+
+func _open_item_menu(item: Dictionary, at: Vector2) -> void:
+	_open_menu_for(StringName(item.id),at)
+
+## Right click opens a small menu at the cursor instead of the full-screen action list.
+func _open_menu_for(id: StringName, at: Vector2) -> void:
+	_select(id)
+	var entry := _describe(id)
+	if entry.is_empty(): return
+	item_menu.clear()
+	_menu_actions.clear()
+	for choice in entry.choices:
+		item_menu.add_item(choice.caption,_menu_actions.size())
+		_menu_actions.append(choice.id)
+	item_menu.reset_size()
+	item_menu.popup(Rect2i(Vector2i(at),Vector2i.ZERO))
+
+func _describe(id: StringName) -> Dictionary:
+	var item = weapon_state.inventory.items.get(id)
+	if item == null: return {}
 	var choices: Array = []
 	var heading := "Rifle"
 	var gun = weapon_state.inventory.weapon()
 	var description := "Chamber: " + ("loaded" if gun != null and gun.chambered_round != null else "empty")
-	split_amount.hide()
+	if item is Inventory.MagazineInstance:
+		heading = item.label
+		description = weapon_state.inventory.knowledge(item.id)
+	elif item is Inventory.AmmoStack:
+		heading = "Loose cartridges"
+		description = "%d cartridges · %s · one stack · maximum 32" % [item.quantity,str(weapon_state.inventory.ammo_definitions[item.ammo_type_id].caliber)]
 	if weapon_state.busy != &"":
 		choices.append({"id":&"cancel_action","caption":"Cancel current action"})
 	elif item is Inventory.MagazineInstance:
-		heading = item.label
-		description = weapon_state.inventory.knowledge(item.id)
 		choices.append({"id":&"inspect","caption":"Inspect magazine"})
 		if item.location.kind == &"magwell": choices.append({"id":&"remove_magazine","caption":"Remove magazine"})
 		else:
@@ -212,13 +258,7 @@ func _show_context() -> void:
 			choices.append({"id":&"unload","caption":"Unload cartridges"})
 			choices.append({"id":&"drop","caption":"Drop magazine"})
 	elif item is Inventory.AmmoStack:
-		heading = "Loose cartridges"
-		description = "%d cartridges · %s · one stack · maximum 32" % [item.quantity,str(weapon_state.inventory.ammo_definitions[item.ammo_type_id].caliber)]
-		if item.quantity > 1:
-			split_amount.max_value = item.quantity-1
-			split_amount.value = mini(10,item.quantity-1)
-			split_amount.show()
-			choices.append({"id":&"split","caption":"Split stack"})
+		if item.quantity > 1: choices.append({"id":&"split_prompt","caption":"Split stack…"})
 		choices.append({"id":&"merge","caption":"Merge into a matching partial stack"})
 		choices.append({"id":&"drop","caption":"Drop stack"})
 	elif item is Inventory.WeaponInstance:
@@ -230,14 +270,25 @@ func _show_context() -> void:
 				choices.append({"id":&"inspect_loaded","caption":"Inspect inserted magazine"})
 				choices.append({"id":&"remove_magazine","caption":"Remove inserted magazine"})
 		choices.append({"id":&"drop","caption":"Drop rifle with its contents"})
-	choices.append({"id":&"back","caption":"Back"})
-	context.present(heading,description,choices)
+	return {"heading":heading,"description":description,"choices":choices}
+
+## Only splitting needs a typed amount, so it keeps the paper dialog.
+func _show_split_dialog() -> void:
+	var stack = weapon_state.inventory.items.get(selected_id) as Inventory.AmmoStack
+	if stack == null or stack.quantity < 2: return
+	split_amount.max_value = stack.quantity-1
+	split_amount.value = mini(10,stack.quantity-1)
+	split_amount.show()
+	context.present("Split stack","%d cartridges in this stack" % stack.quantity,[{"id":&"split","caption":"Split"},{"id":&"back","caption":"Back"}])
 
 func _inventory_action(action: StringName) -> void:
 	context.dismiss()
 	if action == &"back": return
 	if action == &"cancel_action": weapon_state.cancel_action()
 	elif weapon_state.busy != &"": weapon_state.reject("Finish or cancel the current action first")
+	elif action == &"split_prompt":
+		_show_split_dialog()
+		return
 	elif action == &"split":
 		weapon_state.inventory.split_stack(selected_id,int(split_amount.value))
 		weapon_state.message = weapon_state.inventory.error if weapon_state.inventory.error != "" else "Stack split"
@@ -257,7 +308,19 @@ func _inventory_action(action: StringName) -> void:
 	else: weapon_state.request_action(action,selected_id if action in [&"inspect",&"reload",&"pack",&"unload"] else &"",&"",action in [&"pack",&"unload"])
 	_refresh()
 
+## Preview only: the same checks the drop below will make, without changing anything.
+func _can_drop_in_grid(id: StringName, slot: int, target_id: StringName, container: StringName) -> bool:
+	if weapon_state.busy != &"": return false
+	var inventory = weapon_state.inventory
+	if target_id == id: return true
+	var source = inventory.items.get(id)
+	var target = inventory.items.get(target_id)
+	if source is Inventory.AmmoStack and target is Inventory.MagazineInstance: return inventory.can_load_round(target_id,id)
+	if source is Inventory.AmmoStack and target is Inventory.AmmoStack: return inventory.can_merge_stacks(id,target_id)
+	return inventory.can_move_item(id,Inventory.Location.new(container,inventory.owner_id,slot))
+
 func _drop_in_grid(id: StringName, slot: int, target_id: StringName, container: StringName) -> void:
+	if target_id == id: return
 	if weapon_state.busy != &"":
 		weapon_state.reject("Finish or cancel the current action first")
 		return
@@ -272,10 +335,6 @@ func _drop_in_grid(id: StringName, slot: int, target_id: StringName, container: 
 
 func _inspect(title: String, description: String) -> void:
 	detail.text = title + "  /  " + description
-
-func _select_item(item: Dictionary) -> void:
-	selected_id = StringName(item.id)
-	_show_context()
 
 func _input(event: InputEvent) -> void:
 	if visible and event.is_action_pressed("ui_cancel") and not event.is_echo():

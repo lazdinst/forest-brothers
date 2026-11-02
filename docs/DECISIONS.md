@@ -330,3 +330,9 @@ effects, bleed-out duration, enemy aim and ammunition values remain open
 placeholders. The owner directed implementation in small chunks on branch
 `combat/body-zones`, superseding the review hold on a common health system
 in CHARACTER_FREEZE_AND_COMBAT_SLICE.md. See COMBAT_ARENA_PLAN.md.
+
+## Tarkov-style inventory handling: multi-square items and rotation — 2026-11-02
+
+Status: owner-confirmed direction; sizes are placeholders.
+
+The owner clarified that one square per item was only an easy start. Items may occupy several pack squares and can be rotated, as in Escape from Tarkov. This supersedes the one-square rule in "Personal inventory scope and pocket capacity"; pockets stay four single squares in one row, so only 1 × 1 items fit there. Approved starting sizes: rifle 5 × 2 (pack only), magazine 1 × 1, cartridge stack 1 × 1. Right-click context menus replace the full-screen per-item action list, and drag-and-drop shows whether a drop is accepted before release. Secure containers, insurance, traders/prices, found-in-raid status, a private stash, remote camp access and weight remain out. Work proceeds in owner-approved chunks; see INVENTORY_UI_DESIGN.md.

@@ -42,24 +42,60 @@ func _run() -> void:
 	check(inv.insert_magazine(inv.initial_magazine_ids[0]),"Reinserting restores the same magazine ID")
 	preview._refresh()
 	for card in preview.pocket_grid.cards: check(card.size == Vector2.ONE*(preview.pocket_grid.cell-4),"One square per physical item")
+	check(preview.pack_grid.cell == 64 and preview.pocket_grid.cell == 64,"Compact 64-unit cells")
+	# Drag preview: green over free/compatible cells, red over occupied or incompatible ones.
+	var payload := {"inventory_item_id":str(b)}
+	var free_at: Vector2 = Vector2(2.5,1.5)*preview.pack_grid.cell
+	check(preview.pack_grid._can_drop_data(free_at,payload) and preview.pack_grid.hover_ok and preview.pack_grid._highlight.color == preview.pack_grid.ACCEPT,"Free pack cell previews an accepted drop")
+	var stack_slot: int = -1
+	for slot in preview.pocket_grid.slot_ids:
+		if StringName(preview.pocket_grid.slot_ids[slot]) != b: stack_slot = slot
+	var stack_at: Vector2 = Vector2(stack_slot+0.5,0.5)*preview.pocket_grid.cell
+	check(not preview.pocket_grid._can_drop_data(stack_at,payload) and preview.pocket_grid._highlight.color == preview.pocket_grid.REJECT,"Magazine over an occupied cartridge cell previews a rejection")
+	var stack_payload := {"inventory_item_id":str(preview.pocket_grid.slot_ids[stack_slot])}
+	var mag_at: Vector2 = Vector2(int(inv.magazine(b).location.slot)+0.5,0.5)*preview.pocket_grid.cell
+	check(not preview.pocket_grid._can_drop_data(mag_at,stack_payload),"Cartridges cannot preview loading into a full magazine")
+	preview.pocket_grid._notification(Control.NOTIFICATION_DRAG_END)
+	check(not preview.pocket_grid._highlight.visible,"Drop preview clears when the drag ends")
+	check(preview.rifle_button._can_drop_data(Vector2.ZERO,payload) and not preview.rifle_button._can_drop_data(Vector2.ZERO,stack_payload),"Rifle slot previews magazines only")
+	preview.rifle_button._notification(Control.NOTIFICATION_DRAG_END)
+	var dragged = preview.pocket_grid.cards[0].drag_preview()
+	check(dragged.get_child_count() == 1 and dragged.size.x > 0,"Drag preview shows the item picture")
+	dragged.free()
+	# Left click selects without opening anything; right click opens a small menu at the cursor.
+	var mag_card: Button
+	for card in preview.pocket_grid.cards:
+		if card.item_id == b: mag_card = card
+	mag_card.pressed.emit()
+	check(preview.selected_id == b and mag_card.selected and not preview.item_menu.visible and not preview.context.visible,"Left click only selects")
+	check(preview.detail.text.contains("Unknown"),"Selection describes magazine knowledge in the lower strip")
+	var right := InputEventMouseButton.new()
+	right.button_index = MOUSE_BUTTON_RIGHT
+	right.pressed = true
+	right.position = Vector2(10,10)
+	mag_card._gui_input(right)
+	check(preview.item_menu.visible and preview._menu_actions.has(&"reload") and preview._menu_actions.has(&"inspect"),"Right click opens a context menu with magazine actions")
+	check(not preview.context.visible,"Context menu replaces the full-screen action list")
+	preview.item_menu.hide()
 	preview._drop_in_grid(b,5,&"",&"pack")
 	check(inv.magazine(b).location.kind == &"pack" and inv.magazine(b).location.slot == 5,"Drag handler moves the same magazine ID to a specific pack slot")
 	preview._drop_in_grid(b,0,&"",&"pocket")
 	var stack_id: StringName
 	for item in inv.items.values():
 		if item is Inventory.AmmoStack: stack_id = item.id
-	preview.selected_id = stack_id
+	preview._open_menu_for(stack_id,Vector2(100,100))
+	preview.item_menu.id_pressed.emit(preview._menu_actions.find(&"split_prompt"))
+	check(preview.context.visible and preview.split_amount.visible and preview.split_amount.max_value == 31,"Split from the menu asks for an amount")
 	preview.split_amount.value = 10
 	preview._inventory_action(&"split")
 	check(preview.pocket_grid.cards.size() == 3 and state.loose_rounds == 32,"UI split creates another physical stack and conserves rounds")
-	preview.selected_id = b
-	preview._show_context()
-	check(preview.context.message.text.begins_with("Unknown"),"Magazine context starts with unknown knowledge")
+	check(not preview.context.visible,"Split dialog closes after splitting")
 	if "--capture-inventory" in OS.get_cmdline_user_args():
 		await process_frame
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png(OS.get_environment("TEMP").path_join("forest-brothers-magazine-actions.png"))
-	preview._inventory_action(&"inspect")
+	preview._open_menu_for(b,Vector2(100,100))
+	preview.item_menu.id_pressed.emit(preview._menu_actions.find(&"inspect"))
 	await create_timer(0.95).timeout
 	check(inv.knowledge(b) == "Almost full","Inventory clock completes timed inspection on the actual state")
 	check(state.request_action(&"unload",b),"Unloading action begins")

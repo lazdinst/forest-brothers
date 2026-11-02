@@ -157,10 +157,26 @@ func occupant(location: Location, excluding: StringName = &"") -> Item:
 func valid_slot(location: Location) -> bool:
 	return location != null and location.owner_id == owner_id and location.kind in [&"pocket",&"pack"] and location.slot >= 0 and location.slot < (POCKET_CAPACITY if location.kind == &"pocket" else pack_capacity)
 
+## Side-effect-free checks so a view can preview whether a drop would be accepted.
+## The mutating commands below still validate on their own.
+func can_move_item(id: StringName, destination: Location) -> bool:
+	var item: Item = items.get(id)
+	return item != null and carried(item) and item.location.kind != &"magwell" and valid_slot(destination) and occupant(destination,id) == null
+
+func can_merge_stacks(source_id: StringName, target_id: StringName) -> bool:
+	var source := items.get(source_id) as AmmoStack
+	var target := items.get(target_id) as AmmoStack
+	return source != null and target != null and source != target and carried(source) and carried(target) and source.ammo_type_id == target.ammo_type_id and target.quantity < 32
+
+func can_load_round(magazine_id: StringName, stack_id: StringName) -> bool:
+	var mag := magazine(magazine_id)
+	var stack := items.get(stack_id) as AmmoStack
+	return mag != null and stack != null and carried(mag) and mag.location.kind != &"magwell" and carried(stack) and compatible(mag,stack.ammo_type_id) and mag.rounds.size() < mag.capacity
+
 func move_item(id: StringName, destination: Location) -> bool:
 	var item: Item = items.get(id)
 	if item == null or not carried(item) or item.location.kind == &"magwell": return fail("Remove the inserted magazine first")
-	if not valid_slot(destination) or occupant(destination,id) != null: return fail("That slot is unavailable")
+	if not can_move_item(id,destination): return fail("That slot is unavailable")
 	item.location = destination
 	_notify_changed()
 	return true
@@ -243,9 +259,9 @@ func merge_stacks(source_id: StringName, target_id: StringName) -> bool:
 	return true
 
 func load_round(magazine_id: StringName, stack_id: StringName) -> bool:
+	if not can_load_round(magazine_id,stack_id): return fail("Remove the magazine and use compatible cartridges")
 	var mag := magazine(magazine_id)
 	var stack := items.get(stack_id) as AmmoStack
-	if mag == null or stack == null or not carried(mag) or mag.location.kind == &"magwell" or not carried(stack) or not compatible(mag,stack.ammo_type_id) or mag.rounds.size() >= mag.capacity: return fail("Remove the magazine and use compatible cartridges")
 	mag.rounds.append(MagazineRound.new(stack.ammo_type_id))
 	stack.quantity -= 1
 	if stack.quantity == 0: items.erase(stack.id)

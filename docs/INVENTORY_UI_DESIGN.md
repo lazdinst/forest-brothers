@@ -130,3 +130,24 @@ and an approved character visual, and connect the existing local item commands t
 authenticated multiplayer and full campaign transactions. Local ammunition actions,
 equipping, drag/drop, ground recovery and equipment snapshot serialization exist;
 network synchronization and campaign casualty/save/rollback do not follow from them.
+
+## Tarkov-style handling (2026-11-02)
+
+The owner asked to follow Escape from Tarkov's inventory handling where it fits.
+Planned chunks, each with a headless check and owner approval before starting:
+
+1. Done: compact 64-unit flat cells (short name top-right, count bottom-right),
+   item-picture drag preview, green/red drop preview from side-effect-free rule
+   checks (`can_move_item`, `can_merge_stacks`, `can_load_round`), left-click
+   selects, right-click opens a small cursor menu. Only splitting keeps the paper
+   dialog because it needs an amount.
+2. Multi-square items and rotation (R while dragging). Approved placeholder sizes:
+   rifle 5 × 2, magazine 1 × 1, cartridge stack 1 × 1. Pockets stay 1 × 1.
+3. Shortcuts: ctrl-click pocket ↔ pack, alt-click insert magazine, shift-drag split,
+   Delete drop.
+4. Loading progress on the magazine cell; double-click inspect panel.
+5. Rifle slot drag both ways (stow in pack, drag back to equip).
+
+Left out: secure container, insurance, traders/prices, found-in-raid, private stash,
+remote camp access, weight, containers within containers. A nearby-loot panel
+would change the "only what is on the person" rule and needs owner approval.

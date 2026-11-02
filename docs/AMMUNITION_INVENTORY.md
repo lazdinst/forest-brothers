@@ -26,7 +26,8 @@ a carried magazine, and hold **T** to load the spare one cartridge at a time.
 K avoids C, which the movement work uses for stance control. Existing J clearing,
 B cleaning, G dirt testing, aiming, shooting, and action timelines remain.
 
-Press **Tab** for equipment. Click an item to open the shared paper action menu:
+Press **Tab** for equipment. Left-click selects an item and describes it in the lower
+strip. Right-click opens a small action menu at the cursor:
 
 - Magazine: inspect; insert/swap; fill; unload; drop. An inserted magazine offers
   inspection/removal and cannot also occupy a pocket.
@@ -37,7 +38,8 @@ Press **Tab** for equipment. Click an item to open the shared paper action menu:
 - During a timed action, the action menu offers cancellation. Before the effect
   marker nothing transfers; after it the completed transfer remains.
 
-Drag an item to a free pocket/pack square to move it. Drop cartridges on a carried
+Drag an item to a free pocket/pack square to move it. While dragging, the square
+under the cursor turns green if the drop would be accepted and red if not. Drop cartridges on a carried
 magazine to fill it, matching cartridge stacks onto one another to merge, and a
 magazine on the rifle slot to insert/swap. Occupied incompatible destinations reject.
 Each item uses one square. Pockets hold four items; pack capacity remains the
