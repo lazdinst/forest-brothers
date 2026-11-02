@@ -25,8 +25,9 @@ func _run() -> void:
 	root.add_child(world)
 	var player = world.get_node("Player")
 	await _frames(10)
-	await _place(player, Vector3(-11, 0.02, 8.3))
+	await _place(player, Vector3(-11, 0.02, 9.0))
 	Input.action_press("move_forward")
+	await _frames(18) # Acceleration run-up before jumping the hurdle.
 	Input.action_press("jump")
 	await _frames(2)
 	Input.action_release("jump")
@@ -36,7 +37,7 @@ func _run() -> void:
 	await _place(player, Vector3(-11, 0.02, -3.8))
 	Input.action_press("crouch")
 	Input.action_press("move_forward")
-	await _frames(60)
+	await _frames(90)
 	Input.action_release("move_forward")
 	Input.action_release("crouch")
 	await _frames(12)
@@ -57,7 +58,14 @@ func _run() -> void:
 	_check(player.camera.position.x < -0.30, "Lean freely away from the wall")
 	Input.action_release("lean_left")
 	await _place(player, Vector3(-11, 0.02, 4.7))
+	var before_vault: float = player.locomotion.legs
+	player.locomotion.legs = 0.0
+	player.locomotion.exhausted = true
+	_check(not player.try_vault() and not player.is_vaulting, "Exhaustion blocks a geometrically valid vault")
+	player.locomotion.legs = before_vault
+	player.locomotion.exhausted = false
 	_check(player.try_vault(), "Start vault at the low barrier")
+	_check(is_equal_approx(before_vault-player.locomotion.legs, player.movement_tuning.vault_cost), "Successful vault spends leg stamina exactly once")
 	await _frames(55)
 	_check(player.position.z < 3.0 and not player.is_vaulting, "Complete vault across the barrier")
 	await _place(player, Vector3(-11, 0.02, 0.9))
@@ -82,17 +90,27 @@ func _run() -> void:
 	var target = world.get_node("Course/Target2")
 	player.camera.look_at(target.global_position)
 	player.weapon.rng.seed = 12345
+	player.weapon.state.inventory.chamber()
 	player.weapon.command(&"fire")
 	await _frames(3)
 	_check(target.hit_count == 1 and player.weapon.hits == 1, "Camera-directed shot must hit the aimed target")
-	_check(player.weapon.state.total_rounds() == 39, "Successful shot consumes one physical round")
+	_check(player.weapon.state.total_rounds() == 51, "Successful shot consumes one physical round")
 	var walker = world.get_node("Course/WalkingCivilian")
 	var before: Vector3 = walker.position
+	var saw_motion := false
+	var saw_atlas := false
+	var saw_frame_change := false
 	var first_frame = walker.get_node("FacingVisual/IdleSprite").texture
-	await _frames(13)
-	_check(walker.position.distance_to(before) > 0.05, "Walking civilian must physically move")
-	_check(walker.get_node("FacingVisual/IdleSprite").texture is AtlasTexture, "Walking character must use atlas frames")
-	_check(walker.get_node("FacingVisual/IdleSprite").texture != first_frame, "Walking atlas frame must advance")
+	# Observe through the authored one-second pause instead of assuming its phase.
+	for index in range(90):
+		await _frames(1)
+		var frame = walker.get_node("FacingVisual/IdleSprite").texture
+		saw_motion = saw_motion or walker.position.distance_to(before) > 0.05
+		saw_atlas = saw_atlas or frame is AtlasTexture
+		saw_frame_change = saw_frame_change or (frame is AtlasTexture and frame != first_frame)
+	_check(saw_motion, "Walking civilian must physically move")
+	_check(saw_atlas, "Walking character must use atlas frames")
+	_check(saw_frame_change, "Walking atlas frame must advance")
 	for failure in failures:
 		push_error(failure)
 	if failures.is_empty():

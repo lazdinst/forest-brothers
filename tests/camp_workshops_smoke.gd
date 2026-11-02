@@ -17,7 +17,7 @@ func _run() -> void:
 	_check(camp.start_job(&"water",&"well","water"),"Well starts")
 	camp.advance(2.1)
 	_check(camp.stock.count(&"water")==8,"Well produces water once")
-	_check(not camp.start_job(&"cook",&"cook","unassigned"),"Cooking requires assigned civilian")
+	_check(not camp.start_job(&"cook",&"cook","unassigned"),"Delegating cooking requires an assigned civilian")
 	camp.assign_role(&"resident_01",&"cook")
 	_check(camp.start_job(&"cook",&"cook","meal"),"Assigned cook starts meal")
 	_check(not camp.start_job(&"cook",&"cook","meal"),"Duplicate request cannot spend twice")
@@ -75,6 +75,39 @@ func _run() -> void:
 	camp.exercise_objective = true
 	camp.resolve_exercise(true)
 	_check(camp.quests_completed==1,"Objective completion awards the training reward once")
+	# Personal labor works even with no civilians and preserves job accounting.
+	var solo = Runtime.new()
+	solo.claim_cache()
+	solo.residents.clear()
+	solo.can_player_work = func(_player_id, _station_id): return true
+	_check(solo.start_job(&"cook",&"cook","self_cook",null,&"player_a"),"Player cooks without any civilians")
+	var reserved: Dictionary = solo.stock.quantities.duplicate()
+	_check(not solo.start_job(&"cook",&"cook","self_cook",null,&"player_a"),"Repeated personal request cannot double spend")
+	_check(not solo.start_job(&"water",&"well","overlap",null,&"player_a"),"A player cannot work two jobs at once")
+	_check(not solo.assist(&"cook") and solo.stock.quantities == reserved,"Personal labor cannot receive civilian assistance or double spend")
+	solo.advance(4.1)
+	solo.advance(4.1)
+	_check(solo.stock.count(&"food")==7 and solo.stock.count(&"water")==5 and solo.stock.count(&"meals")==1,"Personal cooking spends and produces exactly once")
+	var before_cancel: Dictionary = solo.stock.quantities.duplicate()
+	solo.start_job(&"cook",&"cook","leave",null,&"player_a")
+	solo.can_player_work = func(_player_id, _station_id): return false
+	solo.advance(5)
+	solo.cancel_player_jobs(&"player_a")
+	_check(solo.jobs.is_empty() and solo.stock.quantities == before_cancel,"Leaving cancels before completion and refunds once")
+	_check(not solo.start_job(&"cook",&"cook","remote",null,&"player_a") and solo.stock.quantities == before_cancel,"Remote personal work is rejected before spending")
+	solo.can_player_work = func(_player_id, _station_id): return true
+	_check(solo.start_job(&"upgrade",&"shelter","self_upgrade",null,&"player_a"),"Player can upgrade shelter without a builder")
+	solo.advance(7.1)
+	solo.place_plan(&"personal_rack",Vector2(-10,4))
+	_check(solo.start_job(&"rack",&"personal_rack","self_rack",null,&"player_a"),"Player can build a planned rack without a builder")
+	solo.advance(6.1)
+	_check(solo.shelter_tier==1 and solo.plans[&"personal_rack"].status==&"complete","Personal construction completes normally")
+	# A player and a civilian can work independently at different stations.
+	solo.residents[&"helper"] = {"role":&"cook","busy":"","fed":false}
+	solo.start_job(&"cook",&"cook","delegate")
+	_check(solo.start_job(&"water",&"well","self_water",null,&"player_a"),"Player works alongside an occupied civilian")
+	solo.cancel_player_jobs(&"player_a")
+	_check(solo.jobs.has(&"cook") and solo.residents[&"helper"].busy=="cook","Canceling personal work leaves civilian jobs intact")
 	for failure in failures:
 		push_error(failure)
 	if failures.is_empty():

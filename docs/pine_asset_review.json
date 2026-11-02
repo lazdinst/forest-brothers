@@ -1,0 +1,37 @@
+{
+	"adapter": "NVIDIA GeForce GTX 1080",
+	"assets": {
+		"forest_pine_v1": {
+			"draw_calls": 15.0,
+			"rendered_primitives": 188290.0,
+			"triangles": 50760
+		},
+		"pine_branch_broken_v2": {
+			"draw_calls": 15.0,
+			"rendered_primitives": 2670.0,
+			"triangles": 532
+		},
+		"pine_branch_dead_v2": {
+			"draw_calls": 9.0,
+			"rendered_primitives": 734.0,
+			"triangles": 362
+		},
+		"pine_fallen_v2": {
+			"draw_calls": 20.0,
+			"rendered_primitives": 27000.0,
+			"triangles": 5398
+		},
+		"pine_rotten_v2": {
+			"draw_calls": 14.0,
+			"rendered_primitives": 12652.0,
+			"triangles": 4214
+		},
+		"pine_snag_v2": {
+			"draw_calls": 9.0,
+			"rendered_primitives": 2686.0,
+			"triangles": 1338
+		}
+	},
+	"renderer": "gl_compatibility",
+	"viewport": "(1280, 720)"
+}

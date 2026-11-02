@@ -141,7 +141,7 @@ WeaponDefinition resources now own art, capacities, fire intervals, anchors, and
 
 The main yard's original box floor and four perimeter wall shapes are now disabled in favor of the environment baker's real terrain mesh/collision. Course, partition, door, pickups and range remain; the annex footprint is excluded from forest geometry/placement. `scripts/environment/forest_layout.gd` defines low relief, flat fixture clearances, trail and an excavated trench with a ramp/side branch. `bake_training_forest.gd` bakes shared resources and spatial MultiMesh batches ahead of play; it requires the actual Compatibility renderer because dummy headless rendering loses MultiMesh instance buffers on save. Headless physics checks still work on baked content. Manual environment overrides live outside the generated subtree. This is authored terrain/trench traversal, not runtime deformation, construction authority, persistence or networking.
 
-`training_course.gd` installs `scripts/camp/training_annex.gd` as a sibling after the original world is ready. The annex reuses its player and CampStock instance, with separate collision-bounded space and interactable entry/return tables. It does not replace the environment agent's main scene. Environment crates are optional display references; their source scenes are unchanged. Workshop geometry can be replaced independently of station behavior.
+`training_course.gd` installs `scripts/camp/training_annex.gd` as a sibling after the original world is ready. The annex reuses its player and CampStock instance, with a walkable west entrance and a terrain-matched connecting strip behind the firing lanes. Entry/return teleport tables have been removed. It does not replace the environment agent's main scene. Environment crates are optional display references; their source scenes are unchanged. Workshop geometry can be replaced independently of station behavior.
 
 `camp_runtime.gd` owns jobs, resident roles, plans, patient fixtures and manual exercise results. Atomic ledger exchanges prevent partial spends; jobs reserve up front, own workers and commit once, and cancellation refunds once. Request IDs reject duplicates. These are local correctness boundaries, not authenticated RPCs. Overhead planning changes the local camera and input, while work/AI time continues. No camp save or rollback is implemented.
 
@@ -150,3 +150,23 @@ The main yard's original box floor and four perimeter wall shapes are now disabl
 ## Rigged polygon character presentation
 
 A common PolygonCharacter adapter loads original civilian/field GLBs with Skeleton3D, skinned leg/torso/upper meshes and imported animation clips. The source/baker and import presets are versioned. Static/reset tracks are retained and vertex-palette material use is enforced by post-import. Player locomotion drives body state; weapon action progress samples body clips without changing ammunition rules. Local first-person mode renders legs and full-body shadows; planning restores the full model. Camp interaction/recruitment and opponent rules remain separate from visual replacement. One enemy and original yard actors retain sprites as references. Full first-person hand/weapon rigs, head-camera alignment, retargeting/IK, final art and multiplayer-aware visibility are pending. Polygon rig/pose/integration checks complement existing movement/camp/combat regressions.
+
+### Direct player work in training
+
+CampRuntime jobs now distinguish optional civilian worker IDs from personal player IDs. A rules callback validates station presence before reserving costs and while advancing personal work; interrupted work cancels/refunds once. One personal job per player prevents simultaneous manual labor, while civilian jobs can run independently. The local annex supplies a training player identity and validates panel/proximity, offers personal work first, and labels job progress by worker. Existing footprint checks apply to both construction paths. This remains session-local behavior, not authenticated multiplayer authority or final work animation/interaction design.
+
+
+### Per-character tactical movement
+
+`movement_tuning.gd` holds editable local balance and `tactical_movement.gd`
+holds each character's pace/stance intentions, two stamina pools and load rules.
+The existing player adapter owns input and collision-safe physical motion;
+the HUD reads it without spending resources. Actual grounded travel emits noise
+for the existing enemy listener. Arm fatigue moves the camera ray and aligned
+sights together; existing camera/muzzle cover checks are retained. Mass counts
+only physically carried inventory. These local rules are not authenticated
+multiplayer authority or persistent campaign state. See TACTICAL_MOVEMENT.md.
+
+## Physical ammunition implementation
+
+The scene-owned weapon state now contains typed physical inventory instances and explicit locations. Magazine round arrays are authoritative; a separate chamber feeds firing/cycling. Existing per-weapon timelines still commit effects once. The paper inventory sends ID-based commands, with the same rule clock temporarily driven by its fixed-tick adapter while local training is suspended. Camp ammo exchanges preflight stack space and service jobs bind the physical rifle ID. Versioned equipment serialization validates before applying, but is not a campaign save model, RPC authority or full rollback. See AMMUNITION_INVENTORY.md.

@@ -1,0 +1,9 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://scripts/environment/ground_v1.gdshader" id="1_nvqcp"]
+[ext_resource type="Texture2D" path="res://assets/environment/textures/moss_soil_v1.png" id="2_n00ip"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_nvqcp")
+shader_parameter/ground_texture = ExtResource("2_n00ip")

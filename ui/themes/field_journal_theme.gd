@@ -41,6 +41,10 @@ static func create() -> Theme:
 	theme.set_color("font_color", "Label", INK)
 	theme.set_color("font_color", "RichTextLabel", INK)
 	theme.set_stylebox("panel", "PanelContainer", paper(Color.WHITE, 20))
+	theme.set_stylebox("normal", "LineEdit", paper(Color.WHITE,10))
+	theme.set_stylebox("focus", "LineEdit", paper(Color("ead8b9"),10))
+	theme.set_color("font_color", "LineEdit", INK)
+	theme.set_color("caret_color", "LineEdit", INK)
 	theme.set_constant("separation", "VBoxContainer", 0)
 	_shared_theme = theme
 	return theme

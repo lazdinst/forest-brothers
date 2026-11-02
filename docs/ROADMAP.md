@@ -14,6 +14,20 @@ Before broad asset production, make a small reference-led art test in the confir
 
 Done when: the owner approves the visual direction, transparent sprites align and animate consistently, the character is readable against the environment, and camp assets remain readable from both first-person and a prototype planning camera. Record generation references/settings and processing steps. Exact resolution/direction counts must be selected through the test, not assumed final. This is a feasibility gate, not an art pack for the entire game.
 
+### 0A environment increment — visual proof awaiting review
+
+Birch detail follow-up: owner requested more realistic birches and detailed texture skins. A revised species candidate is integrated through shared resources: generated bark/leaf textures, smooth curved wood, tapered/drooping branches and folded cutout leaves. Close-up, seam and all-side GPU views were inspected; terrain/trench integration checks pass. Prompts/provenance and current GTX 1080 measurements are recorded in `ENVIRONMENT_ASSET_PIPELINE.md`. Owner appearance review and distance LOD remain pending.
+
+Root-flare follow-up: after positive texture feedback, replaced the birch's fin-like separate roots with a continuous low, asymmetric collar and a darker soil-contact transition. Three close root views were inspected and the training-environment check passed. Owner root-shape review remains pending.
+
+Owner requested an environment pipeline and ~100 × 100 m Latvian forest, with a visual-review gate before expansion. Phase 1 plan and Phase 2 candidate now exist in [ENVIRONMENT_ASSET_PIPELINE.md](ENVIRONMENT_ASSET_PIPELINE.md): original procedural spruce, moss/dirt, fern, boulder and crate resources in a separate playable 24 m clearing, reusing the player unchanged. Collision/traversal checks and actual GTX 1080 Compatibility frames were inspected; brief proof measurements are recorded there. F6 runs `scenes/environment/environment_visual_proof.tscn`; the training yard remains the main scene.
+
+Remaining: owner review/visual refinement, a dedicated `forest_biome_test.tscn` if still desired alongside F5, tent/camp environment art, LOD, winter demonstration, wind/fire and extended performance/motion/planning-camera acceptance. The environment milestone and art feasibility gate remain incomplete.
+
+Dense woodland follow-up: at the owner's explicit request for detail, subtle ground relief and a trench they can enter, the F5 scene now has an approximately 100 × 100 m terrain patch (annex footprint excluded), 229 generated trees across three species, fallen logs/stumps, moss clumps and dense small vegetation. Terrain and collision share one height recipe, with gentle rises/hollows and level fixture exclusions. A sloped entrance and connected branch make the excavated trench walkable. Seeded editor-time placement, spacing/undergrowth controls and spatial MultiMesh batches are implemented. Seven focused checks and GTX 1080 rendered views passed; see the pipeline's v2 validation record. No final art approval is implied.
+
+Owner follow-up: environment candidates now also appear in the main F5 weapon/control/animation testbed. A separate prop scene populates unused yard space and the existing floor uses moss/dirt material; course, targets, interactions and player/weapon implementations are preserved. Six focused checks and a rendered combined-yard inspection passed. The isolated F6 proof remains for controlled inspection.
+
 ## 1 — A room you can inhabit
 
 Status: implemented as a placeholder yard/storehouse scene; automated scene checks and a rendered-frame inspection passed. Owner movement/interaction playtesting passed (door and all three supplies). The engine scaffold supports the still-pending art feasibility work; it does not settle the final visual style.
@@ -125,3 +139,38 @@ Remaining migration work: refine/UV/paint one character, improve weights and foo
 The owner rejected 1E's visual result. Its rig checks remain useful technical evidence, but do not complete character art. Normal-play sprites are restored; rejected models remain opt-in and labeled in the display.
 
 Next: one convincing old civilian, a shared production rig and two outfits made from separate garments. Define body coverage, garment compatibility and a tested animation bone map. Show close/front/side/rear, crouch/aim/reload/death and planning views beside the sprite. Verify swapping clothes without duplicating the whole body, inspect deformation/clipping, measure representative dressed characters, and obtain visual feedback before replacing default sprites or producing a roster. See MODULAR_CHARACTER_BRIEF.md. This proof is pending; modular garment assets/runtime and final art are not implemented.
+
+### Continuous training map follow-up
+
+Owner requested one walkable training map. The original shooting/movement yard now connects to the camp/enemy area through a signed ground route and an open entrance, replacing travel tables. Automated two-way walking, station interaction and planning checks pass. Owner navigation/appearance review remains pending.
+
+### Training forest pine/deadwood art iteration
+
+Owner-directed pine upgrade is implemented in the current training scene: generated lower/upper bark and needle skins, fuller crown geometry, dead lower limbs, two fallen pines, three rotten mossy logs, two broken snags and twelve decorative branch props. Focused scene/traversal checks and GPU inspection passed, including vaulting and hollow-log collision. Current close-detail assets are more expensive; distance LOD and foliage/shadow optimization should precede further density expansion. Visual acceptance and prolonged motion review remain pending. See ENVIRONMENT_ASSET_PIPELINE.md; this is not full biome milestone completion.
+
+Training resource follow-up: fresh sessions now start with generous communal supplies for all eight resource categories. Shared icons, names and live counts appear in HUD/camp panels and inventory; the quartermaster cache remains an optional extra. Startup/pickup, workshop, camp and inventory checks pass. Campaign quantities remain undecided.
+
+Direct player work follow-up: cooking and construction no longer require civilians. Station panels offer personal work and optional civilian assignment. Personal tasks validate proximity, cancel/refund on interruption, and share existing costs/completion checks. Rule and real cooking-button integration checks pass, including zero-civilian cooking/building, parallel civilian work and one-time spends/refunds. Work animations, owner feel review and network authority remain pending.
+
+
+### Labeled nature asset review area
+
+Implemented `scenes/environment/environment_asset_test.tscn`: a separate F6 lane with 17 numbered/labeled current nature assets, older/detail status, full-scale spacing, unarmed movement and previous/next station jumps. Catalog coverage, nonoverlapping specimens, clear aisle, floor support and actual navigation passed checks; rendered tree/deadwood/ground-cover views were inspected on GTX 1080 Compatibility. This enables owner review of the remaining simpler meshes; it does not upgrade or retire them or complete the biome milestone.
+
+## Current priority — combat before more character art
+
+Owner froze character art development. Milestone 1F's further outfits/model refinement is paused. Visual validation is complete, original/rigged/dressed MPFB sources and animation recipe are preserved, and sprites are again the default with an optional MPFB enemy comparison. Next proposed work is the bounded supply-recovery combat drill described in CHARACTER_FREEZE_AND_COMBAT_SLICE.md. Review scope before any major combat refactor. Existing nature/environment and main-menu agent work is outside this change. Two-instance combat authority remains an early follow-up gate before content expansion.
+
+
+## 1G — Tactical movement training increment
+
+Owner-directed expansion of the current player: ten walking paces, seven
+collision-safe heights, prone, inertia, leg/arm stamina, carried mass penalties,
+pace-dependent hearing and supplied chalk silhouette HUD. Implemented locally;
+see [TACTICAL_MOVEMENT.md](TACTICAL_MOVEMENT.md) for inspection, controls,
+validation and provisional values. Owner feel acceptance remains pending.
+Character-art freeze and milestone 2's two-instance authority gate remain.
+
+## Physical ammunition inventory increment
+
+Owner-requested local extension of weapon training: stable stack/magazine/weapon IDs, 32-round stacks, explicit chambering, real pockets/pack locations, timed fill/unload/inspection, drag/drop, world recovery and categorical magazine knowledge now share the existing weapon rule owner. The ten-round kit has two full magazines and 32 loose rounds. Equipment JSON/file round-trip checks do not complete campaign persistence or host-crash rollback. This does not complete milestone 2/2B networking acceptance. Detailed behavior and validation are in AMMUNITION_INVENTORY.md; owner animation/game-feel review remains.

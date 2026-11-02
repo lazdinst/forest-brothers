@@ -2,6 +2,7 @@ extends RefCounted
 ## Session-local training rules. No renderer, singleton player, cash or save file.
 signal changed
 var can_complete: Callable
+var can_player_work: Callable
 const Stock = preload("res://scripts/state/camp_stock.gd")
 const RECIPES = {
 	&"water": {"label":"Draw water", "cost":{}, "output":{&"water":2}, "seconds":2.0, "role":&""},
@@ -22,7 +23,7 @@ var shelter_tier: int = 0
 var trench_complete: bool = false
 var patient: Dictionary = {"bleeding":true,"fracture":true,"recovery":30.0}
 var cache_claimed: bool = false
-var message: String = "Training supplies: claim the one-time quartermaster cache."
+var message: String = "Training stores are stocked. Extra supplies are available at the quartermaster."
 var _requests: Dictionary = {}
 var _sequence: int = 0
 var pending_recruits: Array[StringName] = []
@@ -56,7 +57,7 @@ func assign_role(resident_id: StringName, role: StringName) -> bool:
 	changed.emit()
 	return true
 
-func start_job(recipe_id: StringName, station_id: StringName, token: String, weapon_state = null) -> bool:
+func start_job(recipe_id: StringName, station_id: StringName, token: String, weapon_state = null, player_id: StringName = &"") -> bool:
 	if _requests.has(token):
 		return _fail("Duplicate request ignored")
 	_requests[token] = true
@@ -69,7 +70,7 @@ func start_job(recipe_id: StringName, station_id: StringName, token: String, wea
 		return _fail("Marked trench already dug")
 	if recipe_id == &"rack" and (not plans.has(station_id) or plans[station_id].status != &"planned"):
 		return _fail("Place a valid rack plan first")
-	if recipe_id == &"repair" and weapon_state == null:
+	if recipe_id == &"repair" and (weapon_state == null or not weapon_state.equipped()):
 		return _fail("Bring the carried rifle to this workbench")
 	if recipe_id == &"bandage" and not patient.bleeding:
 		return _fail("Patient is not bleeding")
@@ -80,7 +81,13 @@ func start_job(recipe_id: StringName, station_id: StringName, token: String, wea
 	if recipe_id == &"recover" and (patient.bleeding or patient.fracture):
 		return _fail("Treat the bleeding and fracture before recovery")
 	var worker: StringName = &""
-	if recipe.role != &"":
+	if player_id != &"":
+		for job in jobs.values():
+			if job.player == player_id:
+				return _fail("Finish or cancel your current task first")
+		if not can_player_work.is_valid() or not can_player_work.call(player_id,station_id):
+			return _fail("Stay at the station to do this work yourself")
+	elif recipe.role != &"":
 		for id in residents:
 			if residents[id].role == recipe.role and residents[id].busy == "":
 				worker = id
@@ -89,7 +96,8 @@ func start_job(recipe_id: StringName, station_id: StringName, token: String, wea
 			return _fail("Assign an available civilian as %s" % recipe.role)
 	if not stock.try_exchange(recipe.cost, {}):
 		return _fail("Insufficient communal supplies; costs are shown on the station")
-	jobs[station_id] = {"recipe":recipe_id,"left":recipe.seconds,"worker":worker,"cost":recipe.cost.duplicate(),"assisted":false,"weapon":weapon_state}
+	jobs[station_id] = {"recipe":recipe_id,"left":recipe.seconds,"worker":worker,"player":player_id,"cost":recipe.cost.duplicate(),"assisted":false,"weapon":weapon_state}
+	jobs[station_id]["weapon_item_id"] = weapon_state.inventory.active_weapon_id if weapon_state != null else &""
 	if worker != &"":
 		residents[worker].busy = String(station_id)
 	if recipe_id == &"rack":
@@ -103,6 +111,12 @@ func advance(delta: float) -> void:
 		patient.recovery = maxf(0.0, patient.recovery - delta)
 	for id in jobs.keys():
 		if not jobs.has(id):
+			continue
+		if jobs[id].player != &"" and (not can_player_work.is_valid() or not can_player_work.call(jobs[id].player,id)):
+			cancel_job(id)
+			continue
+		if jobs[id].recipe == &"repair" and (not jobs[id].weapon.equipped() or jobs[id].weapon.inventory.active_weapon_id != jobs[id].weapon_item_id):
+			cancel_job(id)
 			continue
 		jobs[id].left -= delta
 		if jobs[id].left <= 0.0:
@@ -122,7 +136,7 @@ func _finish_job(id: StringName) -> void:
 	var recipe: Dictionary = RECIPES[job.recipe]
 	stock.try_exchange({}, recipe.output)
 	match recipe.get("effect", &""):
-		&"repair": job.weapon.cleanliness = 1.0 # Clearing a jam is a separate action.
+		&"repair": job.weapon.inventory.items[job.weapon_item_id].condition = 1.0 # Clearing a jam is separate.
 		&"bandage": patient.bleeding = false
 		&"splint": patient.fracture = false
 		&"recover": patient.recovery = 0.0
@@ -146,6 +160,11 @@ func cancel_job(id: StringName) -> bool:
 	changed.emit()
 	return true
 
+func cancel_player_jobs(player_id: StringName) -> void:
+	for id in jobs.keys():
+		if jobs[id].player == player_id:
+			cancel_job(id)
+
 func assist(id: StringName) -> bool:
 	if not jobs.has(id) or jobs[id].worker == &"" or jobs[id].assisted:
 		return _fail("Assistance applies once to an active civilian job")
@@ -156,6 +175,8 @@ func assist(id: StringName) -> bool:
 	return true
 
 func withdraw_ammo(weapon_state, amount: int = 10) -> bool:
+	if weapon_state != null and not weapon_state.inventory.can_add_loose(amount):
+		return _fail("No room for cartridge stacks; communal stock unchanged")
 	if weapon_state == null or amount <= 0 or not stock.try_exchange({&"rounds":amount}, {}):
 		return _fail("Not enough communal cartridges")
 	weapon_state.loose_rounds += amount

@@ -42,6 +42,7 @@ func _run() -> void:
 	await _frames(30)
 	player.camera.look_at(world.get_node("Course/Target2").global_position)
 	player.weapon.rng.seed = 12345
+	player.weapon.state.inventory.chamber()
 	player.weapon.command(&"fire")
 	await _frames(18)
 	_check(world.get_node("Course/Target2").hit_count == 1, "Shot must hit the target beneath the iron-sight aim point")

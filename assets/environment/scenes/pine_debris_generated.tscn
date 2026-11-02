@@ -1,0 +1,151 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://assets/environment/scenes/pine_fallen_v2.tscn" id="1_4dgdb"]
+[ext_resource type="PackedScene" path="res://assets/environment/scenes/pine_rotten_v2.tscn" id="2_gqiom"]
+[ext_resource type="PackedScene" path="res://assets/environment/scenes/pine_snag_v2.tscn" id="3_3mjde"]
+[ext_resource type="PackedScene" path="res://assets/environment/scenes/pine_branch_dead_v2.tscn" id="4_a742n"]
+[ext_resource type="PackedScene" path="res://assets/environment/scenes/pine_branch_broken_v2.tscn" id="5_jy3k1"]
+
+[node name="PineDebris" type="Node3D" unique_id=1085484226]
+metadata/seed = 194611020
+metadata/placements = [{
+"angle": 2.4977881074491326,
+"asset": "pine_fallen_v2",
+"at": [17.941195, 0.2308304264598375, 14.758015],
+"id": "FallenPine01"
+}, {
+"angle": 2.0629111079565488,
+"asset": "pine_rotten_v2",
+"at": [18.547174, -0.04769798949740326, 33.473824],
+"id": "RottenPine01"
+}, {
+"angle": 6.154115204948896,
+"asset": "pine_fallen_v2",
+"at": [-25.403355, -0.4645914286430381, 7.4336886],
+"id": "FallenPine02"
+}, {
+"angle": 0.5825755962577019,
+"asset": "pine_rotten_v2",
+"at": [-24.633295, 0.0002124738784634178, 29.369576],
+"id": "RottenPine02"
+}, {
+"angle": 4.166973048181865,
+"asset": "pine_rotten_v2",
+"at": [-26.640556, 0.5576468378201079, -20.801495],
+"id": "RottenPine03"
+}, {
+"angle": 2.4091020343467817,
+"asset": "pine_snag_v2",
+"at": [15.276577, -0.5233662823039923, -33.661236],
+"id": "BrokenSnag01"
+}, {
+"angle": 4.307426291537503,
+"asset": "pine_snag_v2",
+"at": [-35.559673, 0.44438270114945977, -37.602196],
+"id": "BrokenSnag02"
+}, {
+"asset": "pine_branch_dead_v2",
+"at": [-33.906544, -0.2576844, 22.037685],
+"id": "LooseBranch02"
+}, {
+"asset": "pine_branch_broken_v2",
+"at": [-23.47759, 0.85314214, -28.437359],
+"id": "LooseBranch03"
+}, {
+"asset": "pine_branch_dead_v2",
+"at": [-28.327387, -0.738521, 10.832985],
+"id": "LooseBranch04"
+}, {
+"asset": "pine_branch_broken_v2",
+"at": [-20.822014, -0.21125947, 6.0586586],
+"id": "LooseBranch05"
+}, {
+"asset": "pine_branch_dead_v2",
+"at": [-34.596035, -0.6948906, -3.237173],
+"id": "LooseBranch06"
+}, {
+"asset": "pine_branch_broken_v2",
+"at": [-28.730465, 0.01807073, -14.920679],
+"id": "LooseBranch07"
+}, {
+"asset": "pine_branch_dead_v2",
+"at": [20.297916, 0.1785409, 13.339973],
+"id": "LooseBranch08"
+}, {
+"asset": "pine_branch_dead_v2",
+"at": [-34.75036, 0.24515928, 25.635471],
+"id": "LooseBranch10"
+}, {
+"asset": "pine_branch_dead_v2",
+"at": [-6.8096924, 0.33608827, 25.668068],
+"id": "LooseBranch12"
+}, {
+"asset": "pine_branch_broken_v2",
+"at": [-3.6871395, 0.31082764, 26.00246],
+"id": "LooseBranch13"
+}, {
+"asset": "pine_branch_dead_v2",
+"at": [-18.30217, 0.38655737, -31.741856],
+"id": "LooseBranch14"
+}, {
+"asset": "pine_branch_broken_v2",
+"at": [-21.007397, -0.7024583, 16.134224],
+"id": "LooseBranch15"
+}]
+
+[node name="FallenPine01" type="Node3D" parent="." unique_id=744757082 instance=ExtResource("1_4dgdb")]
+transform = Transform3D(-0.7996003, -0.018654034, -0.60024273, -0.023322849, 0.999728, 0, 0.6000794, 0.013999372, -0.7998179, 17.941195, 0.23083043, 14.758015)
+
+[node name="RottenPine01" type="Node3D" parent="." unique_id=1236411222 instance=ExtResource("2_gqiom")]
+transform = Transform3D(-0.47243926, 0.0069773723, -0.8813356, 0.014767213, 0.999891, 0, 0.8812395, -0.013014872, -0.4724908, 18.547174, -0.04769799, 33.473824)
+
+[node name="FallenPine02" type="Node3D" parent="." unique_id=2067887402 instance=ExtResource("1_4dgdb")]
+transform = Transform3D(0.98949414, -0.06583772, 0.12871203, 0.06638995, 0.99779373, 0, -0.12842806, 0.0085451845, 0.991682, -25.403355, -0.46459144, 7.4336886)
+
+[node name="RottenPine02" type="Node3D" parent="." unique_id=604757057 instance=ExtResource("2_gqiom")]
+transform = Transform3D(0.83503383, -0.00493852, -0.5501765, 0.005914052, 0.9999826, 0, 0.5501669, -0.0032537724, 0.83504844, -24.633295, 0.00021247388, 29.369576)
+
+[node name="RottenPine03" type="Node3D" parent="." unique_id=267418013 instance=ExtResource("2_gqiom")]
+transform = Transform3D(-0.5140501, 0.069847524, 0.85491157, 0.13463967, 0.9908947, 0, -0.8471273, 0.11510501, -0.51877373, -26.640556, 0.5576468, -20.801495)
+
+[node name="BrokenSnag01" type="Node3D" parent="." unique_id=1026455867 instance=ExtResource("3_3mjde")]
+transform = Transform3D(-0.7389212, -0.08248857, -0.6687235, -0.110944614, 0.9938267, 0, 0.66459525, 0.07419127, -0.7435112, 15.276577, -0.5233663, -33.661236)
+
+[node name="BrokenSnag02" type="Node3D" parent="." unique_id=813093426 instance=ExtResource("3_3mjde")]
+transform = Transform3D(-0.3923322, -0.036044784, 0.9191171, -0.09148783, 0.9958062, 0, -0.9152625, -0.08408803, -0.39398447, -35.559673, 0.4443827, -37.602196)
+
+[node name="LooseBranch02" type="Node3D" parent="." unique_id=197287018 instance=ExtResource("4_a742n")]
+transform = Transform3D(0.18190631, 0, -0.9833159, 0, 1, 0, 0.9833159, 0, 0.18190631, -33.906544, -0.2576844, 22.037685)
+
+[node name="LooseBranch03" type="Node3D" parent="." unique_id=855960823 instance=ExtResource("5_jy3k1")]
+transform = Transform3D(-0.992534, 0, -0.121968366, 0, 1, 0, 0.121968366, 0, -0.992534, -23.47759, 0.85314214, -28.437359)
+
+[node name="LooseBranch04" type="Node3D" parent="." unique_id=321925044 instance=ExtResource("4_a742n")]
+transform = Transform3D(-0.35581028, 0, -0.9345582, 0, 1, 0, 0.9345582, 0, -0.35581028, -28.327387, -0.738521, 10.832985)
+
+[node name="LooseBranch05" type="Node3D" parent="." unique_id=456976152 instance=ExtResource("5_jy3k1")]
+transform = Transform3D(-0.25343853, 0, -0.9673515, 0, 1, 0, 0.9673515, 0, -0.25343853, -20.822014, -0.21125947, 6.0586586)
+
+[node name="LooseBranch06" type="Node3D" parent="." unique_id=236648778 instance=ExtResource("4_a742n")]
+transform = Transform3D(0.72519636, 0, 0.6885421, 0, 1, 0, -0.6885421, 0, 0.72519636, -34.596035, -0.6948906, -3.237173)
+
+[node name="LooseBranch07" type="Node3D" parent="." unique_id=788960050 instance=ExtResource("5_jy3k1")]
+transform = Transform3D(0.95801455, 0, -0.28671956, 0, 1, 0, 0.28671956, 0, 0.95801455, -28.730465, 0.01807073, -14.920679)
+
+[node name="LooseBranch08" type="Node3D" parent="." unique_id=546821019 instance=ExtResource("4_a742n")]
+transform = Transform3D(-0.8271763, 0, 0.5619425, 0, 1, 0, -0.5619425, 0, -0.8271763, 20.297916, 0.1785409, 13.339973)
+
+[node name="LooseBranch10" type="Node3D" parent="." unique_id=707035929 instance=ExtResource("4_a742n")]
+transform = Transform3D(0.71068, 0, 0.7035154, 0, 1, 0, -0.7035154, 0, 0.71068, -34.75036, 0.24515928, 25.635471)
+
+[node name="LooseBranch12" type="Node3D" parent="." unique_id=594697700 instance=ExtResource("4_a742n")]
+transform = Transform3D(-0.88027763, 0, -0.474459, 0, 1, 0, 0.474459, 0, -0.88027763, -6.8096924, 0.33608827, 25.668068)
+
+[node name="LooseBranch13" type="Node3D" parent="." unique_id=1736708181 instance=ExtResource("5_jy3k1")]
+transform = Transform3D(-0.49971494, 0, -0.8661899, 0, 1, 0, 0.8661899, 0, -0.49971494, -3.6871395, 0.31082764, 26.00246)
+
+[node name="LooseBranch14" type="Node3D" parent="." unique_id=284145541 instance=ExtResource("4_a742n")]
+transform = Transform3D(-0.6487986, 0, 0.76096016, 0, 1, 0, -0.76096016, 0, -0.6487986, -18.30217, 0.38655737, -31.741856)
+
+[node name="LooseBranch15" type="Node3D" parent="." unique_id=994148168 instance=ExtResource("5_jy3k1")]
+transform = Transform3D(0.41239065, 0, 0.9110071, 0, 1, 0, -0.9110071, 0, 0.41239065, -21.007397, -0.7024583, 16.134224)

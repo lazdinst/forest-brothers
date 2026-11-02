@@ -3,9 +3,16 @@ extends CharacterBody3D
 
 # Rejected blockout stays opt-in until a replacement passes visual review.
 @export var use_polygon_body: bool = false
-@export var walk_speed: float = 3.3
-@export var sprint_speed: float = 5.2
-@export var crouch_speed: float = 1.5
+const Movement = preload("res://scripts/player/tactical_movement.gd")
+@export var movement_tuning: Resource = preload("res://scripts/player/movement_tuning.gd").new()
+var locomotion
+var is_prone: bool = false
+var _stance_pressed := false
+var _stance_scrolled := false
+var _sway := Vector2.ZERO
+var _sway_time := 0.0
+var _step_distance := 0.0
+signal movement_noise(origin: Vector3, loudness: float)
 @export var jump_speed: float = 5.5
 @export var mouse_sensitivity: float = 0.002
 @export var lean_distance: float = 0.32
@@ -32,6 +39,7 @@ var _head_probe := SphereShape3D.new()
 
 
 func _ready() -> void:
+	locomotion = Movement.new(movement_tuning)
 	_spawn_position = global_position
 	body_shape.shape = body_shape.shape.duplicate()
 	_head_probe.radius = 0.12
@@ -54,12 +62,35 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		return
-	if event is InputEventMouseButton and event.pressed and not controls_active():
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and not controls_active():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		return
 	if not controls_active():
 		return
-	if event is InputEventMouseMotion:
+	if event.is_action("stance_adjust"):
+		if event.is_action_pressed("stance_adjust") and not event.is_echo():
+			_stance_pressed = true
+			_stance_scrolled = false
+		elif event.is_action_released("stance_adjust"):
+			if _stance_pressed and not _stance_scrolled and not is_vaulting:
+				locomotion.prone = false
+				locomotion.stance_level = 1 if locomotion.stance_level == 7 else 7
+			_stance_pressed = false
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		var step := 1 if event.button_index == MOUSE_BUTTON_WHEEL_UP else -1
+		if _stance_pressed and Input.is_action_pressed("stance_adjust"):
+			_stance_scrolled = true
+			if not is_vaulting and not locomotion.prone:
+				locomotion.stance_level = clampi(locomotion.stance_level + step, 1, 7)
+		else:
+			locomotion.adjust_speed(step)
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("slow_walk") and not event.is_echo():
+		locomotion.toggle_slow()
+	elif event.is_action_pressed("prone") and not event.is_echo():
+		toggle_prone()
+	elif event is InputEventMouseMotion:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		camera.rotation.x = clampf(camera.rotation.x - event.relative.y * mouse_sensitivity, -1.45, 1.45)
 	elif event.is_action_pressed("interact"):
@@ -76,6 +107,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		weapon.command(&"dirty")
 	elif event.is_action_pressed("inspect_weapon"):
 		weapon.command(&"inspect")
+	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_K:
+		weapon.command(&"chamber")
 	elif event.is_action_pressed("reset_position"):
 		global_position = _spawn_position
 		velocity = Vector3.ZERO
@@ -84,45 +117,116 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	var active := controls_active()
-	_update_stance(active)
-	is_aiming = active and Input.is_action_pressed("aim") and not is_vaulting and weapon.state.busy == &""
+	if not active or not Input.is_action_pressed("stance_adjust"):
+		_stance_pressed = false
+		_stance_scrolled = false
+	_update_load()
+	_update_stance(active, delta)
+	is_aiming = active and Input.is_action_pressed("aim") and not is_vaulting and weapon.state.busy == &"" and weapon.state.equipped()
+	is_sprinting = false
+	var before := global_position
 	if is_vaulting:
 		_advance_vault(delta)
 	else:
 		var axes := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if active else Vector2.ZERO
+		is_sprinting = active and Input.is_action_pressed("sprint") and locomotion.can_sprint() and body_shape.shape.height >= movement_tuning.stance_heights[6] - 0.01 and not is_aiming and axes.y < 0.0
+		var speed: float = movement_tuning.sprint_speed * locomotion.load_speed() if is_sprinting else locomotion.walking_speed(body_shape.shape.height, is_aiming)
+		axes.x *= movement_tuning.strafe_multiplier
+		if axes.y > 0.0: axes.y *= movement_tuning.backward_multiplier
 		var direction := global_basis * Vector3(axes.x, 0.0, axes.y)
-		is_sprinting = active and Input.is_action_pressed("sprint") and not is_crouching and not is_aiming and axes.y < 0.0
-		var speed := crouch_speed if is_crouching else (sprint_speed if is_sprinting else walk_speed)
-		if is_aiming:
-			speed *= 0.65
-		velocity.x = direction.x * speed
-		velocity.z = direction.z * speed
+		var horizontal := Vector2(velocity.x, velocity.z)
+		var desired := Vector2(direction.x, direction.z) * speed
+		var rate: float = movement_tuning.deceleration if desired.length() < horizontal.length() else (movement_tuning.sprint_acceleration if is_sprinting else movement_tuning.acceleration)
+		horizontal = horizontal.move_toward(desired, rate * delta)
+		velocity.x = horizontal.x
+		velocity.z = horizontal.y
 		if not is_on_floor():
 			velocity.y -= gravity * delta
-		elif active and Input.is_action_just_pressed("jump") and not is_crouching:
+		elif active and Input.is_action_just_pressed("jump") and not is_crouching and not is_prone and locomotion.spend_legs(movement_tuning.jump_cost):
 			velocity.y = jump_speed
 		move_and_slide()
 		if active and Input.is_action_just_pressed("vault"):
 			try_vault()
+	var travelled := Vector2(global_position.x - before.x, global_position.z - before.z).length()
+	var moving := travelled > 0.001
+	locomotion.advance(delta, is_sprinting and moving, moving, is_aiming, weapon.definition.mass_kg, is_vaulting or not is_on_floor())
+	_update_noise(travelled)
 	_update_camera(delta, active)
 	_update_body_visual()
 	refresh_interaction_target()
-	movement_state = "Vaulting" if is_vaulting else ("Airborne" if not is_on_floor() else ("Crouching" if is_crouching else ("Running" if is_sprinting else ("Walking" if Vector2(velocity.x, velocity.z).length() > 0.1 else "Standing"))))
+	movement_state = "Vaulting" if is_vaulting else ("Prone" if is_prone else ("Crouching" if is_crouching else ("Running" if is_sprinting else ("Walking" if moving else "Standing"))))
 
+func toggle_prone() -> void:
+	if is_vaulting: return
+	if not locomotion.prone:
+		if not _capsule_clear(global_position, movement_tuning.prone_height): return
+		locomotion.previous_stance = locomotion.stance_level
+		locomotion.prone = true
+	else:
+		# Remain prone until a complete restored stance can fit.
+		if not _capsule_clear(global_position, movement_tuning.stance_heights[locomotion.previous_stance - 1]): return
+		locomotion.prone = false
+		locomotion.stance_level = locomotion.previous_stance
 
-func _update_stance(active: bool) -> void:
-	var want_crouch := active and Input.is_action_pressed("crouch")
-	if not want_crouch and is_crouching and not _capsule_clear(global_position, 1.8):
-		want_crouch = true
-	is_crouching = want_crouch
-	var height := 1.1 if is_crouching else 1.8
-	body_shape.shape.height = height
-	body_shape.position.y = height * 0.5
+func _update_stance(active: bool, delta: float) -> void:
+	if is_vaulting: return # Keep the clearance-tested traversal shape.
+	var target: float = locomotion.target_height()
+	if active and Input.is_action_pressed("crouch") and not locomotion.prone:
+		target = movement_tuning.stance_heights[0]
+	var height: float = body_shape.shape.height
+	var desired := move_toward(height, target, movement_tuning.height_change_speed * delta)
+	if desired > height and not _capsule_clear(global_position, desired):
+		var low := height
+		var high := desired
+		for iteration in range(8):
+			var middle := (low + high) * 0.5
+			if _capsule_clear(global_position, middle): low = middle
+			else: high = middle
+		desired = low
+	body_shape.shape.height = desired
+	body_shape.position.y = desired * 0.5
+	is_prone = locomotion.prone
+	is_crouching = not is_prone and desired < movement_tuning.stance_heights[6] - 0.01
 
+func _update_load() -> void:
+	var inventory = weapon.state.inventory
+	var weight: float = movement_tuning.additional_equipment_weight
+	for item in inventory.items.values():
+		if not inventory.carried(item): continue
+		match item.kind:
+			&"weapon":
+				weight += weapon.definition.mass_kg
+				if item.chambered_round != null: weight += movement_tuning.cartridge_weight
+			&"magazine": weight += movement_tuning.magazine_weight + item.rounds.size() * movement_tuning.cartridge_weight
+			&"ammo_stack": weight += item.quantity * movement_tuning.cartridge_weight
+	locomotion.carried_weight = weight
+
+func movement_loudness() -> float:
+	var pace := clampf(Vector2(velocity.x, velocity.z).length() / movement_tuning.maximum_walk_speed, 0.0, 1.0)
+	var volume: float = movement_tuning.sprint_noise if is_sprinting else movement_tuning.walking_noise * pace
+	volume *= lerpf(movement_tuning.crouch_noise_multiplier, 1.0, locomotion.height_fraction(body_shape.shape.height))
+	if is_prone: volume *= movement_tuning.prone_noise_multiplier
+	return volume * lerpf(1.0, 1.4, locomotion.load_fraction())
+
+func _update_noise(distance: float) -> void:
+	if not is_on_floor() or is_vaulting:
+		_step_distance = 0.0
+		return
+	_step_distance += distance
+	if _step_distance >= (1.7 if is_sprinting else 1.1):
+		_step_distance = 0.0
+		movement_noise.emit(global_position, movement_loudness())
 
 func _update_camera(delta: float, active: bool) -> void:
-	var eye_height := 1.0 if is_crouching else 1.6
-	camera.position.y = move_toward(camera.position.y, eye_height, delta * 3.0)
+	var eye_height: float = body_shape.shape.height - 0.2
+	camera.position.y = minf(move_toward(camera.position.y, eye_height, delta * movement_tuning.height_change_speed), eye_height)
+	camera.rotation.x -= _sway.x
+	camera.rotation.y -= _sway.y
+	_sway_time += delta
+	var fatigue: float = pow(1.0 - locomotion.arm_fraction(), 2.0) if is_aiming else 0.0
+	_sway = Vector2(sin(_sway_time * 2.1), sin(_sway_time * 1.7)) * fatigue * movement_tuning.fatigue_sway_radians
+	camera.rotation.x += _sway.x
+	camera.rotation.y += _sway.y
 	var lean_input := Input.get_axis("lean_left", "lean_right") if active and not is_vaulting else 0.0
 	_lean = move_toward(_lean, lean_input, delta * 5.0)
 	var motion := global_basis.x * _lean * lean_distance
@@ -142,7 +246,7 @@ func _update_camera(delta: float, active: bool) -> void:
 
 func _capsule_clear(feet: Vector3, height: float) -> bool:
 	var shape := CapsuleShape3D.new()
-	shape.radius = 0.3
+	shape.radius = body_shape.shape.radius
 	shape.height = height
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = shape
@@ -153,7 +257,7 @@ func _capsule_clear(feet: Vector3, height: float) -> bool:
 
 
 func try_vault() -> bool:
-	if is_vaulting or is_crouching or not is_on_floor():
+	if is_vaulting or is_crouching or is_prone or not is_on_floor():
 		return false
 	var forward := -global_basis.z
 	var space := get_world_3d().direct_space_state
@@ -172,8 +276,11 @@ func try_vault() -> bool:
 	if floor_hit.is_empty() or floor_hit.normal.y < 0.7:
 		return false
 	var destination: Vector3 = floor_hit.position + Vector3.UP * 0.02
-	if not _capsule_clear(destination, 1.8):
+	if not _capsule_clear(destination, body_shape.shape.height):
 		traversal_message = "Landing is blocked"
+		return false
+	if not locomotion.spend_legs(movement_tuning.vault_cost):
+		traversal_message = "Too exhausted to traverse"
 		return false
 	var lift: float = maxf(top.position.y, destination.y) + 0.12
 	_vault_points.assign([global_position, Vector3(global_position.x, lift, global_position.z), Vector3(destination.x, lift, destination.z), destination])

@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3]
+[gd_scene load_steps=30 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player/first_person_player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/prototype/camp_test.gd" id="2_world"]
@@ -8,14 +8,19 @@
 [ext_resource type="PackedScene" path="res://scenes/characters/starting_civilian.tscn" id="5_civilian"]
 
 [ext_resource type="Script" path="res://scripts/prototype/training_course.gd" id="6_course"]
+[ext_resource type="PackedScene" path="res://scenes/environment/training_environment.tscn" id="7_environment"]
+[ext_resource type="Material" path="res://assets/environment/materials/moss_ground_v1.tres" id="8_ground"]
 
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
 background_color = Color(0.28, 0.33, 0.31, 1)
 ambient_light_source = 3
 ambient_light_color = Color(0.72, 0.76, 0.7, 1)
-ambient_light_energy = 0.7
+ambient_light_energy = 0.55
 tonemap_mode = 0
+fog_enabled = true
+fog_light_color = Color(0.32, 0.37, 0.34, 1)
+fog_density = 0.012
 
 [sub_resource type="StandardMaterial3D" id="GroundMaterial"]
 albedo_color = Color(0.24, 0.26, 0.18, 1)
@@ -75,9 +80,10 @@ script = ExtResource("2_world")
 environment = SubResource("Environment")
 [node name="Sun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-55, -25, 0)
-light_color = Color(0.95, 0.88, 0.72, 1)
-light_energy = 1.1
+light_color = Color(0.87, 0.90, 0.83, 1)
+light_energy = 0.9
 shadow_enabled = true
+directional_shadow_max_distance = 45.0
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
 position = Vector3(0, 0.1, 4.3)
@@ -88,33 +94,44 @@ position = Vector3(2.0, 0, 0.3)
 [node name="Floor" type="StaticBody3D" parent="."]
 position = Vector3(0, -0.2, -4)
 [node name="Mesh" type="MeshInstance3D" parent="Floor"]
+visible = false
+material_override = ExtResource("8_ground")
 mesh = SubResource("FloorMesh")
 [node name="Shape" type="CollisionShape3D" parent="Floor"]
+disabled = true
 shape = SubResource("FloorShape")
 
 [node name="LeftWall" type="StaticBody3D" parent="."]
 position = Vector3(-20, 1.7, -4)
 [node name="Mesh" type="MeshInstance3D" parent="LeftWall"]
+visible = false
 mesh = SubResource("SideMesh")
 [node name="Shape" type="CollisionShape3D" parent="LeftWall"]
+disabled = true
 shape = SubResource("SideShape")
 [node name="RightWall" type="StaticBody3D" parent="."]
 position = Vector3(20, 1.7, -4)
 [node name="Mesh" type="MeshInstance3D" parent="RightWall"]
+visible = false
 mesh = SubResource("SideMesh")
 [node name="Shape" type="CollisionShape3D" parent="RightWall"]
+disabled = true
 shape = SubResource("SideShape")
 [node name="BackWall" type="StaticBody3D" parent="."]
 position = Vector3(0, 1.7, -24)
 [node name="Mesh" type="MeshInstance3D" parent="BackWall"]
+visible = false
 mesh = SubResource("EndMesh")
 [node name="Shape" type="CollisionShape3D" parent="BackWall"]
+disabled = true
 shape = SubResource("EndShape")
 [node name="FrontWall" type="StaticBody3D" parent="."]
 position = Vector3(0, 1.7, 16)
 [node name="Mesh" type="MeshInstance3D" parent="FrontWall"]
+visible = false
 mesh = SubResource("EndMesh")
 [node name="Shape" type="CollisionShape3D" parent="FrontWall"]
+disabled = true
 shape = SubResource("EndShape")
 
 [node name="PartitionLeft" type="StaticBody3D" parent="."]
@@ -187,6 +204,8 @@ mesh = SubResource("PickupMesh")
 [node name="Course" type="Node3D" parent="."]
 script = ExtResource("6_course")
 
+[node name="WoodlandProps" parent="." instance=ExtResource("7_environment")]
+
 [node name="HUD" type="CanvasLayer" parent="."]
 layer = 3
 [node name="Title" type="Label" parent="HUD"]
@@ -199,7 +218,7 @@ text = "FOREST BROTHERS"
 offset_left = 29.0
 offset_top = 55.0
 theme_override_font_sizes/font_size = 16
-text = "FIELD TEST  /  traversal, animation & firing lane"
+text = "FIELD TEST  /  traversal, animation, weapons & woodland props"
 [node name="Stock" type="Label" parent="HUD"]
 anchors_preset = 1
 anchor_left = 1.0
@@ -244,7 +263,7 @@ anchor_bottom = 1.0
 offset_left = 28.0
 offset_top = -72.0
 theme_override_font_sizes/font_size = 16
-text = "WASD Move   Shift Run   Ctrl Crouch   Space Jump   V Vault/climb   Q/E Lean   F Interact   P Return to start\nLMB Fire   RMB Aim   R Swap magazine   Hold T Pack spare   J Clear jam   B Clean   G Dirty (test)   I Inspect"
+text = "WASD Move   Wheel Pace   Caps Slow   Shift Sprint   Tap C Stance / C + wheel Height   X Prone   Q/E Lean\nLMB Fire   RMB Aim   R Swap magazine   K Chamber   Hold T Pack spare   J Clear jam   B Clean   G Dirty (test)   I Inspect\nSpace Jump   V Vault/climb   F Interact   P Return to start"
 
 [node name="MovementState" type="Label" parent="HUD"]
 offset_left = 28.0

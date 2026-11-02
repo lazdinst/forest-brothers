@@ -1,6 +1,12 @@
 # Modular character production brief
 
+**Current owner priority: character art is frozen.** Preserve MPFB sources/rig/clips/clothes; do not create outfits or polish appearance. Sprites are the default; retain MPFB for comparison. See [CHARACTER_FREEZE_AND_COMBAT_SLICE.md](CHARACTER_FREEZE_AND_COMBAT_SLICE.md) for validated defects and the pending combat-first proposal. This supersedes further production steps below.
+
 Status: owner rejected the procedural humanoids on visual quality and scalability. Rigged polygonal characters remain the goal. The existing meshes are technical fixtures, not an art foundation to multiply into a roster. Painted sprites are restored for normal training play until a replacement earns the change.
+
+## Selected base
+
+The owner has now chosen an MPFB human. See [MPFB_CHARACTER_BASE.md](MPFB_CHARACTER_BASE.md) for its editable source, prepared rigged copy and pending clothing/export work. MPFB is now installed and this base has been inspected; the candidate/tool-availability discussion below describes the earlier research stage.
 
 ## Why the first attempt failed
 

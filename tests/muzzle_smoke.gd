@@ -26,6 +26,7 @@ func _run() -> void:
 	player.camera.look_at(target.global_position)
 	await _frames(3)
 	weapon.rng.seed = 12345
+	weapon.state.inventory.chamber()
 	var muzzle: Vector3 = weapon.muzzle_world_position()
 	weapon.command(&"fire")
 	await _frames(2)

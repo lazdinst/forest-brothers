@@ -27,7 +27,21 @@ Each weapon can own separate `reload`, `clear`, `inspect`, `clean`, and `pack` c
 
 `commit_at` is normalized: the current reload seats its magazine at 0.78 of 1.4 seconds. Firing stays locked until the complete action ends. A large time step crossing several phases commits only once. Cancellation before commit preserves the original magazines; cancellation afterward retains the completed swap. `cancel_action()` is ready for future weapon switching; there is no new cancel-key binding in this increment.
 
-The shared rules currently support **detachable-magazine weapons only**, with two magazine instances in the test harness. Garand en-bloc loading, stripper clips, internal magazines, individual chamber rounds, bolt operation, empty/tactical reload variants, and multiple malfunction types require their own rule behavior and tests. Do not implement a Garand simply by changing the name and capacity. Presentation clips are extensible without hardcoding a new action animation into the player controller; different loading mechanisms still require gameplay work.
+The shared rules support **detachable-magazine weapons only**. The physical-ammunition
+increment now supplies distinct magazine/stack/weapon IDs and a separate chamber
+round; see [Physical Ammunition](AMMUNITION_INVENTORY.md). Magazine counts derive from
+round arrays. The initial ten-round rifle has two full magazines plus 32 loose rounds,
+an empty chamber and no third magazine. Chambering uses K. Content defines calibre,
+ammunition and magazine types, capacities and action durations.
+
+Chambering, chamber unloading, magazine removal and cartridge unloading currently
+reuse per-weapon inspection/packing poses with their own action/effect markers.
+These are readable placeholders, not finished mechanism/hand animations. The UI has
+separate rifle and magazine artwork and reflects insertion/removal independently.
+Reloading commits one physical swap without automatically chambering; a chambered
+round can fire after magazine removal. Drawing or animation callbacks never transfer
+rounds. Garand en-bloc loading, stripper clips, internal magazines, distinct tactical
+reload choreography and multiple malfunction types still need their own rules/art.
 
 ## Validation
 

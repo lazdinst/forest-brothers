@@ -1,0 +1,12 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://scripts/environment/pine_decay.gdshader" id="1_2xsdu"]
+[ext_resource type="Texture2D" path="res://assets/environment/textures/pine_bark_lower_v2.png" id="2_sijj4"]
+[ext_resource type="Texture2D" path="res://assets/environment/textures/pine_decay_moss_v2.png" id="3_n8vn8"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_2xsdu")
+shader_parameter/decay_texture = ExtResource("3_n8vn8")
+shader_parameter/bark_texture = ExtResource("2_sijj4")
+shader_parameter/moss_only = true

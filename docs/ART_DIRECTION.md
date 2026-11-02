@@ -1,5 +1,7 @@
 # Art direction and production
 
+**Current owner priority: character art is frozen.** Preserve MPFB sources/rig/clips/clothes; do not create outfits or polish appearance. Sprites are the default; retain MPFB for comparison. See [CHARACTER_FREEZE_AND_COMBAT_SLICE.md](CHARACTER_FREEZE_AND_COMBAT_SLICE.md) for validated defects and the pending combat-first proposal. This supersedes further production steps below.
+
 Status: the owner rejected the first procedural polygon models as visually worse than the sprites and unsuitable for varied clothing. Normal play uses the preserved sprites while better rigged models remain the target. Require a believable base human and separate interchangeable garments; read [MODULAR_CHARACTER_BRIEF.md](MODULAR_CHARACTER_BRIEF.md). The first GLB rig is a blockout test, not approved final character art. Read [POLYGON_CHARACTER_PIPELINE.md](POLYGON_CHARACTER_PIPELINE.md) for current work. Earlier sprite experiments below remain preserved history/reference. The owner approved the first painted front-view starting civilian appearance on 2026-11-01. A four-direction idle experiment with a body collider is now in the movement test: approved front plus new side/back candidates and a mirrored opposite profile. Side/back approval, animation, final direction count, and final sprite resolution remain pending. See [the asset and generation prompts](../assets/characters/starting_civilian/README.md). This is a visual candidate, not a completed sprite animation pipeline.
 
 ## Confirmed direction

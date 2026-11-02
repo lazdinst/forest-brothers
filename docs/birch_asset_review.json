@@ -1,0 +1,39 @@
+{
+	"adapter": "NVIDIA GeForce GTX 1080",
+	"foliage_triangles": 67200,
+	"renderer": "gl_compatibility",
+	"viewport": "(1280, 720)",
+	"views": [
+		{
+			"draw_calls": 12.0,
+			"name": "whole",
+			"rendered_primitives": 279650.0
+		},
+		{
+			"draw_calls": 10.0,
+			"name": "bark",
+			"rendered_primitives": 260138.0
+		},
+		{
+			"draw_calls": 10.0,
+			"name": "bark_seam",
+			"rendered_primitives": 260138.0
+		},
+		{
+			"draw_calls": 8.0,
+			"name": "leaf_skin",
+			"rendered_primitives": 173428.0
+		},
+		{
+			"draw_calls": 10.0,
+			"name": "crown",
+			"rendered_primitives": 260138.0
+		},
+		{
+			"draw_calls": 13.0,
+			"name": "reverse",
+			"rendered_primitives": 346850.0
+		}
+	],
+	"wood_triangles": 19510
+}

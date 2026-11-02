@@ -98,7 +98,7 @@ Confirmed progression: start with rough tents and improve buildings gradually. E
 
 ## Civilian labor — confirmed roles, unresolved detailed simulation
 
-The owner confirmed that civilians construct buildings, cook, and perform similar camp jobs. Players can assist as foremen; exactly how assistance changes work is unresolved. Some civilians can simply be resident NPCs. Main-mission completion awards construction materials. Detailed assignments, worker suitability, hauling, tree harvesting, pathfinding, skills, wages, and schedules still need design; neither instant labor nor an elaborate workforce simulation is implied.
+The owner confirmed that players can cook, construct buildings, and perform camp tasks directly, with Valheim as the hands-on reference. Civilian labor is optional rather than a prerequisite. Civilians can also construct buildings, cook, and perform similar camp jobs. Players can assist civilian jobs as foremen; exactly how assistance changes work is unresolved. Some civilians can simply be resident NPCs. Main-mission completion awards construction materials. Detailed assignments, worker suitability, hauling, tree harvesting, pathfinding, skills, wages, and schedules still need design; neither instant labor nor an elaborate workforce simulation is implied.
 
 Prototype one civilian construction job and one cooking job after plans/resource accounting work. Add one player-assistance action to test the foreman role. A simple timed job is a possible feasibility step before visible hauling/tree harvesting, not a final presentation decision. Job durations, assignment UI, assistance benefits, and the supply-delivery system remain open.
 
@@ -153,3 +153,5 @@ Do not assume mission death fully heals the player, camp entry clears all injuri
 8. How should camp time interact with ongoing missions?
 9. What feedback tells a player who died that surviving teammates secured the group's civilian arrivals?
 10. How are civilians committed when teammates leave at different times, given that early safe return can secure them without main-quest completion?
+
+Local training implementation: station recipes offer personal work first and optional civilian assignment for cooking/building. Personal work uses the existing recipe costs/durations, reserves communal materials once, and requires remaining at the station with its panel open. Closing/leaving cancels and refunds once; one player can work one personal task at a time. Rack construction starts at the planning table. Civilians can continue separate jobs. These reversible interactions do not settle final work animations, hold-to-work controls, logistics or multiplayer authority.

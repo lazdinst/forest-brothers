@@ -1,0 +1,59 @@
+{
+  "source": "C:\\Users\\Nauda\\Documents\\Codex\\ForestBrothers-Art\\characters\\working\\forest_brothers_enemy_dressed_v1.blend",
+  "glb": "C:\\Users\\Nauda\\Code\\forest-brothers\\assets\\characters\\mpfb_enemy\\enemy_v1.glb",
+  "skin_image": "Jartur_mid_old_Slavic_Male_with_Genitals_and_Beard_lsdif_lighter.png",
+  "rig": "MPFB game_engine",
+  "bone_count": 53,
+  "parts": [
+    "Body",
+    "Shirt",
+    "Trousers",
+    "Boots",
+    "Eyes",
+    "Hair"
+  ],
+  "clips": [
+    "idle",
+    "walk",
+    "aim",
+    "die"
+  ],
+  "meshes": [
+    {
+      "name": "Body",
+      "vertices": 11174,
+      "triangles": 22308,
+      "bound": true
+    },
+    {
+      "name": "Shirt",
+      "vertices": 2126,
+      "triangles": 4164,
+      "bound": true
+    },
+    {
+      "name": "Trousers",
+      "vertices": 1372,
+      "triangles": 2674,
+      "bound": true
+    },
+    {
+      "name": "Boots",
+      "vertices": 2084,
+      "triangles": 4120,
+      "bound": true
+    },
+    {
+      "name": "Eyes",
+      "vertices": 96,
+      "triangles": 172,
+      "bound": true
+    },
+    {
+      "name": "Hair",
+      "vertices": 1755,
+      "triangles": 3344,
+      "bound": true
+    }
+  ]
+}

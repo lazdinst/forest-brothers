@@ -17,7 +17,12 @@ func _frames(count: int) -> void:
 
 func _run() -> void:
 	var rules = State.new()
-	rules.magazines.assign([3, 7])
+	rules.loose_rounds = 30 # Explicit legacy timing fixture; normal starting stock is 32.
+	for index in range(2):
+		var mag = rules.inventory.magazine(rules.inventory.initial_magazine_ids[index])
+		mag.rounds.clear()
+		for round_index in range(3 if index == 0 else 7):
+			mag.rounds.append(rules.Inventory.MagazineRound.new(rules.inventory.primary_ammo_id))
 	rules.start_action(&"reload")
 	rules.advance(0.8)
 	_check(rules.loaded_magazine == 0 and rules.total_rounds() == 40, "Removing/retaining the old magazine must not award or swap ammo early")
@@ -54,6 +59,7 @@ func _run() -> void:
 	other_rules.advance(0.2)
 	_check(other_rules.loaded_magazine == 1 and other_rules.busy == &"reload", "Second definition commits at its own marker")
 	other_rules.advance(1.0)
+	other_rules.inventory.chamber()
 	_check(other_rules.try_fire(1.0) and other_rules.total_rounds() == 16, "Second weapon uses its own capacity and retains physical rounds")
 	other_rules.advance(0.3)
 	_check(not other_rules.try_fire(1.0), "Second weapon uses its own fire interval")

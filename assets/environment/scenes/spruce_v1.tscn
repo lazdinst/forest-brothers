@@ -1,0 +1,24 @@
+[gd_scene format=3]
+
+[ext_resource type="CylinderMesh" path="res://assets/environment/meshes/spruce_trunk_v1.tres" id="1_u5k7g"]
+[ext_resource type="ArrayMesh" path="res://assets/environment/meshes/spruce_boughs_v1.res" id="2_80gqk"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_3ihtx"]
+height = 11.0
+radius = 0.23
+
+[node name="SpruceV1" type="Node3D" unique_id=327238988]
+
+[node name="Trunk" type="MeshInstance3D" parent="." unique_id=752303540]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, 0)
+mesh = ExtResource("1_u5k7g")
+
+[node name="Boughs" type="MeshInstance3D" parent="." unique_id=417310569]
+mesh = ExtResource("2_80gqk")
+
+[node name="TrunkBody" type="StaticBody3D" parent="." unique_id=352169959]
+collision_mask = 2
+
+[node name="Shape" type="CollisionShape3D" parent="TrunkBody" unique_id=534975614]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, 0)
+shape = SubResource("CylinderShape3D_3ihtx")

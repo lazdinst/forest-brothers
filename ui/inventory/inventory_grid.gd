@@ -1,13 +1,17 @@
 extends Control
 ## One item per cell. Reject over-capacity snapshots without replacing visible items.
 signal item_selected(item: Dictionary)
+signal item_dropped(item_id: StringName, slot: int, target_id: StringName)
 const Symbol = preload("res://ui/inventory/item_symbol.gd")
 const JournalTheme = preload("res://ui/themes/field_journal_theme.gd")
 const ButtonScene = preload("res://ui/components/menu_button.tscn")
+const ItemCard = preload("res://ui/inventory/inventory_item_card.gd")
+const AmmunitionArt = preload("res://ui/inventory/ammunition_art.gd")
 var columns := 6
 var rows := 7
 var cell := 48.0
 var cards: Array[Button] = []
+var slot_ids := {}
 
 func configure(column_count: int, row_count: int, cell_size: float) -> void:
 	columns = column_count
@@ -20,14 +24,23 @@ func configure(column_count: int, row_count: int, cell_size: float) -> void:
 func show_items(items: Array) -> bool:
 	if items.size() > columns * rows:
 		return false
+	var requested_slots := {}
+	for index in range(items.size()):
+		var slot: int = items[index].get("slot",index)
+		if slot < 0 or slot >= columns*rows or requested_slots.has(slot): return false
+		requested_slots[slot] = items[index].get("id","")
 	for card in cards:
 		remove_child(card)
 		card.queue_free()
 	cards.clear()
+	slot_ids = requested_slots
 	for index in range(items.size()):
 		var item: Dictionary = items[index]
-		var at := Vector2i(index % columns, floori(float(index) / columns))
+		var slot: int = item.get("slot",index)
+		var at := Vector2i(slot % columns, floori(float(slot) / columns))
 		var card := ButtonScene.instantiate() as Button
+		card.set_script(ItemCard)
+		card.set("item_id",StringName(item.get("id","")))
 		card.text = ""
 		card.theme = JournalTheme.create()
 		for state in ["hover", "pressed", "focus"]:
@@ -39,31 +52,41 @@ func show_items(items: Array) -> bool:
 		var label := Label.new()
 		label.text = item.title
 		label.position = Vector2(9,6)
-		label.size.x = card.size.x - 18
 		label.clip_text = true
 		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		label.add_theme_font_size_override("font_size",14)
+		label.size = Vector2(card.size.x-18,20)
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card.add_child(label)
-		var symbol := Symbol.new()
+		var symbol = AmmunitionArt.new() if item.get("kind","") in ["magazine","rounds","rifle"] else Symbol.new()
 		symbol.kind = item.get("kind", "parts")
+		if symbol is AmmunitionArt: symbol.status = str(item.quantity)
 		symbol.position = Vector2(12,24)
-		symbol.size = Vector2(card.size.x - 24, maxf(18, card.size.y - 44))
+		symbol.size = Vector2(card.size.x - 24, maxf(18, card.size.y - 48))
 		symbol.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		symbol.visible = card.size.y >= 80
 		card.add_child(symbol)
 		var quantity := Label.new()
 		quantity.text = str(item.quantity)
-		quantity.position = Vector2(9,card.size.y-24)
-		quantity.size.x = card.size.x - 18
+		quantity.position = Vector2(5,card.size.y-22)
+		quantity.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		quantity.clip_text = true
-		quantity.add_theme_font_size_override("font_size",14)
+		quantity.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		quantity.add_theme_font_size_override("font_size",11 if item.get("kind","")=="magazine" else 14)
+		quantity.size = Vector2(card.size.x-10,20)
 		quantity.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card.add_child(quantity)
 		card.pressed.connect(func(): item_selected.emit(item))
 		add_child(card)
 		cards.append(card)
 	return true
+
+func _can_drop_data(at: Vector2, data: Variant) -> bool:
+	return data is Dictionary and data.get("inventory_item_id") is String and Rect2(Vector2.ZERO,size).has_point(at)
+
+func _drop_data(at: Vector2, data: Variant) -> void:
+	var slot := floori(at.y/cell)*columns+floori(at.x/cell)
+	item_dropped.emit(StringName(data.inventory_item_id),slot,StringName(slot_ids.get(slot,"")))
 
 func _draw() -> void:
 	var ink := Color("66523c65")

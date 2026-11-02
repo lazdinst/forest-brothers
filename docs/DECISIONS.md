@@ -160,6 +160,34 @@ Rather than trying to cancel perspective with a moving visual, a player-only cle
 
 The previous equal-projected-width test missed the reported behavior. Its replacement exercises walking to the civilian, pitching up/down in place, constant sprite transform/FOV, an upright visual/body, and bounded taper at the reachable distance. This entry supersedes the previous camera-plane alignment implementation.
 
+## Environment pipeline visual proof — 2026-11-01
+
+Status: owner-directed environment scope; reversible implementation candidates awaiting visual review.
+
+The owner requested a scalable Latvian woodland pipeline, beginning with a five-asset visual proof before a ~100 × 100 m forest. Added original procedural meshes/textures, native materials/scenes, an explicit offline baker, and a separate 24 m proof clearing that instances the existing player and civilian without modifying their sources or the main training scene. Opaque needle/fern geometry is an initial alternative to alpha cards, not a final approved tree or vegetation technique. Fixed seeds, metre scale, texture/import/collision conventions and category backlog are documented in `ENVIRONMENT_ASSET_PIPELINE.md`. No external asset/dependency or engine change was selected.
+
+Inspected existing work and the active reload chat before editing. Environment additions use separate folders; shared roadmap/decision updates were applied after reload commit `d75f67d`. Proof checks and GTX 1080 Compatibility captures/brief measurements pass, with visual shortcomings and restricted-environment log warnings recorded. Owner visual approval, full biome assembly, seeded placement/density controls, tent/camp, winter, wind/fire, elevated-view review and full-scene performance acceptance remain pending. Do not bypass the requested visual-review gate or label this a completed forest milestone.
+
+## Environment assets in the shared training yard — 2026-11-01
+
+Owner clarified that environment candidates should be part of the current weapons, controls and animation testbed. Supersedes isolation of the assets from the main yard: `camp_test.tscn` now instances a separate woodland-prop scene in unused space and overrides the existing floor's material. F5 launches the combined testbed with the same player, weapons, course, targets and interactions. The isolated proof remains for asset inspection; this does not approve final visuals or bypass the full-biome review gate. Six focused checks, including reload/ADS/muzzle and integrated prop collision/vaulting, passed; a GTX 1080 Compatibility frame was inspected. The earlier isolated-proof measurements are not a benchmark of this combined scene.
+
+## Dense woodland, low terrain relief and an enterable trench — 2026-11-01
+
+Owner requested a much more detailed Latvian forest within the existing training testbed, specifically many trees, moss and fallen deadwood; clarified that ground should vary while remaining mostly flat; and requested a trench the player can enter. This authorizes expanding the earlier sparse visual proof, without implying final asset approval.
+
+Implemented reversible training choices: approximately 100 m terrain footprint with low undulations/rises/hollows, level fixture exclusions, three procedural tree types, dense ground cover, deadwood/stumps, and a roughly 1.55 m-deep authored trench with an entrance slope and connected side branch. The original flat box floor/perimeter are disabled; test fixtures and the camp/character annex are preserved. Seeded offline placement uses spatial MultiMesh batches and separate manual overrides. The baker requires actual rendering to preserve instance buffers; included content remains headless-testable. Seven focused checks and real GTX 1080 views/short measurements are recorded in ENVIRONMENT_ASSET_PIPELINE.md. This is not runtime digging, a construction/job rule, an approved historical trench design or completed biome/art acceptance; winter, final assets, LOD and broader playtesting remain open.
+
+## Detailed birch skins and volumetric form — 2026-11-01
+
+Owner requested more realistic birches because the flat polygons lacked detail, then specifically asked for detailed skins wrapped around them. Implemented a candidate using two built-in generated raster textures (birch bark and a transparent leaf), retained original PNGs/exact prompts, smooth curved wood/forks, drooping twigs and folded leaf cutouts. Existing shared mesh paths update the placed birches without regenerating world positions or changing collision/gameplay. A separate birch recipe is also called by future full forest bakes while preserving their previous random draw sequence.
+
+Bark/leaf import sizes (512/256), alpha-scissor threshold, approximately 86.7k triangles/tree, enlarged leaf cards and albedo-derived bump are reversible detail-test choices, not approved final art/budgets or botanical measurements. Close-up/seam/front/back and leaf views were inspected in Compatibility on GTX 1080; terrain/trench checks passed headless and rendered. Current short-sample timing/provenance is in ENVIRONMENT_ASSET_PIPELINE.md. Owner appearance review and LOD/motion refinement remain pending. No other species, player/weapon/character sources or forest placement was changed by this increment.
+
+## Birch root-collar refinement — 2026-11-01
+
+After positive feedback on the detailed skins, the owner requested a more realistic birch root flare. Replaced six separate tapered root pieces with a continuous, modestly widened collar and asymmetric low root shoulders extending below soil level. Added a subdued darker soil-contact band while retaining the generated bark/leaf sources. Standing/low/reverse GPU views were inspected and the training-environment integration check passed. This is a reversible appearance candidate; existing trunk collision, forest positions, canopy, other species and gameplay remain unchanged. Root proportions across terrain slopes still need owner review. Details and reference links are in ENVIRONMENT_ASSET_PIPELINE.md.
+
 ## Recording future decisions
 
 For each consequential decision, add the date, status, choice, reason, relevant user direction, and any decision it supersedes. Update the concept, roadmap, or technical direction when needed. Do not mark an agent proposal as owner-approved without evidence.
@@ -207,6 +235,20 @@ Owner judged the first polygon models substantially worse than the sprites and t
 
 The agent's proposed next proof is one believable old civilian on a shared production rig, wearing two interchangeable outfits with body coverage and clipping checks before another migration. Blender/MPFB is a researched candidate, not an installed dependency or an owner-approved final asset source. See MODULAR_CHARACTER_BRIEF.md for production steps, source/license references and visual acceptance. No improved finished model or wardrobe runtime is claimed.
 
+## Continuous training map — 2026-11-01
+
+Owner requested free walking between the shooting/movement yard and camp/enemy training area without a menu transition. Both areas stay in the same scene and now connect through an open west entrance and a terrain-matched ground strip behind the firing lanes. Travel tables are removed; workshop and planning interactions remain. This settles the local training layout only; campaign map/deployment rules remain unchanged.
+
+## Training pine detail and deadwood — 2026-11-01
+
+Owner requested pine skin/geometry upgrades following the birch iteration, plus dead/broken branches, fallen pines and rotten moss-covered fallen pines. Implemented as shared pine resource replacements and a separate additive debris subscene in the existing training forest; existing tree positions, terrain/trench and weapon/controller rules are preserved. New generated texture sources/prompts are retained. Large logs provide geometry-matched cover and use the existing vault mechanic; loose branches are decorative. No harvesting, build costs or historical trench claims follow from these art assets.
+
+Rendered inspection and focused traversal/collision regressions passed. Additional detail increases measured scene cost; LOD/foliage-shadow optimization and owner visual acceptance remain pending. This does not complete the biome milestone. See ENVIRONMENT_ASSET_PIPELINE.md and assets/environment/source/PINE_TEXTURE_PROMPTS.md for recipes, provenance, measurements and limits.
+
+## Stocked training resources and icons — 2026-11-01
+
+Owner requested plentiful resources and small icons for easier recognition. Fresh training now receives food/water 100 each, medicine/meals 30 each, timber 200, parts 60, cloth 80 and communal cartridges 500. These are reversible training quantities, not campaign balance. The quartermaster still provides its one-time extra cache. HUD/camp stock displays reuse the inventory icon component with labels and live ledger counts; medicine, cloth and meals have distinct symbols. No remote transfer or carried-ammo refill is introduced.
+
 ## Personal inventory scope and pocket capacity — 2026-11-01
 
 Status: owner-confirmed clarification of the inventory design.
@@ -214,3 +256,58 @@ Status: owner-confirmed clarification of the inventory design.
 The personal inventory screen shows only equipment and supplies currently on the person. Camp stores belong to a separate interaction/menu and must not appear here. Each item occupies one square in pack space. Pockets are four squares in a single horizontal row, permitting at most four items. This supersedes the initial UI proposal that showed communal camp storage alongside carried gear and used multi-cell pack items.
 
 Total pack capacity, item stacking, clothing-slot details and authoritative transfer/equip rules remain open. All items remain communal; being carried denotes physical custody, not private ownership.
+
+## Direct player camp work — 2026-11-01
+
+Owner clarified that players must be able to do cooking and other camp tasks themselves, like Valheim, rather than requiring civilians. This supersedes civilian-only cooking/construction in the training laboratory; civilian automation and foreman assistance remain optional. The local implementation offers personal work at stations plus civilian assignment, keeping communal costs and existing durations. Personal work requires station proximity and an open panel; closing/leaving cancels with one refund. One personal task per player, parallel civilian work, footprint clearance and duplicate-request checks remain enforced. Panel-based timers and refund behavior are reversible prototype choices; final active-work controls/animations and network authority remain pending.
+
+
+## Labeled environment review lineup — 2026-11-01
+
+Owner requested a dedicated environment test area displaying all possible nature assets in a line with individual labels, after identifying remaining simpler trees/logs/stumps. Implemented as a separate F6 inspection scene listing the 17 current standalone nature assets, including both older spruce variants, detailed pine/birch, old/new deadwood and ground cover. The catalog distinguishes species and earlier/detail status; older spruce is not mislabeled as an unupgraded pine. This request authorizes the review area, not deletion or approval of the earlier assets. Main menu, forest placement and other agents' training work remain unchanged by this increment.
+
+## Owner-selected MPFB human base — 2026-11-01
+
+Owner installed Blender/MPFB and selected `forest_brothers_human_base.blend` in `C:\Users\Nauda\Documents\Codex\ForestBrothers-Art\characters`. Use this human as the production starting point, preserving the original. A separate packed working copy now has MPFB's 53-bone game-engine rig and verified actual skin deformation. Separate eyes/hair/clothes, game material/export preparation and animation retargeting remain pending. Normal-play sprites stay until a clothed replacement passes visual review. See MPFB_CHARACTER_BASE.md for exact files, provenance and checks. Do not regenerate the rejected procedural humanoid as the art solution.
+
+## Owner priority change: character art frozen — 2026-11-01
+
+Freeze outfits, character appearance and animation polishing. Preserve the owner-selected MPFB body, 53-bone rig, four initial clips, separate clothing/bodyparts, original sources and current GLB. Validation completed for idle/walk/actual aim/damage/death; defects are documented without an art overhaul. Both enemies default to sprites; the combat table can reset the first enemy with MPFB for comparison. Actor health, collision, perception, facing, damage and death are independent of that choice; paired gameplay traces pass. The model-only patrol yaw change was removed and gameplay defeat resolves before cosmetic death playback.
+
+Primary focus is combat, movement and enemy AI. Read CHARACTER_FREEZE_AND_COMBAT_SLICE.md for current implementation, biggest gaps and the proposed supply-recovery drill in the existing training area. The proposal is pending owner review; do not begin a major combat/health/navigation refactor. Do not modify nature/environment or main-menu agents' work. Source preservation is under art_source/mpfb_enemy; no art was rebuilt during the freeze.
+
+
+
+## Tactical movement and stamina — 2026-11-01
+
+Owner requested persistent adjustable pace, seven standing/crouch heights,
+separate prone, inertia, independent leg/arm stamina, equipment load, movement
+noise and a compact HUD using supplied partisan silhouettes. Implemented in the
+existing local controller, inventory/weapon/perception paths. C now controls
+stance; manual chambering moves to K, with Ctrl preserved as a compatibility
+hold. Balance beyond the supplied partial table is provisional: see
+[TACTICAL_MOVEMENT.md](TACTICAL_MOVEMENT.md) for defaults, inspection, tests and
+remaining limitations. The pasted request ends at `| Fat`; no missing rows are
+claimed as implemented. No engine, multiplayer, persistence, campaign injury or
+character-art decision follows. Owner movement/visual feel review is pending.
+
+## Physical ammunition, magazines and chambers — 2026-11-01
+
+Status: owner-requested ammunition inventory behavior; local implementation, not campaign/network approval.
+
+The owner requested physical stack, magazine and weapon instances with stable IDs and explicit locations, 32-round maximum stacks, compatible mixed magazine rounds, separate chambers, insertion/removal, and inspection-based magazine estimates. The existing ten-round test rifle is preserved under the request's historical-weapon exception: two full magazines plus 32 loose rounds total 52, with no extra chamber round or third magazine. One magazine is inserted and the other plus the loose stack occupy pockets. Weapons never draw from an abstract loose-ammo pool.
+
+Magazine knowledge follows the configurable table (90/50/30 percent boundaries and empty), not exact UI counts or fill bars. The attachment's 26/30 example conflicts with that table; the implementation follows the table and displays More than half. Typed item rules, inventory actions, K chambering, existing action timelines, world recovery and validated equipment serialization are integrated locally. Full campaign persistence/rollback and network authority remain deferred. See AMMUNITION_INVENTORY.md for controls, assumptions, limits and checks.
+
+
+## Minimal tactical movement HUD — 2026-11-01
+
+Owner approved the supplied compact mockup as the redesign reference: pale
+partisan outline, seven left height ticks, ten lower pace ticks and two thin
+muted stamina lines, without a panel, labels or numbers. Persistent training,
+weapon and resource diagnostics move behind a default-hidden F3 developer
+overlay, gated out of release builds unless explicitly enabled. Contextual
+interaction prompts stay visible; a tiny existing prone indication remains
+until prone artwork is approved. This is a UI-only revision, not a change to
+movement balance or combat. See TACTICAL_MOVEMENT.md for scale, validation and
+remaining owner appearance review.

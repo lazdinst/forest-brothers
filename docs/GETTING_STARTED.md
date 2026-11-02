@@ -8,14 +8,23 @@ Import the repository's `project.godot` in Godot, then press **F5**. Stop an alr
 
 The test yard now has three areas: the obstacle course on the left, a walking civilian at the far left, and a firing lane on the right. The original door, three pickups, communal stock display, and standing civilian remain. **Interaction moved from E to F** to make room for leaning.
 
+The same **F5 testbed is now surrounded by dense woodland**: spruce, pine and birch, fallen logs, stumps, ferns, grass, moss clumps and leaf litter. The old box perimeter is open, with real gently uneven ground extending around the training clearing: low rises, hollows, sandy patches and damp soil. Test fixtures and firing lanes keep level footing. The camp/character annex is preserved.
+
+**To enter the trench:** from the original spawn, turn around and go behind-left toward the trench entrance marker (approximately x −9, z 19). Walk down the slope. The main trench continues to z 33, with a left branch at z 27. It is physically below ground; walk back up the entrance slope to leave. Try crouching, leaning and ADS inside. This is an authored traversal fixture, not a player-digging or construction system. The forest is a finite prototype patch; use P if stuck or if you walk past its far edge. No separate scene launch is needed.
+
 ## Controls
 
 | Input | Action |
 |---|---|
 | WASD / Mouse | Move / look |
-| Shift | Run forward |
+| Shift | Sprint forward while standing; uses leg stamina |
 | Space | Jump |
-| Hold Ctrl | Crouch; stay crouched if the ceiling blocks standing |
+| Wheel / Caps Lock | Adjust walking pace / minimum-pace toggle |
+| F3 (debug builds) | Show/hide developer diagnostics; hidden during normal play |
+| Tap C / Hold C + wheel | Toggle full crouch / adjust seven stance heights |
+| X | Toggle prone and restore previous stance when clear |
+| Hold Ctrl | Temporary low crouch; blocked growth waits for clearance |
+| K | Manually chamber a round |
 | Q / E | Hold to lean left / right; head collision limits the lean |
 | V | Vault a marked low barrier or climb the low platform when close and grounded |
 | F | Open/close the aimed door or collect an aimed supply |
@@ -31,10 +40,12 @@ The test yard now has three areas: the obstacle course on the left, a walking ci
 | Escape / Click | Release mouse and stop movement input / capture again |
 | F8 in editor | Stop the running project |
 
+See [tactical movement](TACTICAL_MOVEMENT.md) for tuning, stamina/load rules, inspection and focused checks.
+
 ## Suggested playtest
 
 1. Turn left. Jump the short hurdle, use V at the next barrier, then climb onto the platform. The tall barrier should refuse climbing. Move close enough for the chest-height probe to find a marked obstacle; V is not free climbing.
-2. Crouch through the low passage. Release Ctrl inside; you should stand only after leaving its roof.
+2. Crouch through the low passage. Release Ctrl inside; you should stand only after leaving its roof. C and C + wheel also control persistent stance.
 3. At the corner walls, hold Q/E. The view should move sideways and tilt, stopping before the camera enters the wall.
 4. Find the patrolling older civilian at the far left. Walk around him to inspect front, mirrored side, and back walking frames. The original civilian remains idle.
 5. At the right-hand firing lane, shoot the three targets. Hits flash orange and the HUD counts hits/shots. Start with a ten-round magazine, empty spare, and thirty loose rounds. Hold T to fill the spare, then R to swap. Try G, fire until a jam occurs, clear with J, and clean with B. Jam occurrence is random; G increases risk but does not force a jam.
@@ -74,6 +85,8 @@ From the repository, replace `<godot>` with the installed executable:
 <godot> --headless --fixed-fps 60 --path . --script res://tests/training_smoke.gd
 <godot> --headless --fixed-fps 60 --path . --script res://tests/ads_smoke.gd
 <godot> --headless --fixed-fps 60 --path . --script res://tests/muzzle_smoke.gd
+<godot> --headless --fixed-fps 60 --path . --script res://tests/training_environment_check.gd
+<godot> --headless --fixed-fps 60 --path . --script res://tests/forest_terrain_check.gd
 <godot> --headless --fixed-fps 60 --path . --script res://tests/reload_animation_smoke.gd
 <godot> --path .
 ```
@@ -86,7 +99,7 @@ Weapon content, action timelines, and future animation authoring are documented 
 
 ## Camp / NPC / enemy annex
 
-Restart F8 → F5. Turn behind-left at the original spawn and press **F** at the new annex table (approximately x −2, z 6). It connects the same player, weapon and communal ledger to the camp/workshop/enemy training area. The southwest return table brings you back. Claim the quartermaster cache once, assign the civilian as cook/builder, then try the well, kitchen, food store, armourer, ammo store, medical patient, shelter/trench sites, planning camera and HQ rescue exercise. The northern control table enables/reset opponents. Recipes, effects, labels and remaining limits are detailed in [Camp and Combat Tests](CAMP_AND_COMBAT_TESTS.md).
+Restart F8 → F5. Walk behind the firing lanes and follow the **Camp / Workshops** signs east (approximately z 18) through the open entrance. The shooting range, movement course and camp/workshop/enemy area now share a continuous walkable map; return along the same path. No travel menu or teleport table is needed. Starting stores are stocked; the quartermaster cache is an optional extra. Choose **Do it yourself** at stations, or assign the civilian as cook/builder to delegate work, then try the well, kitchen, food store, armourer, ammo store, medical patient, shelter/trench sites, planning camera and HQ rescue exercise. The northern control table enables/reset opponents. Recipes, effects, labels and remaining limits are detailed in [Camp and Combat Tests](CAMP_AND_COMBAT_TESTS.md).
 
 Additional checks:
 
@@ -113,3 +126,37 @@ The models are original procedural geometry with simple skin weights and vertex 
 ## Character art correction
 
 The owner rejected the first polygon blockout. Normal camp residents, medical patient and both opponents again use preserved sprites; the optional polygon player body is off. Restart F8 then F5 to see the correction. The display near x -6, z 11 is labeled REJECTED ART / rig test only. The polygon smoke check now verifies normal defaults first, then explicitly enables rig fixtures. See MODULAR_CHARACTER_BRIEF.md for the next human/clothing proof; the previous integration description above is historical, not the normal-play default.
+
+## Pine and deadwood inspection
+
+Restart F8 → F5 and enter the training scene from the main menu. Existing forest pines now use detailed bark/needles and dead lower limbs. Walk into the woodland behind the range/near the trench for fallen pines, hollow rotten mossy logs, broken snags and loose dead/broken branches. First fallen pine is near x 18, z 15; a rotten mossy log is near x 19, z 33. V uses the existing vault controller on accessible low trunk sections. Loose branches do not block walking or shots.
+
+Rebuild commands and exact texture prompts are in [Environment Asset Pipeline](ENVIRONMENT_ASSET_PIPELINE.md). Additional check: `<godot> --headless --fixed-fps 60 --path . --script res://tests/pine_debris_check.gd`. Art is still a detail candidate; LOD/performance and owner visual review remain pending.
+
+Personal camp work: open a station with F and choose **Do it yourself**. Stay nearby with the panel open through the timer; closing or walking away cancels/refunds materials. Cooking, shelter upgrades and planned racks work without civilians. **Assign civilian** remains available for optional unattended cooking/building. Current work timing/UI is a prototype pending hands-on animation and playtesting.
+
+
+## Environment asset lineup
+
+Open `scenes/environment/environment_asset_test.tscn` in Godot and press **F6** (Run Current Scene). F5 still launches the normal project/menu. The separate inspection lane shows all 17 current standalone nature assets at their authored scale, each with a numbered label and description. Earlier spruce, log, stump and ground-cover meshes are retained alongside detailed pine/birch and new deadwood for comparison; no forest replacements were made in this gallery increment.
+
+Use WASD/mouse to walk and inspect, Shift to run, **Page Up / Page Down** to jump to the previous/next specimen, P to return to the entrance, Escape to release the mouse and click to capture again. The gallery reuses player movement with a local unarmed view. It does not change training weapon controls.
+
+Direct launch: `<godot> --path . res://scenes/environment/environment_asset_test.tscn`. Check: `<godot> --headless --fixed-fps 60 --path . --script res://tests/environment_asset_test_check.gd`.
+
+## Character freeze and comparison
+
+Both training enemies default to the painted sprite. At Enemy test controls use **Compare first enemy: Sprite (resets bout)** to reset with MPFB; use the corresponding MPFB button to return. This comparison resets the bout but preserves carried ammo and stock. Read CHARACTER_FREEZE_AND_COMBAT_SLICE.md for all five validated states, frozen issues and pending combat scope. Additional checks: `res://tests/mpfb_enemy_smoke.gd` and `res://tests/enemy_visual_parity_smoke.gd`, using the existing headless fixed-fps command format. Art sources are preserved in art_source/mpfb_enemy and excluded from Godot imports.
+
+## Physical ammunition and equipment
+
+Fresh training now carries two full ten-round magazines and one 32-round loose stack (52 total). Magazine A is inserted but the chamber starts empty: press K before firing. Magazine B and the stack use two of four pockets. R swaps magazines without chambering automatically; I performs a timed magazine inspection, revealing only an estimated category. T loads the carried spare; full magazines cannot accept more cartridges.
+
+Open Tab and click a magazine, stack or rifle for paper actions: inspect, fill/unload, insert/remove, chamber/unload chamber, split/merge or drop. Drag items between free one-square pocket/pack slots, cartridges onto a magazine, matching stacks together, or a magazine onto the rifle. Dropped equipment is recovered with F and keeps its identity and contents. Camp stores are not shown in this screen. See AMMUNITION_INVENTORY.md for precise rules, original art provenance, snapshot API and focused check commands.
+
+
+Minimal movement HUD: normal training now hides persistent headings, controls,
+resource counts and weapon diagnostics. Contextual F interaction prompts stay
+visible. Use F3 in debug builds for detailed state; release builds require
+explicit developer-overlay enablement. See TACTICAL_MOVEMENT.md for the new
+HUD layout and visual-review commands.

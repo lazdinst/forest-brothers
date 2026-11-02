@@ -18,6 +18,8 @@ func _run() -> void:
 	root.add_child(world)
 	var player = world.get_node("Player")
 	await _frames(40)
+	for id in world.TRAINING_STOCK:
+		_check(world.stock.count(id) == world.TRAINING_STOCK[id],"Fresh training receives %s supplies" % id)
 	_check(player.is_on_floor(), "Player must land on the floor")
 	var start_z: float = player.position.z
 	Input.action_press("move_forward")
@@ -31,10 +33,11 @@ func _run() -> void:
 	await _frames(30)
 	_check(world.get_node("Door").is_open, "An aimed in-range interaction must open the door")
 	Input.action_press("move_forward")
-	await _frames(50)
+	await _frames(80) # Allow acceleration and recovery from the swinging door push.
 	Input.action_release("move_forward")
-	_check(player.position.z < -2.5, "Player must pass through the open doorway")
+	_check(player.position.z < -2.5, "Player must pass through the open doorway: %s" % player.position)
 	for entry in [["food", -2.0], ["water", 0.0], ["medicine", 2.0]]:
+		var before: int = world.stock.count(StringName(entry[0]))
 		player.position = Vector3(entry[1], 0.01, -4.3)
 		player.velocity = Vector3.ZERO
 		player.camera.rotation.x = -0.34
@@ -42,14 +45,16 @@ func _run() -> void:
 		player.try_interact()
 		player.try_interact()
 		await _frames(3)
-		_check(world.stock.count(StringName(entry[0])) == 1, "%s pickup must be awarded exactly once" % entry[0])
+		_check(world.stock.count(StringName(entry[0])) == before + 1, "%s pickup must be awarded exactly once" % entry[0])
 	player.camera.rotation.x = 0.0
-	player.position = Vector3(19.3, 0.01, 1.0)
+	# The old box perimeter is now open woodland. Retain the solid-wall
+	# regression against the existing supplies-room partition instead.
+	player.position = Vector3(3.4, 0.01, -0.8)
 	player.velocity = Vector3.ZERO
-	Input.action_press("move_right")
+	Input.action_press("move_forward")
 	await _frames(35)
-	Input.action_release("move_right")
-	_check(player.position.x < 19.6, "Solid wall must block movement")
+	Input.action_release("move_forward")
+	_check(player.position.z > -1.6, "Solid wall must block movement")
 	if failures.is_empty():
 		print("PASS: floor, movement, door interaction/traversal, three one-shot pickups, wall collision")
 	else:

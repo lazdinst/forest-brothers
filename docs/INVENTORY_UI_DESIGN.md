@@ -1,6 +1,8 @@
 # Personal inventory interface
 
-Status: owner-requested inventory design prototype. Worn equipment, a current
+Status: integrated local carried inventory with physical ammunition actions. See
+[Physical Ammunition](AMMUNITION_INVENTORY.md) for the rule model, controls, initial
+kit, estimated magazine knowledge and serialization boundary. Worn equipment, a current
 character pane and a large carried-inventory area are requested. Owner-confirmed:
 this screen shows only what is on the person; camp storage is a separate interaction.
 Each pack item occupies one square. Pockets are exactly four squares in a horizontal
@@ -45,8 +47,8 @@ does not stack over an open camp panel/planning view or the pause menu. Only the
 local training subtree is suspended; SceneTree is never globally paused.
 
 Open `ui/inventory/inventory_view.tscn` and press F6 for the standalone design
-preview. This version explicitly labels its sample outfit, provisions and pack
-arrangement. Its Back action emits a view-close signal for a containing owner; F8
+preview. This version owns an independent reset-on-run instance of the same training
+kit. Its Back action emits a view-close signal for a containing owner; F8
 stops the standalone scene in the editor. The main-menu Controls panel lists Tab.
 
 The composition scales uniformly from 1600 × 900. The large right sheet contains
@@ -54,13 +56,12 @@ four pocket cells and a provisional 9 × 4 pack layout (36 shown spaces, preserv
 the prior draft's slot count). Only the four-pocket capacity and one-square item
 footprint are confirmed; total pack capacity remains unapproved.
 
-The training adapter reads only the supplied player's rifle definition, condition,
-jam state, magazine contents and loose rounds. It no longer accepts or reads camp
-stock. The live build has no per-location carried-item records yet: pack and pocket
-entries stay empty rather than inventing possessions or assigning existing ammo to
-an unconfirmed pocket location. Carried ammunition remains a separate summary.
-Standalone preview data demonstrates pocket and pack items and is clearly labelled.
-No source is mutated, transferred or refilled by viewing this screen.
+The training adapter reads only the supplied player's physical weapon inventory.
+It does not read camp stock. The spare magazine and 32-round stack now occupy real
+pocket locations with unique IDs. The inserted magazine appears only on the rifle,
+and ammunition actions use these same items in play. Empty pack spaces contain no
+invented possessions. Raw magazine counts stay internal; inspected categories are
+the only magazine quantities projected into UI labels and tooltips.
 
 ## Current character limitation
 
@@ -68,7 +69,7 @@ The owner rejected the procedural character blockout, and the current playable
 player normally has no BodyVisual. This UI does not reload that rejected asset or
 substitute the civilian/enemy sprite as the player. It displays a labelled neutral
 ink mannequin and marks live clothing slots as not recorded until actual equipment
-records exist. Only the standalone preview uses an explicitly sample outfit.
+records exist. No sample outfit is asserted as the current player's equipment.
 
 `character_preview.gd.bind_visual(visual)` accepts the supplied current Node3D body
 when one exists. It duplicates that visual with scripts/signals/groups disabled
@@ -81,13 +82,17 @@ wardrobe validation remains with that workstream under MODULAR_CHARACTER_BRIEF.m
 ## Components and ownership
 
 - `ui/inventory/inventory_snapshot.gd`: read-only training-to-UI adapter plus clearly
-  separate standalone sample data. Takes only an explicit player; no global
+  separate standalone rule instance. Takes only an explicit player; no global
   player reference or new inventory authority.
 - `ui/inventory/inventory_grid.gd`: reusable view grid with selectable item cards.
   Each entry takes one square regardless of legacy span metadata. Over-capacity
   snapshots are rejected before changing visible entries, so a fifth pocket item
   cannot disappear silently or displace an existing item. This view validation does
-  not replace future authoritative pickup/transfer rules.
+  is supplemented by the physical item's authoritative local location checks.
+- `ui/inventory/inventory_item_card.gd` / `inventory_weapon_slot.gd`: ID-only drag
+  payloads. The weapon-state owner validates movement, loading, merging and insertion.
+- `ui/inventory/ammunition_art.gd`: separate original rifle, magazine and cartridge
+  AtlasTextures. An inserted-magazine overlay follows the current weapon item.
 - `ui/inventory/item_symbol.gd`: original code-drawn category sketches, not final or
   historically verified item art. No protected asset-generation pipeline is used.
 - `ui/inventory/character_preview.gd`: isolated visual preview and honest fallback.
@@ -95,8 +100,9 @@ wardrobe validation remains with that workstream under MODULAR_CHARACTER_BRIEF.m
   reusing shared MenuPanel/MenuButton/theme resources.
 - `startup/startup_router.gd`: local opening/closing, input precedence and restoration.
 
-All new GDScript UIDs are retained. Environment, character, camp, weapon and player
-source files and project.godot are unchanged by this work. No dependencies added.
+All new GDScript UIDs are retained. The ammunition increment includes focused
+weapon/input and camp transfer/service integration. Environment and character art,
+project.godot, rendering and input mappings are unchanged by that increment.
 
 ## Validation
 
@@ -106,12 +112,11 @@ source files and project.godot are unchanged by this work. No dependencies added
 <godot> --headless --path . --script res://tests/menu_startup_smoke.gd
 ```
 
-The inventory check covers sample/live separation, no camp-stock data in the
-snapshot, item detail, one-square item footprints, four pockets on one row, fifth-item
-rejection without replacing contents, absent-body fallback, isolated supplied-visual
-rotation, actual ammunition, Tab/Escape/pause routing, local process restoration,
-no stacking over camp panels, and conservation of ammunition/stock during inspection.
-The supplied-visual check uses a synthetic mesh, not the rejected character.
+The inventory check covers the initial physical kit, no camp-stock data, unknown
+magazine counts, ID-preserving movement, splitting/loading/inspection, four pockets,
+fifth-item rejection, dynamic magazine attachment art, real ground/F recovery, K
+chambering and firing, Tab/Escape/pause transitions and conservation. The separate
+ammunition rule check covers compatibility, mixed rounds and save validation.
 
 Performed on Godot 4.7.2: inventory and existing menu/startup checks passed
 headlessly; the inventory check also passed with GTX 1080 Compatibility rendering.
@@ -120,8 +125,8 @@ rectangles are checked for overlap. Restricted-environment certificate-store and
 shader-cache write warnings occurred; no gameplay, networking or approved-character
 art acceptance is implied.
 
-Before real inventory manipulation: approve total pack capacity, stacking and physical access,
-introduce item/location IDs and authoritative transfer/equip rules, supply current
-clothing records and an approved character visual, then connect requests to those
-rules. No drag/drop, equip, consumption, persistence, network synchronization or
-campaign casualty behavior is claimed by this design prototype.
+Before campaign integration: approve final pack capacity, supply clothing records
+and an approved character visual, and connect the existing local item commands to
+authenticated multiplayer and full campaign transactions. Local ammunition actions,
+equipping, drag/drop, ground recovery and equipment snapshot serialization exist;
+network synchronization and campaign casualty/save/rollback do not follow from them.

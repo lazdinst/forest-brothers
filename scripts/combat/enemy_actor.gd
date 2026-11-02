@@ -5,6 +5,7 @@ signal spotted(actor, at: Vector3)
 signal fired(actor, target, hit: bool)
 const ART = preload("res://assets/characters/training_guard/idle_front_v1.png")
 @export var use_polygon: bool = false
+@export var character_scene: PackedScene
 var polygon_model
 var health: float = 100.0
 var state: StringName = &"idle"
@@ -45,7 +46,13 @@ func _ready() -> void:
 	sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	sprite.no_depth_test = false
 	visual.add_child(sprite)
-	if use_polygon:
+	if character_scene != null:
+		visual.position.y = 0.0
+		sprite.hide()
+		polygon_model = load("res://scripts/characters/imported_character.gd").new()
+		polygon_model.model_scene = character_scene
+		visual.add_child(polygon_model)
+	elif use_polygon:
 		visual.position.y = 0.0
 		sprite.hide()
 		polygon_model = load("res://scripts/characters/polygon_character.gd").new()
@@ -62,7 +69,7 @@ func _physics_process(delta: float) -> void:
 	if polygon_model != null:
 		polygon_model.set_hit_flash(_hit_tint > 0)
 	var viewer := get_viewport().get_camera_3d()
-	if viewer != null and not use_polygon:
+	if viewer != null and polygon_model == null:
 		var facing := viewer.global_position - visual.global_position
 		facing.y = 0
 		if facing.length_squared() > 0.001:
@@ -77,7 +84,8 @@ func _physics_process(delta: float) -> void:
 	velocity.x = 0
 	velocity.z = 0
 	if seen != null:
-		var stance_factor: float = 0.65 if seen.is_crouching else 1.0
+		var stance_factor: float = lerpf(0.4, 1.0, seen.locomotion.height_fraction(seen.body_shape.shape.height))
+		stance_factor *= 1.0 + minf(Vector2(seen.velocity.x, seen.velocity.z).length() / 10.0, 0.5)
 		var distance_factor := clampf(1.8-global_position.distance_to(seen.global_position)/18.0,0.5,1.5)
 		recognition = minf(1.0, recognition + delta * 1.5 * stance_factor * distance_factor)
 		last_known = seen.global_position
@@ -116,12 +124,13 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= delta * 20
 	move_and_slide()
+	# Patrol keeps the same lane-facing AI heading for every visual.
 	if polygon_model != null:
 		polygon_model.play(&"aim" if state==&"engage" else (&"walk" if Vector2(velocity.x,velocity.z).length()>0.1 else &"idle"))
 
 func can_see(actor: Node3D) -> bool:
 	var eye := global_position + Vector3.UP * 1.55
-	var chest := actor.global_position + Vector3.UP * (0.7 if actor.is_crouching else 1.0)
+	var chest: Vector3 = actor.global_position + Vector3.UP * (actor.body_shape.shape.height * 0.6)
 	var toward := chest-eye
 	toward.y = 0.0
 	if toward.length_squared() > 0.001 and global_basis.z.dot(toward.normalized()) < 0.3:
@@ -181,10 +190,14 @@ func _die() -> void:
 	velocity = Vector3.ZERO
 	set_deferred("collision_layer",0)
 	$Body.set_deferred("disabled",true)
+	# Resolve gameplay before choosing a cosmetic corpse animation.
+	defeated.emit(self)
+	_play_death_visual()
+
+func _play_death_visual() -> void:
 	if polygon_model != null:
 		polygon_model.set_hit_flash(false)
 		polygon_model.play(&"die")
-		defeated.emit(self)
 		return
 	var tween := create_tween()
 	tween.tween_property(visual,"scale:y",0.7,0.18)
@@ -192,7 +205,6 @@ func _die() -> void:
 	tween.tween_property(visual,"rotation:x",-PI/2,0.6).set_trans(Tween.TRANS_QUAD)
 	tween.parallel().tween_property(visual,"position:y",0.035,0.6)
 	tween.parallel().tween_property(visual,"scale:y",1.0,0.6)
-	defeated.emit(self)
 
 func _blood(at: Vector3, lethal: bool) -> void:
 	var particles := CPUParticles3D.new()

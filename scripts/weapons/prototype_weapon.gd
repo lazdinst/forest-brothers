@@ -3,6 +3,7 @@ signal shot_fired(origin: Vector3)
 ## Presentation/input adapter for the local training rifle. Not network authority.
 
 const WeaponState = preload("res://scripts/weapons/prototype_weapon_state.gd")
+const GroundEquipment = preload("res://scripts/inventory/ground_equipment.gd")
 const DEFAULT_DEFINITION = preload("res://weapons/svt_inspired_training.tres")
 const MAGAZINE_SHADER = preload("res://scripts/weapons/weapon_magazine.gdshader")
 @export var definition: Resource = DEFAULT_DEFINITION
@@ -30,6 +31,7 @@ var last_shot_origin := Vector3.ZERO
 var last_shot_end := Vector3.ZERO
 var last_shot_blocked: bool = false
 var _sound: AudioStreamPlayer
+var _ground_items: Dictionary = {}
 
 
 func _ready() -> void:
@@ -96,11 +98,16 @@ func command(action: StringName) -> void:
 		state.cleanliness = 0.05
 		state.message = "Range test: weapon dirtied"
 	else:
-		state.start_action(action)
+		state.request_action(action)
+
+func prepare_inventory() -> void:
+	_fire_requested = false
+	state.cancel_packing()
 
 
 func _physics_process(delta: float) -> void:
 	state.advance(delta)
+	sync_ground_items()
 	var active: bool = _player.controls_active()
 	if active and Input.is_action_pressed("pack_magazine") and not _player.is_vaulting:
 		state.start_action(&"pack")
@@ -110,6 +117,32 @@ func _physics_process(delta: float) -> void:
 		_fire_requested = false
 		if active and not _player.is_vaulting and not _player.is_sprinting and state.try_fire(rng.randf()):
 			_fire()
+
+func sync_ground_items() -> void:
+	for id in _ground_items.keys():
+		if not state.inventory.items.has(id) or state.inventory.items[id].location.kind != &"ground":
+			if is_instance_valid(_ground_items[id]): _ground_items[id].queue_free()
+			_ground_items.erase(id)
+	for item in state.inventory.items.values():
+		if item.location.kind != &"ground": continue
+		if _ground_items.has(item.id) and is_instance_valid(_ground_items[item.id]):
+			_ground_items[item.id].global_position = item.location.position
+			continue
+		var pickup := GroundEquipment.new()
+		pickup.weapon_state = state
+		pickup.item_id = item.id
+		_player.get_parent().add_child(pickup)
+		pickup.global_position = item.location.position
+		_ground_items[item.id] = pickup
+
+func drop_inventory_item(id: StringName) -> bool:
+	if state.busy != &"": return state.reject("Finish or cancel the current action first")
+	var origin: Vector3 = _player.global_position + Vector3.UP + -_player.global_basis.z * 1.2
+	var ground: Dictionary = _player.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(origin,origin+Vector3.DOWN*4,1,[_player.get_rid()]))
+	var at: Vector3 = ground.position+Vector3.UP*0.12 if not ground.is_empty() else origin+Vector3.DOWN*0.85
+	if not state.inventory.drop_item(id,at): return false
+	sync_ground_items()
+	return true
 
 
 func _fire() -> void:
@@ -200,8 +233,10 @@ func _process(delta: float) -> void:
 	_hands.rotation = -_player.camera.rotation.z + sin(_phase * 0.5) * minf(speed, 1.0) * 0.006 * (1.0 - aim_fraction)
 	_hands.rotation += deg_to_rad(pose.get("roll", 0.0))
 	var separate_magazine: bool = clip != null and clip.animate_magazine and not aimed_view and pose.get("texture") == null
-	_gun_material.set_shader_parameter("hide_magazine", separate_magazine)
+	var physical_weapon = state.inventory.weapon()
+	_gun_material.set_shader_parameter("hide_magazine", separate_magazine or physical_weapon == null or physical_weapon.inserted_magazine_id == &"")
 	_magazine.visible = separate_magazine
+	_hands.visible = state.equipped()
 	_magazine.size = _hands.size
 	_magazine.position = _hands.position + pose.get("magazine_offset", Vector2.ZERO).rotated(_hands.rotation) * scale_factor
 	_magazine.pivot_offset = _hands.pivot_offset
@@ -237,7 +272,8 @@ func muzzle_world_position() -> Vector3:
 
 
 func status_text() -> String:
-	return "%s  %d/%d   Spare %d/%d   Loose %d\nClean %d%%   %s   Hits %d / Shots %d" % [definition.display_name, state.magazines[state.loaded_magazine], definition.capacity, state.magazines[1 - state.loaded_magazine], definition.capacity, state.loose_rounds, roundi(state.cleanliness * 100.0), action_phase if action_phase != "" else state.message, hits, shots]
+	if not state.equipped(): return "No equipped rifle · recover it with F"
+	return "%s · Magazine: %s · Loose %d\nChamber %s · Clean %d%% · %s" % [definition.display_name,state.inventory.knowledge(state.inventory.weapon().inserted_magazine_id),state.loose_rounds,"loaded" if state.inventory.weapon().chambered_round != null else "empty",roundi(state.cleanliness*100),action_phase if action_phase != "" else state.message]
 
 
 func _make_test_shot_sound() -> AudioStreamWAV:

@@ -146,6 +146,7 @@ func open_inventory() -> void:
 	if is_instance_valid(training_ui) and training_ui.has_active_context():
 		return
 	if navigation_open: close_navigation()
+	content.get_node("Player").weapon.prepare_inventory()
 	previous_process_mode = content.process_mode
 	previous_mouse_mode = Input.mouse_mode
 	content.process_mode = Node.PROCESS_MODE_DISABLED
@@ -155,6 +156,7 @@ func open_inventory() -> void:
 	add_child(inventory_layer)
 	inventory_view = InventoryScene.instantiate()
 	inventory_view.data = InventorySnapshot.from_training(content.get_node("Player"))
+	inventory_view.drop_requested.connect(content.get_node("Player").weapon.drop_inventory_item)
 	inventory_layer.add_child(inventory_view)
 	inventory_view.closed.connect(close_inventory)
 	inventory_open = true

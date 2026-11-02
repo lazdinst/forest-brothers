@@ -16,9 +16,24 @@ func _run() -> void:
 	var annex = world.get_node("SystemsAnnex")
 	var player = world.get_node("Player")
 	_check(annex.runtime.stock==world.stock,"Annex shares the original communal ledger")
-	annex.open_station(annex.stations[&"entry"],player)
-	await _frames(10)
-	_check(player.global_position.x > 30 and player.is_on_floor(),"Entry portal reaches walkable annex")
+	_check(not annex.stations.has(&"entry") and not annex.stations.has(&"return"),"Travel requires no portal tables")
+	# Walk both directions using real player input, without interaction or jumping.
+	player.global_position = Vector3(0,0.1,18.3)
+	player.velocity = Vector3.ZERO
+	player.rotation = Vector3.ZERO
+	await _frames(12)
+	var rounds_before: int = player.weapon.state.loose_rounds
+	Input.action_press("move_right")
+	await _frames(750) # Slower strafe plus acceleration.
+	Input.action_release("move_right")
+	await _frames(5)
+	_check(player.global_position.x > 35 and player.is_on_floor(),"Walk from main yard through the open camp entrance: %s" % player.global_position)
+	Input.action_press("move_left")
+	await _frames(750) # Slower strafe plus acceleration.
+	Input.action_release("move_left")
+	await _frames(5)
+	_check(absf(player.global_position.x) < 1 and player.is_on_floor(),"Walk back to main yard without a transition: %s" % player.global_position)
+	_check(player.weapon.state.loose_rounds == rounds_before and not annex._overlay.visible,"Travel preserves ammunition without opening UI")
 	for id in [&"depot",&"well",&"cook",&"food",&"armourer",&"ammo",&"medical",&"shelter",&"trench",&"planning",&"hq",&"combat"]:
 		var station = annex.stations[id]
 		player.global_position = station.global_position+Vector3(0,0.02,1.6)
@@ -45,6 +60,20 @@ func _run() -> void:
 	annex.open_resident(annex.resident_nodes[&"resident_01"],player)
 	_check(annex._overlay.visible and annex._actions.get_child_count()==3,"Civilian exposes role assignment UI")
 	annex.close_panel()
+	# Use the actual primary cooking button without assigning the civilian.
+	var kitchen = annex.stations[&"cook"]
+	player.global_position = kitchen.global_position+Vector3(0,0.02,1.6)
+	player.velocity = Vector3.ZERO
+	await _frames(5)
+	var meals_before: int = annex.runtime.stock.count(&"meals")
+	annex.open_station(kitchen,player)
+	_check(annex._actions.get_child(0).text.begins_with("Do it yourself:"),"Personal work is the primary station action")
+	annex._actions.get_child(0).pressed.emit()
+	await _frames(250)
+	_check(annex.runtime.stock.count(&"meals")==meals_before+1 and annex.runtime.residents[&"resident_01"].role==&"unassigned","Real cooking UI lets an unassisted player produce a meal")
+	annex._actions.get_child(0).pressed.emit()
+	annex.close_panel()
+	_check(not annex.runtime.jobs.has(&"cook"),"Closing the panel cancels personal work")
 	annex.open_station(annex.stations[&"planning"],player)
 	annex.start_planning()
 	await _frames(3)
@@ -93,13 +122,10 @@ func _run() -> void:
 	annex.runtime.resolve_exercise(true)
 	await _frames(105)
 	_check(quick_recruit.visible and not quick_recruit.departing,"An early safe result cancels departure so the arrived civilian cannot disappear later")
-	annex.open_station(annex.stations[&"return"],player)
-	await _frames(5)
-	_check(player.global_position.x < 20,"Return portal restores original training yard")
 	for failure in failures:
 		push_error(failure)
 	if failures.is_empty():
-		print("PASS: original-yard integration, all 12 station ray interactions, resident UI, overhead placement/restoration, shared ledger, return")
+		print("PASS: original-yard integration, all 12 station ray interactions, resident UI, overhead placement/restoration, shared ledger, two-way walking connection")
 	world.queue_free()
 	await process_frame
 	quit(0 if failures.is_empty() else 1)

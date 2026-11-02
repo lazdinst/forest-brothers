@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://scripts/environment/pine_bark.gdshader" id="1_ufnjm"]
+[ext_resource type="Texture2D" path="res://assets/environment/textures/pine_bark_lower_v2.png" id="2_jcp1m"]
+[ext_resource type="Texture2D" path="res://assets/environment/textures/pine_bark_upper_v2.png" id="3_n64rr"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_ufnjm")
+shader_parameter/lower_bark = ExtResource("2_jcp1m")
+shader_parameter/upper_bark = ExtResource("3_n64rr")
+shader_parameter/growth_axis = null
+shader_parameter/growth_offset = null
+shader_parameter/deadness = null

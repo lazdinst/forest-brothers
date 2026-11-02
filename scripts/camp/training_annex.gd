@@ -1,12 +1,18 @@
 extends Node3D
 ## Additive training module. Owns local rules/UI; reuses the world's stock/player.
 const Runtime = preload("res://scripts/camp/camp_runtime.gd")
+const ResourceStrip = preload("res://ui/components/resource_strip.gd")
+# Local fixture identity only; shared-session identities belong to the later authority layer.
+const PLAYER_WORKER_ID: StringName = &"training_player"
+const ForestLayout = preload("res://scripts/environment/forest_layout.gd")
 const Station = preload("res://scripts/camp/camp_station.gd")
 const Enemy = preload("res://scripts/combat/enemy_actor.gd")
 const Civilian = preload("res://scenes/characters/starting_civilian.tscn")
 const ResidentScript = preload("res://scripts/camp/camp_resident.gd")
 # Rig fixtures only; the owner rejected this blockout as character art.
 @export var use_polygon_characters: bool = false
+# Art frozen: preserve the painted default and offer MPFB only for comparison.
+@export var use_mpfb_enemy: bool = false
 var runtime
 var world
 var player
@@ -22,7 +28,9 @@ var _layer: CanvasLayer
 var _overlay: ColorRect
 var _heading: Label
 var _details: Label
+var _resource_strip
 var _actions: VBoxContainer
+var debug_diagnostics_visible := false
 var _summary: Label
 var _job_status: Label
 var _entry_hint: Label
@@ -34,7 +42,6 @@ var _planner: Camera3D
 var planning: bool = false
 var _planner_hint: Label
 var _map_labels: Array[Label] = []
-var _footstep_time: float = 0.0
 var _bout_active: bool = false
 var vitality: float = 100.0
 var blood_enabled: bool = true
@@ -44,16 +51,19 @@ func _ready() -> void:
 	player = world.get_node("Player")
 	runtime = Runtime.new(world.stock)
 	runtime.can_complete = _completion_clear
+	runtime.can_player_work = _can_player_work
 	position = Vector3(48,0,0)
 	_box(self,"AnnexFloor",Vector3(0,-0.2,0),Vector3(36,0.4,40),Color(0.22,0.25,0.18),true)
 	for side in [-1,1]:
-		_box(self,"Boundary",Vector3(side*18,1,0),Vector3(0.3,2,40),Color(0.25,0.29,0.25),true)
 		_box(self,"Boundary",Vector3(0,1,side*20),Vector3(36,2,0.3),Color(0.25,0.29,0.25),true)
+	# Leave a four-metre opening behind the firing lanes (world x30, z15..19).
+	_box(self,"WestBoundaryNorth",Vector3(-18,1,-2.5),Vector3(0.3,2,35),Color(0.25,0.29,0.25),true)
+	_box(self,"WestBoundarySouth",Vector3(-18,1,19.5),Vector3(0.3,2,1),Color(0.25,0.29,0.25),true)
+	_box(self,"EastBoundary",Vector3(18,1,0),Vector3(0.3,2,40),Color(0.25,0.29,0.25),true)
+	_connect_yard()
 	_label(self,"CAMP & COMBAT TRAINING ANNEX\nF at stations / one shared stock / prototype costs",Vector3(0,3.0,16))
 	_label(self,"WEST PLANNING PLOT\nPlace racks from the build table",Vector3(-10,0.03,3))
 	_box(self,"PlanningPlot",Vector3(-9.5,0.006,4),Vector3(9,0.01,12),Color(0.24,0.3,0.23))
-	_station(&"entry",&"entry","Camp / enemy test annex",Vector3(-2,0,6)-position)
-	_station(&"return",&"return","Return to original training yard",Vector3(-14,0,17))
 	_station(&"depot",&"depot","Communal quartermaster",Vector3(0,0,13))
 	_station(&"well",&"well","Well / water collection",Vector3(-12,0,13))
 	_station(&"cook",&"cook","Cooking workshop",Vector3(-7,0,13))
@@ -76,7 +86,38 @@ func _ready() -> void:
 	runtime.changed.connect(refresh_panel)
 	world.stock.changed.connect(refresh_panel)
 	player.weapon.shot_fired.connect(_gun_noise)
+	player.movement_noise.connect(_movement_noise)
 	_sync_world()
+
+func _connect_yard() -> void:
+	# Follow baked terrain to its x27 edge, then grade to the camp floor.
+	# Keep the generated forest resources intact; mesh and collision share vertices.
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for xi in range(13):
+		for zi in range(8):
+			var x := 24.0 + xi * 0.5
+			var z := 15.0 + zi * 0.5
+			for corner in [Vector2(x,z),Vector2(x+0.5,z),Vector2(x,z+0.5),Vector2(x+0.5,z),Vector2(x+0.5,z+0.5),Vector2(x,z+0.5)]:
+				var blend := smoothstep(27.0,30.0,corner.x)
+				var y := lerpf(ForestLayout.height(minf(corner.x,27.0),corner.y),0.0,blend)
+				surface.set_uv(corner * 0.25)
+				surface.add_vertex(Vector3(corner.x,y+0.012,corner.y)-position)
+	surface.generate_normals()
+	var mesh := surface.commit()
+	var path := MeshInstance3D.new()
+	path.name = "YardConnection"
+	path.mesh = mesh
+	path.material_override = load("res://assets/environment/materials/moss_ground_v1.tres")
+	add_child(path)
+	var body := StaticBody3D.new()
+	path.add_child(body)
+	var collision := CollisionShape3D.new()
+	collision.shape = mesh.create_trimesh_shape()
+	body.add_child(collision)
+	_label(self,"CAMP / WORKSHOPS →\nWalk behind the firing lanes",Vector3(3,2.4,18.3)-position)
+	_label(self,"CAMP / WORKSHOPS →",Vector3(25,2.4,18.3)-position)
+	_label(self,"← SHOOTING RANGE / MOVEMENT COURSE",Vector3(-15,2.4,17))
 
 func _station(id: StringName, kind: StringName, title: String, at: Vector3) -> void:
 	var station = Station.new()
@@ -181,11 +222,22 @@ func reset_enemies() -> void:
 		enemy.targets.assign([player])
 		enemy.blood_enabled = blood_enabled
 		enemy.use_polygon = use_polygon_characters and index == 0
+		if index == 0 and use_mpfb_enemy and not use_polygon_characters:
+			enemy.character_scene = preload("res://assets/characters/mpfb_enemy/enemy_v1.glb")
 		add_child(enemy)
 		enemy.defeated.connect(_enemy_defeated)
 		enemy.spotted.connect(_enemy_spotted)
 		enemy.fired.connect(_enemy_fired)
 		enemies.append(enemy)
+
+func _toggle_enemy_comparison() -> void:
+	use_mpfb_enemy = not use_mpfb_enemy
+	reset_enemies()
+	refresh_panel()
+
+func _movement_noise(at: Vector3, loudness: float) -> void:
+	for enemy in enemies:
+		enemy.hear_noise(at, loudness)
 
 func _gun_noise(at: Vector3) -> void:
 	for enemy in enemies:
@@ -218,16 +270,18 @@ func _ui() -> void:
 	_layer.layer = 6
 	add_child(_layer)
 	_summary = Label.new()
-	_summary.position = Vector2(28,155)
+	_summary.position = Vector2(28,225)
 	_summary.add_theme_font_size_override("font_size",15)
 	_summary.add_theme_color_override("font_outline_color",Color.BLACK)
 	_summary.add_theme_constant_override("outline_size",5)
+	_summary.hide()
 	_layer.add_child(_summary)
 	_entry_hint = Label.new()
-	_entry_hint.position = Vector2(28,245)
-	_entry_hint.text = "NEW: Camp / NPC / enemy annex — F at the table behind-left of spawn"
+	_entry_hint.position = Vector2(28,315)
+	_entry_hint.text = "Camp / NPC / enemy training: follow signs behind the firing lanes to the right"
 	_entry_hint.add_theme_font_size_override("font_size",16)
 	_entry_hint.add_theme_constant_override("outline_size",5)
+	_entry_hint.hide()
 	_layer.add_child(_entry_hint)
 	_overlay = ColorRect.new()
 	_overlay.color = Color(0.035,0.045,0.035,1.0)
@@ -246,6 +300,17 @@ func _ui() -> void:
 	_heading = Label.new()
 	_heading.add_theme_font_size_override("font_size",25)
 	box.add_child(_heading)
+	_resource_strip = ResourceStrip.new()
+	# Explicit ink works for both standalone and journal-themed training panels.
+	var resource_paper := PanelContainer.new()
+	var paper := StyleBoxFlat.new()
+	paper.bg_color = Color("e6d5b5")
+	paper.set_content_margin_all(10)
+	resource_paper.add_theme_stylebox_override("panel",paper)
+	box.add_child(resource_paper)
+	_resource_strip.ink = Color("493a29")
+	_resource_strip.outlined = false
+	resource_paper.add_child(_resource_strip)
 	_details = Label.new()
 	_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_details.custom_minimum_size.y = 140
@@ -268,7 +333,7 @@ func _ui() -> void:
 	_overlay.hide()
 	_planner_hint = Label.new()
 	_planner_hint.position = Vector2(25,90)
-	_planner_hint.text = "BUILD PLANNING\nClick the marked west plot to place a rack plan.\nEsc returns to first person.\nUse the planning table to order civilian construction."
+	_planner_hint.text = "BUILD PLANNING\nClick the marked west plot to place a rack plan.\nEsc returns to first person.\nUse the planning table to build yourself or assign a civilian."
 	_planner_hint.add_theme_font_size_override("font_size",18)
 	_planner_hint.add_theme_constant_override("outline_size",4)
 	_planner_hint.hide()
@@ -280,8 +345,6 @@ func _ui() -> void:
 	_planner.position = Vector3(-0.5,27,5)
 	_planner.look_at(global_position+Vector3(-0.5,0,5),Vector3.FORWARD)
 	for id in stations:
-		if id in [&"entry",&"return"]:
-			continue
 		var label := Label.new()
 		label.text = {&"depot":"Quartermaster",&"well":"Well",&"cook":"Cooking",&"food":"Food store",&"armourer":"Armourer",&"ammo":"Ammo store",&"medical":"Medical post",&"shelter":"Shelter upgrade",&"trench":"Trench",&"planning":"Build table",&"hq":"HQ / Rescue",&"combat":"Enemy controls"}.get(id,stations[id].title)
 		label.custom_minimum_size.x = 130
@@ -295,13 +358,6 @@ func _ui() -> void:
 		_map_labels.append(label)
 
 func open_station(station, actor) -> void:
-	if station.kind == &"entry":
-		_teleport(Vector3(0,0.02,17))
-		return
-	if station.kind == &"return":
-		player.global_position = Vector3(0,0.02,4.3)
-		player.velocity = Vector3.ZERO
-		return
 	_actor = actor
 	_panel_station = station.station_id
 	_panel_resident = &""
@@ -321,6 +377,7 @@ func _show_panel() -> void:
 
 func close_panel() -> void:
 	_overlay.hide()
+	runtime.cancel_player_jobs(PLAYER_WORKER_ID)
 	Input.mouse_mode = _prior_mouse
 
 func _button(title: String, action: Callable) -> void:
@@ -336,10 +393,8 @@ func refresh_panel() -> void:
 	for child in _actions.get_children():
 		_actions.remove_child(child)
 		child.queue_free()
-	var items: Array[String] = []
-	for id in runtime.stock.quantities:
-		items.append("%s %d" % [id,runtime.stock.count(id)])
-	_details.text = "COMMUNAL: " + " / ".join(items) + "\n" + runtime.message + "\nAssign a civilian before starting worker jobs. Jobs continue when you walk away."
+	_resource_strip.show_stock(runtime.stock.quantities)
+	_details.text = "COMMUNAL CAMP STORES\n" + runtime.message + "\nDo tasks yourself, or assign a civilian. Stay here while working yourself; closing cancels and refunds materials. Civilian jobs continue when you leave."
 	if _panel_resident != &"":
 		_heading.text = "Civilian assignment"
 		var record: Dictionary = runtime.residents[_panel_resident]
@@ -362,7 +417,7 @@ func refresh_panel() -> void:
 			_details.text += "\nCarried rifle cleanliness %d%%. Service does not clear a jam." % roundi(player.weapon.state.cleanliness*100)
 			_recipe_button(&"repair",_panel_station)
 		&"ammo":
-			_details.text += "\nCarried loose %d; loaded %d; spare %d. Packing still requires T." % [player.weapon.state.loose_rounds,player.weapon.state.magazines[player.weapon.state.loaded_magazine],player.weapon.state.magazines[1-player.weapon.state.loaded_magazine]]
+			_details.text += "\n" + player.weapon.status_text()
 			_button("Withdraw 10 loose cartridges",runtime.withdraw_ammo.bind(player.weapon.state,10))
 			_button("Deposit 10 loose cartridges",runtime.deposit_ammo.bind(player.weapon.state,10))
 		&"medical":
@@ -378,7 +433,8 @@ func refresh_panel() -> void:
 				if runtime.plans[id].status == &"planned":
 					_recipe_button(&"rack",id)
 				if runtime.jobs.has(id):
-					_button("Assist " + String(id),runtime.assist.bind(id))
+					if runtime.jobs[id].worker != &"":
+						_button("Assist " + String(id),runtime.assist.bind(id))
 					_button("Cancel " + String(id),runtime.cancel_job.bind(id))
 		&"hq":
 			_details.text += "\nRESCUE EXERCISE ONLY: active %s / pending %d / residents %d / completed objectives %d" % [runtime.exercise_active,runtime.pending_recruits.size(),runtime.residents.size(),runtime.quests_completed]
@@ -386,20 +442,31 @@ func refresh_panel() -> void:
 			_button("Safe return (secures pending civilians)",runtime.resolve_exercise.bind(true))
 			_button("Group-death result (lose pending civilians)",runtime.resolve_exercise.bind(false))
 		&"combat":
-			_details.text += "\nVitality %.0f / 100. Enemy hits count only while the bout is armed.\nEnemy weapons are flash proxies; art is a front-only candidate." % vitality
+			_details.text += "\nVitality %.0f / 100. Enemy hits count only while the bout is armed.\nEnemy weapons are flash proxies. Sprite default; MPFB comparison has frozen pose/clothing issues." % vitality
 			_button("Arm enemies / start exposure test",arm_bout)
 			_button("Reset enemies / corpses / blood",reset_enemies)
+			_button("Compare first enemy: %s (resets bout)" % ("MPFB" if use_mpfb_enemy else "Sprite"),_toggle_enemy_comparison)
 			_button("Toggle non-graphic blood: %s" % blood_enabled,_toggle_blood)
 	if runtime.jobs.has(_panel_station):
-		_button("Foreman assistance (once per civilian job)",runtime.assist.bind(_panel_station))
+		if runtime.jobs[_panel_station].worker != &"":
+			_button("Foreman assistance (once per civilian job)",runtime.assist.bind(_panel_station))
 		_button("Cancel job / refund reserved supplies",runtime.cancel_job.bind(_panel_station))
 
 func _recipe_button(recipe: StringName, station: StringName) -> void:
 	var data: Dictionary = runtime.RECIPES[recipe]
-	_button("%s — %s — %.1fs%s" % [data.label,_cost_text(data.cost),data.seconds," / civilian "+String(data.role) if data.role != &"" else ""],_start_job.bind(recipe,station))
+	var description := "%s — %s — %.1fs" % [data.label,_cost_text(data.cost),data.seconds]
+	_button("Do it yourself: " + description,_start_job.bind(recipe,station,true))
+	if data.role != &"":
+		_button("Assign civilian %s: %s" % [data.role,description],_start_job.bind(recipe,station,false))
 
-func _start_job(recipe: StringName, station: StringName) -> void:
-	runtime.start_job(recipe,station,runtime.request_id(),player.weapon.state)
+func _start_job(recipe: StringName, station: StringName, do_it_yourself: bool = true) -> void:
+	runtime.start_job(recipe,station,runtime.request_id(),player.weapon.state,PLAYER_WORKER_ID if do_it_yourself else &"")
+
+func _can_player_work(player_id: StringName, station_id: StringName) -> bool:
+	if player_id != PLAYER_WORKER_ID or not _overlay.visible or planning or _panel_resident != &"":
+		return false
+	var work_station: StringName = &"planning" if runtime.plans.has(station_id) else station_id
+	return _panel_station == work_station and stations.has(work_station) and player.global_position.distance_to(stations[work_station].global_position) <= 3.0
 
 func _reset_vitality() -> void:
 	vitality = 100
@@ -469,31 +536,21 @@ func _teleport(at: Vector3) -> void:
 func _process(delta: float) -> void:
 	if runtime == null:
 		return
-	if player.global_position.x > 29 and player.is_on_floor() and Vector2(player.velocity.x,player.velocity.z).length() > 0.2:
-		_footstep_time -= delta
-		if _footstep_time <= 0:
-			_footstep_time = 0.35 if player.is_sprinting else 0.65
-			var loudness: float = 0.1 if player.is_crouching else (0.6 if player.is_sprinting else 0.3)
-			for enemy in enemies:
-				enemy.hear_noise(player.global_position,loudness)
 	_sync_world()
 	if planning:
-		_planner_hint.text = "BUILD PLANNING\nClick west plot to place a rack plan. Esc returns.\nOrder civilian construction at the planning table.\nTimber %d / Parts %d / Plans %d / Residents %d\n%s" % [runtime.stock.count(&"timber"),runtime.stock.count(&"parts"),runtime.plans.size(),runtime.residents.size(),runtime.message]
-	_entry_hint.visible = player.global_position.x < 29 and not _overlay.visible and not planning
-	_summary.visible = player.global_position.x > 29 and not _overlay.visible and not planning
+		_planner_hint.text = "BUILD PLANNING\nClick west plot to place a rack plan. Esc returns.\nBuild yourself or assign a civilian at the planning table.\nTimber %d / Parts %d / Plans %d / Residents %d\n%s" % [runtime.stock.count(&"timber"),runtime.stock.count(&"parts"),runtime.plans.size(),runtime.residents.size(),runtime.message]
+	_entry_hint.visible = debug_diagnostics_visible and player.global_position.x < 29 and not _overlay.visible and not planning
+	_summary.visible = debug_diagnostics_visible and player.global_position.x > 29 and not _overlay.visible and not planning
 	if _overlay.visible:
 		var lines: Array[String] = []
 		for id in runtime.jobs:
-			lines.append("%s: %.1fs remaining" % [runtime.RECIPES[runtime.jobs[id].recipe].label,runtime.jobs[id].left])
+			lines.append("%s — %s: %.1fs remaining" % ["You are working" if runtime.jobs[id].player != &"" else "Civilian / station",runtime.RECIPES[runtime.jobs[id].recipe].label,runtime.jobs[id].left])
 		_job_status.text = "\n".join(lines)
 	if _summary.visible:
-		var parts: Array[String] = []
-		for id in runtime.stock.quantities:
-			parts.append("%s %d" % [id,runtime.stock.count(id)])
 		var states: Array[String] = []
 		for enemy in enemies:
 			states.append("%s: %.0fHP / %s" % [enemy.name,enemy.health,enemy.state])
-		_summary.text = "ANNEX STOCK: " + " / ".join(parts) + "\n"+runtime.message+"\nVitality %.0f | Jobs %d | Residents %d | Pending %d\n" % [vitality,runtime.jobs.size(),runtime.residents.size(),runtime.pending_recruits.size()] + " / ".join(states)
+		_summary.text = runtime.message+"\nVitality %.0f | Jobs %d | Residents %d | Pending %d\n" % [vitality,runtime.jobs.size(),runtime.residents.size(),runtime.pending_recruits.size()] + " / ".join(states)
 
 func _sync_world() -> void:
 	for id in runtime.residents:

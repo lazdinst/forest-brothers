@@ -1,0 +1,121 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player/first_person_player.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://assets/environment/scenes/moss_ground_v1.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://assets/environment/scenes/spruce_v1.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://assets/environment/scenes/fern_v1.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://assets/environment/scenes/boulder_v1.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://assets/environment/scenes/crate_v1.tscn" id="6"]
+[ext_resource type="Script" path="res://scripts/environment/visual_proof.gd" id="7"]
+[ext_resource type="PackedScene" path="res://scenes/characters/starting_civilian.tscn" id="8"]
+
+[sub_resource type="Environment" id="Environment"]
+background_mode = 1
+background_color = Color(0.42, 0.46, 0.43, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.67, 0.72, 0.62, 1)
+ambient_light_energy = 0.65
+tonemap_mode = 0
+fog_enabled = true
+fog_light_color = Color(0.42, 0.46, 0.43, 1)
+fog_density = 0.007
+
+[sub_resource type="LabelSettings" id="Label"]
+font_size = 16
+font_color = Color(0.86, 0.86, 0.75, 1)
+shadow_color = Color(0.08, 0.09, 0.07, 1)
+shadow_size = 4
+shadow_offset = Vector2(1, 2)
+
+[node name="EnvironmentVisualProof" type="Node3D"]
+script = ExtResource("7")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -32, 0)
+light_color = Color(0.87, 0.89, 0.83, 1)
+light_energy = 0.8
+shadow_enabled = true
+directional_shadow_max_distance = 35.0
+
+[node name="Ground" parent="." instance=ExtResource("2")]
+
+[node name="Player" parent="." instance=ExtResource("1")]
+position = Vector3(0, 0.03, 7)
+
+[node name="Spruce" parent="." instance=ExtResource("3")]
+position = Vector3(-3.8, 0, -1)
+
+[node name="Spruce02" parent="." instance=ExtResource("3")]
+position = Vector3(5.5, 0, -5.8)
+rotation_degrees = Vector3(0, 67, 0)
+
+[node name="Spruce03" parent="." instance=ExtResource("3")]
+position = Vector3(-8, 0, -6.5)
+rotation_degrees = Vector3(0, 136, 0)
+
+[node name="Spruce04" parent="." instance=ExtResource("3")]
+position = Vector3(-2.5, 0, -9.5)
+rotation_degrees = Vector3(0, 202, 0)
+
+[node name="Spruce05" parent="." instance=ExtResource("3")]
+position = Vector3(8.5, 0, 1)
+rotation_degrees = Vector3(0, 279, 0)
+
+[node name="Spruce06" parent="." instance=ExtResource("3")]
+position = Vector3(-9, 0, 4)
+rotation_degrees = Vector3(0, 41, 0)
+
+[node name="Boulder" parent="." instance=ExtResource("5")]
+position = Vector3(3.6, 0, -2.8)
+rotation_degrees = Vector3(0, -22, 0)
+
+[node name="Crate" parent="." instance=ExtResource("6")]
+position = Vector3(1.8, 0, 0)
+
+[node name="Fern" parent="." instance=ExtResource("4")]
+position = Vector3(-1.9, 0.01, 2.3)
+
+[node name="Fern02" parent="." instance=ExtResource("4")]
+position = Vector3(-2.7, 0.01, 1.9)
+rotation_degrees = Vector3(0, 82, 0)
+
+[node name="Fern03" parent="." instance=ExtResource("4")]
+position = Vector3(3.2, 0.01, 1.9)
+rotation_degrees = Vector3(0, 123, 0)
+
+[node name="Fern04" parent="." instance=ExtResource("4")]
+position = Vector3(3, 0.01, -3.7)
+
+[node name="Fern05" parent="." instance=ExtResource("4")]
+position = Vector3(-5.3, 0.01, 0.3)
+
+[node name="CivilianReference" parent="." instance=ExtResource("8")]
+position = Vector3(-1.7, 0, -4.5)
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Guide" type="Label" parent="HUD"]
+offset_left = 24.0
+offset_top = 20.0
+label_settings = SubResource("Label")
+text = "ENVIRONMENT / VISUAL PROOF 01\nSpruce · moss and dirt · fern · granite · supply crate\nWASD move   Shift sprint   Ctrl crouch   Q/E lean   V vault crate   RMB sights\nP return   Esc release mouse   Open this scene with F6; F5 remains the training yard"
+
+[node name="State" type="Label" parent="HUD"]
+offset_left = 24.0
+offset_top = 126.0
+label_settings = SubResource("Label")
+
+[node name="Crosshair" type="Label" parent="HUD"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -4.0
+offset_top = -12.0
+offset_right = 4.0
+offset_bottom = 12.0
+text = "+"

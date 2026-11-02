@@ -1,0 +1,212 @@
+{
+  "status": "Frozen by owner instruction; do not improve art or regenerate assets until requested.",
+  "blender": "5.2.3 LTS",
+  "mpfb": "2.0.18",
+  "files": [
+    {
+      "path": ".gdignore",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "build_enemy_snapshot.py",
+      "bytes": 7158,
+      "sha256": "70da65460312357d373c862f587b817998b3a27741ff323e5a8d3957ddf39423"
+    },
+    {
+      "path": "enemy_dressed_v1.blend",
+      "bytes": 16949925,
+      "sha256": "c6b0bfc8cf2bcd80b4f3cb30c0707ee549d5874fecfd2a34a07a796fa2df4cac"
+    },
+    {
+      "path": "human_base_rigged_v1.blend",
+      "bytes": 12885267,
+      "sha256": "0271cd9df676c4f27681be5a885160b3a5e736adf1e5b2ce8c9fafb7cf3963ad"
+    },
+    {
+      "path": "intake-report.json",
+      "bytes": 2094,
+      "sha256": "573718f9e584cd6045c6dabe8e8d663e4ed52c7f6b90bf3cd0f47a53c4303a38"
+    },
+    {
+      "path": "owner_original.blend",
+      "bytes": 1410005,
+      "sha256": "589ad3e4af9f3498b5c1835802466390377392998ccb4b81d8ed5e5ebd2e01eb"
+    },
+    {
+      "path": "resources/clothes/toigo_ankle_boots_male/boots_ankle_male.mhmat",
+      "bytes": 554,
+      "sha256": "0731fd75bc7333f83010e64d9d5ff7441a0067bc79e3baf489f9ec7abcb47aba"
+    },
+    {
+      "path": "resources/clothes/toigo_ankle_boots_male/boots_ankle_male.obj",
+      "bytes": 171260,
+      "sha256": "b23f306d072e5ec89b5958242111e647a76db374a8ff219b006010ff2e504294"
+    },
+    {
+      "path": "resources/clothes/toigo_ankle_boots_male/BootsAnkle-norm.png",
+      "bytes": 2155003,
+      "sha256": "d4bbc26383a8c191be31a645c5ddfdea4c3ba27d56140305271c4553dbaae8a3"
+    },
+    {
+      "path": "resources/clothes/toigo_ankle_boots_male/BootsAnkle-spec.png",
+      "bytes": 291316,
+      "sha256": "30e2ce35ab197a55f43f2cdae248940445b5fe14de30eebe4f3c2aed96a80802"
+    },
+    {
+      "path": "resources/clothes/toigo_ankle_boots_male/BootsAnkleM.png",
+      "bytes": 1545946,
+      "sha256": "0e476df27c5ddebca2c55ce889abd46387ba405f34833de81db466d1a4b1ca5b"
+    },
+    {
+      "path": "resources/clothes/toigo_ankle_boots_male/toigo_ankle_boots_male.mhclo",
+      "bytes": 142277,
+      "sha256": "0143dbcfdac444a42af339bcc65352af8ad6d8d2519457aa1aff89a639dd554a"
+    },
+    {
+      "path": "resources/clothes/toigo_ankle_boots_male/toigo_ankle_boots_male.thumb",
+      "bytes": 36133,
+      "sha256": "96306005c0346eeb670fc2f66cf2b831f520a53668290f3abdc380ffadee610f"
+    },
+    {
+      "path": "resources/clothes/toigo_fisherman_sweater/shirt-knit-NORM.png",
+      "bytes": 598273,
+      "sha256": "c3458d9b5174d7c34beed74618828c26f479200512d691a6bada34e7ea5d9a62"
+    },
+    {
+      "path": "resources/clothes/toigo_fisherman_sweater/shirt-knit.png",
+      "bytes": 2316765,
+      "sha256": "a7d526797da4cdc1a79603a35abebf41e577277267f36db6641cdb6cebe6ffb1"
+    },
+    {
+      "path": "resources/clothes/toigo_fisherman_sweater/sweater_fisherman.mhmat",
+      "bytes": 509,
+      "sha256": "254c011b3edae8cbab7adb2d082de670dd41b26324bf5772318b7557a127fd64"
+    },
+    {
+      "path": "resources/clothes/toigo_fisherman_sweater/sweater_fisherman.obj",
+      "bytes": 172798,
+      "sha256": "2844465f4e798666a90f631ea4a89ae30d3e526ef045a978d338908750d21d09"
+    },
+    {
+      "path": "resources/clothes/toigo_fisherman_sweater/toigo_fisherman_sweater.mhclo",
+      "bytes": 144016,
+      "sha256": "b454960bdd61985f246e88e547a127a75d590dc87d6c1a4062fb7c7c281d8999"
+    },
+    {
+      "path": "resources/clothes/toigo_fisherman_sweater/toigo_fisherman_sweater.thumb",
+      "bytes": 75154,
+      "sha256": "a64cdf427b565eb72d69c4e3b93cd6021df66fe4a7e30c14c55fbced8c3df391"
+    },
+    {
+      "path": "resources/clothes/toigo_wool_pants/pants_wool.mhmat",
+      "bytes": 473,
+      "sha256": "fedf31e98ea92b57c8f45e10ec167d420f5eb11b9410feb075c321c3798fdb53"
+    },
+    {
+      "path": "resources/clothes/toigo_wool_pants/pants_wool.obj",
+      "bytes": 108902,
+      "sha256": "e02cd1e417ca3365e4dafc033f415c5186739df535d98810075cface0ce59c96"
+    },
+    {
+      "path": "resources/clothes/toigo_wool_pants/Pants_wool.png",
+      "bytes": 1355120,
+      "sha256": "a820b0dc4f9f881956a068f26889ca677b696dbdccfdbf2a168e7b327b390ab6"
+    },
+    {
+      "path": "resources/clothes/toigo_wool_pants/toigo_wool_pants.mhclo",
+      "bytes": 93219,
+      "sha256": "ac1a57a817976d80ece8a88698873d54de7f252d01ba3dca5e361693621fcf22"
+    },
+    {
+      "path": "resources/clothes/toigo_wool_pants/toigo_wool_pants.thumb",
+      "bytes": 36834,
+      "sha256": "23dfe8875ee2fbdaef1e705871d2054868198fc415188ec177bebf96a09b944c"
+    },
+    {
+      "path": "resources/eyes/low-poly/low-poly.mhclo",
+      "bytes": 1344,
+      "sha256": "68582e28e9176cba7cfcf35208f671b6201b8d1bc95c32decff61a3160ec34d8"
+    },
+    {
+      "path": "resources/eyes/low-poly/low-poly.obj",
+      "bytes": 6604,
+      "sha256": "783fe1e6331162c876520b4c2bed7a8ca06354ca15497e8ebd68bb1b59f4d3de"
+    },
+    {
+      "path": "resources/eyes/low-poly/low-poly.thumb",
+      "bytes": 15938,
+      "sha256": "27b09c5a2bd792671c99a00016ec836855278f199bc4753c3018f1ac73068c72"
+    },
+    {
+      "path": "resources/eyes/materials/brown.mhmat",
+      "bytes": 1247,
+      "sha256": "4abad93ce50541c08127721e77bce035640c9f16bed16cd0f5524b1cd5908465"
+    },
+    {
+      "path": "resources/eyes/materials/brown_eye.png",
+      "bytes": 610817,
+      "sha256": "4659691c7295ad6206c78b003e5fd0e5f91dcd53032fa914a229bb48cabe424b"
+    },
+    {
+      "path": "resources/hair/short02/short02.mhclo",
+      "bytes": 119240,
+      "sha256": "625736cdb73e6d094df6e5a2df18f371781f1d2cd37b0ae15795c5d7051c3ec2"
+    },
+    {
+      "path": "resources/hair/short02/short02.mhmat",
+      "bytes": 1323,
+      "sha256": "2ed04c8aad9c1a35d858ca72091525d32b1da3b61b5a031634dd528fd8530f6d"
+    },
+    {
+      "path": "resources/hair/short02/short02.obj",
+      "bytes": 139742,
+      "sha256": "48f979114adfa712165a69cc55c45a70831af1fb3cba8e2a89120f0c87407b64"
+    },
+    {
+      "path": "resources/hair/short02/short02.thumb",
+      "bytes": 41127,
+      "sha256": "af21a0e84bfcc294b9840d90a04f1b6655ad909bc09328251886adffbc0727e8"
+    },
+    {
+      "path": "resources/hair/short02/short02_diffuse.png",
+      "bytes": 3553543,
+      "sha256": "47fe33831a3929567c733356dd66243116e05df2ace1f884ddca0080b728229f"
+    },
+    {
+      "path": "resources/hair/short02/short02_normal.png",
+      "bytes": 1626745,
+      "sha256": "2cfac7619f8eec77dd90df979d912415058f4f0fc16940cba40a8eb1ae6d74b5"
+    },
+    {
+      "path": "resources/packs/makehuman_system_assets.json",
+      "bytes": 39220,
+      "sha256": "e86f1572432cfd062f372adddba4eb7c2e2e31280e96c29291a970320e0a5df0"
+    },
+    {
+      "path": "resources/packs/pants01.json",
+      "bytes": 2435,
+      "sha256": "bdb03e12282c92d8dc66e34e5698b77340baef8eff212515640c1255d3ec7261"
+    },
+    {
+      "path": "resources/packs/shirts01.json",
+      "bytes": 8264,
+      "sha256": "fc1bdab84824c7f36e1482f8f40d381cdeda49315003caba50a40d06b8ed2998"
+    },
+    {
+      "path": "resources/packs/shoes01.json",
+      "bytes": 14692,
+      "sha256": "f59c2d5151aee4b2e9a807eb0050bce080013dc79b7d21757bbda34931bac77b"
+    },
+    {
+      "path": "resources/packs/skins02.json",
+      "bytes": 7907,
+      "sha256": "35c4e7d05d882537b6312cbbc95830347eb547941248dbdb5f5595e6d9e1e705"
+    }
+  ],
+  "export": {
+    "path": "assets/characters/mpfb_enemy/enemy_v1.glb",
+    "sha256": "fd17fc62a5167bf49feafd3d9b54f0aa96f9ea5a0663e080c8ec0d3512f56a25",
+    "bytes": 16426736
+  }
+}

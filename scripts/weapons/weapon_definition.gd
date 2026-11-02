@@ -5,8 +5,15 @@ extends Resource
 @export var loading_rule: StringName = &"detachable_magazine"
 @export_range(1, 100) var capacity: int = 10
 @export var initial_loaded: int = 10
-@export var initial_spare: int = 0
-@export var initial_loose: int = 30
+@export var initial_spare: int = 10
+@export var initial_loose: int = 32
+@export var chamber_duration: float = 0.7
+@export var remove_magazine_duration: float = 0.9
+@export var ammo_type_id: StringName = &"training_rifle_ball"
+@export var caliber: StringName = &"7.62x54"
+@export var magazine_type_id: StringName = &"training_rifle_magazine"
+@export var ammo_display_name := "7.62 rifle rounds"
+@export var mass_kg: float = 4.0 # Prototype carried mass; includes rifle, excludes magazine.
 @export var damage: float = 40.0
 @export var fire_interval: float = 0.22
 @export var hip_texture: Texture2D
@@ -27,9 +34,19 @@ func get_clip(action: StringName) -> Resource:
 	for clip in action_clips:
 		if clip.action == action:
 			return clip
+	if action in [&"chamber",&"eject_chamber",&"remove_magazine",&"unload"]:
+		var source = get_clip(&"pack" if action == &"unload" else &"inspect")
+		if source != null:
+			var clip = source.duplicate(true)
+			clip.action = action
+			if action != &"unload": clip.duration = remove_magazine_duration if action == &"remove_magazine" else chamber_duration
+			for pose in clip.poses: pose.phase = action
+			return clip
 	return null
 
 func validation_error() -> String:
+	if ammo_type_id == &"" or caliber == &"" or magazine_type_id == &"" or chamber_duration <= 0 or remove_magazine_duration <= 0:
+		return "Invalid ammunition definitions or action durations"
 	if weapon_id == &"" or loading_rule != &"detachable_magazine":
 		return "This prototype supports detachable magazines only"
 	if capacity < 1 or initial_loaded < 0 or initial_loaded > capacity or initial_spare < 0 or initial_spare > capacity or initial_loose < 0 or fire_interval <= 0.0 or damage <= 0.0:

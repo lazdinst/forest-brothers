@@ -1,0 +1,9 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://scripts/environment/birch_bark.gdshader" id="1_naaf8"]
+[ext_resource type="Texture2D" path="res://assets/environment/textures/birch_bark_v2.png" id="2_gg33d"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_naaf8")
+shader_parameter/bark_texture = ExtResource("2_gg33d")

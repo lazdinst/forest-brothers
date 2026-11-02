@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://assets/environment/meshes/pine_branch_dead_v2.res" id="1_3iawl"]
+
+[node name="DeadPineBranch" type="Node3D" unique_id=872470286]
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=611675848]
+mesh = ExtResource("1_3iawl")

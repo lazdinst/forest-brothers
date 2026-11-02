@@ -1,0 +1,50 @@
+{
+	"adapter": "NVIDIA GeForce GTX 1080",
+	"conditions": "Actual F5 scene including active camp annex/character prototypes; default shadowed sun + depth fog, 1280x720, uncapped process-frame intervals, 300 samples/view after 30 settling physics ticks; not GPU timestamps or prolonged playtesting.",
+	"counts": {
+		"ferns": 961,
+		"grass": 1661,
+		"litter": 1667,
+		"logs": 21,
+		"moss": 576,
+		"rocks": 9,
+		"stumps": 12,
+		"trees": 229
+	},
+	"engine": "4.7.2-stable (official)",
+	"renderer": "gl_compatibility",
+	"seed": 19461101,
+	"texture_bytes_process": 95298053.0,
+	"video_bytes_process": 153601413.0,
+	"viewport": "(1280, 720)",
+	"views": [
+		{
+			"draw_calls_max": 380.0,
+			"median_ms": 13.29,
+			"name": "training_forest",
+			"p95_ms": 21.377,
+			"rendered_primitives_max": 7840191.0
+		},
+		{
+			"draw_calls_max": 150.0,
+			"median_ms": 2.343,
+			"name": "forest_interior",
+			"p95_ms": 9.204,
+			"rendered_primitives_max": 1787553.0
+		},
+		{
+			"draw_calls_max": 210.0,
+			"median_ms": 10.421,
+			"name": "trench_inside",
+			"p95_ms": 18.19,
+			"rendered_primitives_max": 6090827.0
+		},
+		{
+			"draw_calls_max": 300.0,
+			"median_ms": 8.444,
+			"name": "trench_entry",
+			"p95_ms": 17.816,
+			"rendered_primitives_max": 5879468.0
+		}
+	]
+}

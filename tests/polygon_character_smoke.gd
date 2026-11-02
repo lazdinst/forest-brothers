@@ -56,8 +56,8 @@ func _run() -> void:
 	_check(default_annex.resident_nodes[&"resident_01"].polygon_model == null,"Default residents do not allocate rejected models")
 	_check(default_annex.resident_nodes[&"resident_01"].get_node("PlayerClearance").collision_layer == 4,"Restored sprite keeps its near-camera clearance")
 	_check(default_annex.stations[&"medical"].get_node_or_null("SpritePatient") != null,"Default medical patient retains sprite presentation")
-	for enemy in default_annex.enemies:
-		_check(enemy.polygon_model == null and enemy.sprite.visible,"Default enemies retain sprites")
+	_check(default_annex.enemies[0].character_scene == null and default_annex.enemies[0].sprite.visible,"First enemy retains the sprite default during the art freeze")
+	_check(default_annex.enemies[1].polygon_model == null and default_annex.enemies[1].sprite.visible,"Second enemy retains the sprite comparison")
 	default_annex.start_planning()
 	default_annex.stop_planning()
 	_check(default_player.camera.current,"Planning restores camera without optional body")

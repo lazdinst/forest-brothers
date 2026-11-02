@@ -1,0 +1,14 @@
+{
+	"adapter": "NVIDIA GeForce GTX 1080",
+	"conditions": "Stationary proof spawn, six repeated spruce, five ferns, boulder, crate, civilian reference, existing weapon HUD, one shadowed sun, depth fog; uncapped, no movie writer. Whole process memory includes reused art. Not a 100m biome benchmark.",
+	"draw_calls_max": 82.0,
+	"engine": "4.7.2-stable (official)",
+	"median_frame_ms": 0.762,
+	"p95_frame_ms": 1.866,
+	"primitives_max": 315450.0,
+	"renderer": "gl_compatibility",
+	"samples": 240,
+	"texture_bytes_process": 77293219.0,
+	"video_bytes_process": 102188643.0,
+	"viewport": "(1280, 720)"
+}

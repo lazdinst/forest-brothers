@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://assets/environment/meshes/forest_birch_wood_v1.res" id="1_iqc1j"]
+[ext_resource type="ArrayMesh" path="res://assets/environment/meshes/forest_birch_crown_v1.res" id="2_hig2j"]
+
+[node name="Birch" type="Node3D" unique_id=805974523]
+
+[node name="Trunk" type="MeshInstance3D" parent="." unique_id=2084763180]
+mesh = ExtResource("1_iqc1j")
+
+[node name="Crown" type="MeshInstance3D" parent="." unique_id=596129624]
+mesh = ExtResource("2_hig2j")

@@ -85,4 +85,4 @@ func show_message(caption: String, message: String) -> void:
 	details.present(caption, message, [{"id": &"close", "caption": "Back"}])
 
 func show_controls() -> void:
-	show_message("Training controls", "WASD move · Mouse look · Shift run · Space jump\nCtrl crouch · Q / E lean · V vault · F interact\nLeft mouse fire · Right mouse aim · R reload\nHold T refill spare magazine · J clear jam\nB clean · G dirty weapon · I inspect · P reset position\nTab opens equipment & inventory.\n\nEscape opens navigation when launched through startup.\nTraining is session-only; leaving discards its progress.")
+	show_message("Training controls", "WASD move · Mouse look · Shift sprint · Space jump\nWheel pace · Caps slow · Tap C stance · C + wheel height\nX prone · Ctrl hold crouch · Q / E lean · V vault · F interact\nLeft mouse fire · Right mouse aim · K chamber · R reload\nHold T refill spare magazine · J clear jam\nB clean · G dirty weapon · I inspect · P reset position\nTab opens equipment & inventory.\n\nEscape opens navigation when launched through startup.\nTraining is session-only; leaving discards its progress.")

@@ -1,0 +1,11 @@
+[gd_resource type="CylinderMesh" format=3]
+
+[ext_resource type="Material" path="res://assets/environment/materials/spruce_bark_v1.tres" id="1_ccwfk"]
+
+[resource]
+material = ExtResource("1_ccwfk")
+top_radius = 0.055
+bottom_radius = 0.23
+height = 11.0
+radial_segments = 9
+rings = 3

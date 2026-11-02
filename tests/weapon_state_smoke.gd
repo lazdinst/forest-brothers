@@ -7,7 +7,10 @@ func _check(ok: bool, detail: String) -> void:
 		failures.append(detail)
 
 func _initialize() -> void:
-	var state = State.new()
+	var fixture = preload("res://weapons/svt_inspired_training.tres").duplicate(true)
+	fixture.initial_spare = 0
+	fixture.initial_loose = 30
+	var state = State.new(fixture)
 	state.start_action(&"pack")
 	state.advance(0.1)
 	state.cancel_packing()
@@ -21,6 +24,7 @@ func _initialize() -> void:
 	_check(not state.try_fire(1.0), "Cannot fire mid-reload")
 	state.advance(1.41)
 	_check(state.loaded_magazine == 1 and state.magazines[0] == 10, "Reload retains the other magazine and its contents")
+	_check(state.inventory.chamber(), "Explicitly chamber the reloaded rifle")
 	_check(state.try_fire(1.0) and state.total_rounds() == 39, "Fire consumes exactly one round")
 	_check(not state.try_fire(1.0) and state.total_rounds() == 39, "Cooldown does not consume ammunition")
 	state.advance(1.0)

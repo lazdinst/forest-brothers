@@ -19,6 +19,9 @@ func _run() -> void:
 	player.global_position = annex.global_position+Vector3(5,0.02,-9)
 	player.velocity = Vector3.ZERO
 	await _frames(10)
+	if player.weapon.state.inventory.weapon().chambered_round == null:
+		player.weapon.command(&"chamber")
+		await _frames(60)
 	player.weapon.rng.seed = 12345
 	for i in range(3):
 		player.camera.look_at(target.global_position+Vector3.UP)

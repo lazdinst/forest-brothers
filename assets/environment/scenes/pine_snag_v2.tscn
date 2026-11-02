@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://assets/environment/meshes/pine_snag_v2.res" id="1_cu5qu"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_rty0k"]
+height = 7.0
+radius = 0.3
+
+[node name="BrokenPineSnag" type="Node3D" unique_id=287862120]
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=407110102]
+mesh = ExtResource("1_cu5qu")
+
+[node name="Body" type="StaticBody3D" parent="." unique_id=944434693]
+collision_mask = 2
+
+[node name="@CollisionShape3D@2" type="CollisionShape3D" parent="Body" unique_id=1265572270]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
+shape = SubResource("CylinderShape3D_rty0k")

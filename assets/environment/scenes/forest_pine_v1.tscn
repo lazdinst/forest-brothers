@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://assets/environment/meshes/forest_pine_wood_v1.res" id="1_lhdor"]
+[ext_resource type="ArrayMesh" path="res://assets/environment/meshes/forest_pine_crown_v1.res" id="2_13kei"]
+
+[node name="ScotsPine" type="Node3D" unique_id=669869891]
+
+[node name="Trunk" type="MeshInstance3D" parent="." unique_id=1918819927]
+mesh = ExtResource("1_lhdor")
+
+[node name="Crown" type="MeshInstance3D" parent="." unique_id=1216375173]
+mesh = ExtResource("2_13kei")

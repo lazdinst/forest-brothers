@@ -1,0 +1,10 @@
+[gd_resource type="SphereMesh" format=3]
+
+[ext_resource type="Material" path="res://assets/environment/materials/moss_clump_v1.tres" id="1_h5iok"]
+
+[resource]
+material = ExtResource("1_h5iok")
+radius = 0.48
+height = 0.25
+radial_segments = 8
+rings = 3

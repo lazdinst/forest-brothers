@@ -11,6 +11,10 @@ Before proposing or implementing substantial work, read:
 
 The user's current instructions take precedence. This file applies throughout the repository; nested `AGENTS.md` files add guidance for their directories.
 
+## Current owner priority
+
+Character art development is frozen. Preserve MPFB sources, rig, clips and separate clothing/bodyparts. Keep sprites as the default and MPFB available for comparison; do not create outfits or improve appearance. Read `docs/CHARACTER_FREEZE_AND_COMBAT_SLICE.md` for validated issues and the proposed combat/movement/AI slice. The scope awaits owner review: do not start a major combat, health or navigation refactor. Do not modify the nature/environment or main-menu agents' work. This priority supersedes earlier character-production steps.
+
 ## Purpose
 
 Build an immersive, punishing first-person survival game about a small resistance group in postwar Latvia. The player helps local people and supports a concealed forest camp. Tarkov informs tension, vulnerability, and material consequences. The game is not an extraction shooter.
