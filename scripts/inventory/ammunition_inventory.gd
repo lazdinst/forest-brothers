@@ -68,7 +68,7 @@ const POCKET_CAPACITY := 4
 ## Owner-approved starting footprints (2026-11-02), placeholders rather than final balance.
 ## Pockets are separate single cells, so only 1 x 1 items fit there.
 const FOOTPRINTS := {&"weapon":Vector2i(5,2),&"magazine":Vector2i(1,1),&"ammo_stack":Vector2i(1,1)}
-var pack_capacity := 36 # Existing reversible layout, not approved final balance.
+var pack_capacity := 54 # Owner asked for a larger pack (9 x 6); reversible, not final balance.
 var pack_columns := 9
 var owner_id: StringName
 var items: Dictionary[StringName, Item] = {}
@@ -158,14 +158,20 @@ func area(location: Location, size := Vector2i.ONE) -> Rect2i:
 	if location.kind == &"pocket": return Rect2i(location.slot,0,size.x,size.y)
 	return Rect2i(location.slot % pack_columns,floori(float(location.slot)/pack_columns),size.x,size.y)
 
-## First free spot for an item of this size, trying it upright and then rotated.
+## First free spot for an item of this size, trying pockets then pack.
 func empty_location(excluding: StringName = &"", size := Vector2i.ONE) -> Location:
 	for kind in [&"pocket",&"pack"]:
-		for index in range(POCKET_CAPACITY if kind == &"pocket" else pack_capacity):
-			for turned in ([false] if size.x == size.y else [false,true]):
-				var location := Location.new(kind,owner_id,index,turned)
-				var shape := Vector2i(size.y,size.x) if turned else size
-				if valid_slot(location,shape) and occupant(location,excluding,shape) == null: return location
+		var location := empty_location_in(kind,excluding,size)
+		if location != null: return location
+	return null
+
+## First free spot in one container, trying the item upright and then rotated.
+func empty_location_in(kind: StringName, excluding: StringName = &"", size := Vector2i.ONE) -> Location:
+	for index in range(POCKET_CAPACITY if kind == &"pocket" else pack_capacity):
+		for turned in ([false] if size.x == size.y else [false,true]):
+			var location := Location.new(kind,owner_id,index,turned)
+			var shape := Vector2i(size.y,size.x) if turned else size
+			if valid_slot(location,shape) and occupant(location,excluding,shape) == null: return location
 	return null
 
 ## Any item overlapping the given area. Equipped/magwell/ground locations compare slots only.
@@ -259,10 +265,17 @@ func remove_loose(amount: int, ammo_id: StringName = &"") -> bool:
 	_notify_changed()
 	return true
 
-func split_stack(id: StringName, amount: int) -> StringName:
+## A new stack can be split off into this free carried cell (any free cell when null).
+func can_split_stack(id: StringName, destination: Location = null) -> bool:
 	var source := items.get(id) as AmmoStack
-	var destination := empty_location()
-	if source == null or not carried(source) or amount <= 0 or amount >= source.quantity or destination == null:
+	if source == null or not carried(source) or source.quantity < 2: return false
+	if destination == null: return empty_location() != null
+	return valid_slot(destination) and occupant(destination) == null
+
+func split_stack(id: StringName, amount: int, destination: Location = null) -> StringName:
+	var source := items.get(id) as AmmoStack
+	if destination == null: destination = empty_location()
+	if source == null or not carried(source) or amount <= 0 or amount >= source.quantity or not can_split_stack(id,destination):
 		fail("Split needs a partial amount and a free slot")
 		return &""
 	var stack := AmmoStack.new()

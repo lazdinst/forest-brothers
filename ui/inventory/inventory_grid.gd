@@ -4,7 +4,8 @@ extends Control
 ## drop_validator; the rule owner still validates the actual drop.
 signal item_selected(item: Dictionary)
 signal item_menu_requested(item: Dictionary, at: Vector2)
-signal item_dropped(item_id: StringName, slot: int, target_id: StringName, rotated: bool)
+signal item_quick(item: Dictionary, kind: StringName)
+signal item_dropped(item_id: StringName, slot: int, target_id: StringName, rotated: bool, split: bool)
 const ItemCard = preload("res://ui/inventory/inventory_item_card.gd")
 const ACCEPT := Color("4f7a4a73")
 const REJECT := Color("8a3a3280")
@@ -14,7 +15,7 @@ var cell := 48.0
 var cards: Array[Button] = []
 ## Every covered cell index -> item ID.
 var slot_ids := {}
-## (item_id, slot, target_id, rotated) -> bool. Empty means every in-grid drop is offered.
+## (item_id, slot, target_id, rotated, split) -> bool. Empty means every in-grid drop is offered.
 var drop_validator: Callable
 var selected_id: StringName
 var hover_active := false
@@ -64,6 +65,7 @@ func show_items(items: Array) -> bool:
 		card.set_selected(card.item_id == selected_id and selected_id != &"")
 		card.pressed.connect(func(): item_selected.emit(item))
 		card.menu_requested.connect(func(at_screen: Vector2): item_menu_requested.emit(item,at_screen))
+		card.quick_requested.connect(func(kind: StringName): item_quick.emit(item,kind))
 		add_child(card)
 		cards.append(card)
 	if _highlight != null: move_child(_highlight,-1)
@@ -96,7 +98,7 @@ func _can_drop_data(at: Vector2, data: Variant) -> bool:
 	var target := drop_target(at,data)
 	var ok: bool = bounds().encloses(target.area)
 	if ok and drop_validator.is_valid():
-		ok = drop_validator.call(StringName(data.inventory_item_id),target.slot,target.target_id,target.rotated)
+		ok = drop_validator.call(StringName(data.inventory_item_id),target.slot,target.target_id,target.rotated,bool(data.get("split",false)))
 	_set_hover(target.area.intersection(bounds()),true,ok)
 	return ok
 
@@ -107,7 +109,7 @@ func refresh_hover(data: Dictionary) -> void:
 func _drop_data(at: Vector2, data: Variant) -> void:
 	_set_hover(Rect2i(),false,false)
 	var target := drop_target(at,data)
-	item_dropped.emit(StringName(data.inventory_item_id),target.slot,target.target_id,target.rotated)
+	item_dropped.emit(StringName(data.inventory_item_id),target.slot,target.target_id,target.rotated,bool(data.get("split",false)))
 
 func _set_hover(area: Rect2i, active: bool, ok: bool) -> void:
 	hover_active = active

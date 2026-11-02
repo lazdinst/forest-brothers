@@ -336,3 +336,5 @@ in CHARACTER_FREEZE_AND_COMBAT_SLICE.md. See COMBAT_ARENA_PLAN.md.
 Status: owner-confirmed direction; sizes are placeholders.
 
 The owner clarified that one square per item was only an easy start. Items may occupy several pack squares and can be rotated, as in Escape from Tarkov. This supersedes the one-square rule in "Personal inventory scope and pocket capacity"; pockets stay four single squares in one row, so only 1 × 1 items fit there. Approved starting sizes: rifle 5 × 2 (pack only), magazine 1 × 1, cartridge stack 1 × 1. Right-click context menus replace the full-screen per-item action list, and drag-and-drop shows whether a drop is accepted before release. Secure containers, insurance, traders/prices, found-in-raid status, a private stash, remote camp access and weight remain out. Work proceeds in owner-approved chunks; see INVENTORY_UI_DESIGN.md.
+
+Later the same day the owner asked for a larger pack (now 9 × 6, placeholder) and said the pack should be an item itself, like a Tarkov backpack. The backpack-item design (starting backpack, contents when dropped, other sizes) is pending owner answers.

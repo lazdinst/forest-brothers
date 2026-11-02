@@ -33,6 +33,7 @@ var rifle_status: Label
 var ammunition_status: Label
 var item_menu: PopupMenu
 var _menu_actions: Array[StringName] = []
+var _split_destination
 var _seen_revision := -1
 var _appearance
 
@@ -150,19 +151,21 @@ func _build() -> void:
 	var pockets_fit: bool = pocket_grid.show_items(data.pocket_items)
 	pocket_grid.item_selected.connect(_select_item)
 	pocket_grid.item_menu_requested.connect(_open_item_menu)
+	pocket_grid.item_quick.connect(_quick)
 	pocket_grid.drop_validator = _can_drop_in_grid.bind(&"pocket")
 	pocket_grid.item_dropped.connect(_drop_in_grid.bind(&"pocket"))
 	_label(carried,"RIFLE & AMMUNITION",Vector2(455,45),470,20)
 	ammunition_status = _label(carried,"",Vector2(455,87),470,18)
-	_label(carried,"03  /  PACK SPACE",Vector2(0,238),920,20)
-	_label(carried,"Pack space · total capacity under review",Vector2(0,269),920,16)
+	_label(carried,"03  /  PACK SPACE",Vector2(0,200),920,20)
+	_label(carried,"Pack space · total capacity under review",Vector2(0,231),920,16)
 	pack_grid = Grid.new()
-	pack_grid.position = Vector2(0,305)
-	pack_grid.configure(9,4,64)
+	pack_grid.position = Vector2(0,265)
+	pack_grid.configure(weapon_state.inventory.pack_columns,ceili(float(weapon_state.inventory.pack_capacity)/weapon_state.inventory.pack_columns),64)
 	carried.add_child(pack_grid)
 	var pack_fits: bool = pack_grid.show_items(data.pack_items)
 	pack_grid.item_selected.connect(_select_item)
 	pack_grid.item_menu_requested.connect(_open_item_menu)
+	pack_grid.item_quick.connect(_quick)
 	pack_grid.drop_validator = _can_drop_in_grid.bind(&"pack")
 	pack_grid.item_dropped.connect(_drop_in_grid.bind(&"pack"))
 	var footer := _frame(Vector2(24,829),Vector2(1552,60))
@@ -187,7 +190,9 @@ func _build() -> void:
 	item_menu.add_theme_color_override("font_hover_color",JournalTheme.PAPER)
 	item_menu.add_theme_stylebox_override("panel",ItemCard.style(Color("efe2c8"),JournalTheme.INK))
 	item_menu.add_theme_stylebox_override("hover",ItemCard.style(JournalTheme.BURGUNDY,JournalTheme.BURGUNDY))
-	item_menu.id_pressed.connect(func(index: int): _inventory_action(_menu_actions[index]))
+	item_menu.id_pressed.connect(func(index: int):
+		item_menu.hide()
+		_inventory_action(_menu_actions[index]))
 	add_child(item_menu)
 
 func _refresh() -> void:
@@ -272,8 +277,10 @@ func _describe(id: StringName) -> Dictionary:
 		choices.append({"id":&"drop","caption":"Drop rifle with its contents"})
 	return {"heading":heading,"description":description,"choices":choices}
 
-## Only splitting needs a typed amount, so it keeps the paper dialog.
-func _show_split_dialog() -> void:
+## Only splitting needs a typed amount, so it keeps the paper dialog. A shift-drag passes
+## where the new stack should go; the menu leaves it to the first free cell.
+func _show_split_dialog(destination = null) -> void:
+	_split_destination = destination
 	var stack = weapon_state.inventory.items.get(selected_id) as Inventory.AmmoStack
 	if stack == null or stack.quantity < 2: return
 	split_amount.max_value = stack.quantity-1
@@ -290,7 +297,8 @@ func _inventory_action(action: StringName) -> void:
 		_show_split_dialog()
 		return
 	elif action == &"split":
-		weapon_state.inventory.split_stack(selected_id,int(split_amount.value))
+		weapon_state.inventory.split_stack(selected_id,int(split_amount.value),_split_destination)
+		_split_destination = null
 		weapon_state.message = weapon_state.inventory.error if weapon_state.inventory.error != "" else "Stack split"
 	elif action == &"merge":
 		var source = weapon_state.inventory.items.get(selected_id)
@@ -308,19 +316,40 @@ func _inventory_action(action: StringName) -> void:
 	else: weapon_state.request_action(action,selected_id if action in [&"inspect",&"reload",&"pack",&"unload"] else &"",&"",action in [&"pack",&"unload"])
 	_refresh()
 
+## Ctrl-click: pockets <-> pack. Alt-click: insert a carried magazine into the rifle.
+func _quick(item: Dictionary, kind: StringName) -> void:
+	var id := StringName(item.id)
+	var inventory = weapon_state.inventory
+	var source = inventory.items.get(id)
+	if source == null: return
+	_select(id)
+	if weapon_state.busy != &"": weapon_state.reject("Finish or cancel the current action first")
+	elif kind == &"use" and source is Inventory.MagazineInstance: weapon_state.request_action(&"reload",id)
+	elif kind == &"move" and source.location.kind in [&"pocket",&"pack"]:
+		var other := &"pack" if source.location.kind == &"pocket" else &"pocket"
+		var spot = inventory.empty_location_in(other,id,inventory.footprint(source))
+		if spot == null: weapon_state.reject("No room in the " + ("pack" if other == &"pack" else "pockets"))
+		else: weapon_state.move_item(id,other,spot.slot,spot.rotated)
+	_refresh()
+
 ## Preview only: the same checks the drop below will make, without changing anything.
-func _can_drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated: bool, container: StringName) -> bool:
+func _can_drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated: bool, split: bool, container: StringName) -> bool:
 	if weapon_state.busy != &"": return false
 	var inventory = weapon_state.inventory
+	if split: return inventory.can_split_stack(id,Inventory.Location.new(container,inventory.owner_id,slot))
 	var source = inventory.items.get(id)
 	var target = inventory.items.get(target_id)
 	if source is Inventory.AmmoStack and target is Inventory.MagazineInstance: return inventory.can_load_round(target_id,id)
 	if source is Inventory.AmmoStack and target is Inventory.AmmoStack and target != source: return inventory.can_merge_stacks(id,target_id)
 	return inventory.can_move_item(id,Inventory.Location.new(container,inventory.owner_id,slot,rotated))
 
-func _drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated: bool, container: StringName) -> void:
+func _drop_in_grid(id: StringName, slot: int, target_id: StringName, rotated: bool, split: bool, container: StringName) -> void:
 	if weapon_state.busy != &"":
 		weapon_state.reject("Finish or cancel the current action first")
+		return
+	if split:
+		selected_id = id
+		_show_split_dialog(Inventory.Location.new(container,weapon_state.inventory.owner_id,slot))
 		return
 	var source = weapon_state.inventory.items.get(id)
 	var target = weapon_state.inventory.items.get(target_id)
@@ -351,6 +380,11 @@ func rotate_drag() -> bool:
 func _input(event: InputEvent) -> void:
 	if visible and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R and rotate_drag():
 		get_viewport().set_input_as_handled()
+		return
+	# Delete drops the selected item, like Tarkov's discard, but onto the ground for recovery.
+	if visible and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_DELETE and not context.visible and not item_menu.visible and weapon_state.inventory.items.has(selected_id):
+		get_viewport().set_input_as_handled()
+		_inventory_action(&"drop")
 		return
 	if visible and event.is_action_pressed("ui_cancel") and not event.is_echo():
 		get_viewport().set_input_as_handled()

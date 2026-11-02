@@ -146,9 +146,14 @@ Planned chunks, each with a headless check and owner approval before starting:
    each item across its cells and the drop tint covers the whole footprint, anchored
    at the grabbed cell. R while dragging turns the item about the cursor. Approved
    placeholder sizes: rifle 5 × 2, magazine 1 × 1, cartridge stack 1 × 1; pockets
-   stay 1 × 1. The 9 × 4 pack cannot hold a turned rifle; pack size is still open.
-3. Shortcuts: ctrl-click pocket ↔ pack, alt-click insert magazine, shift-drag split,
-   Delete drop.
+   stay 1 × 1. The owner then asked for a larger pack: now 9 × 6 (54 cells), which
+   holds a turned rifle. The grid reads its size from the rules.
+3. Done: ctrl-click pocket ↔ pack, alt-click insert magazine, shift-drag split
+   (rules: `can_split_stack`, `split_stack` with a destination), Delete drops the
+   selected item to the ground.
+
+Requested next (2026-11-02): the pack should be an item itself, as Tarkov's
+backpacks are. Not designed yet; see DECISIONS.md.
 4. Loading progress on the magazine cell; double-click inspect panel.
 5. Rifle slot drag both ways (stow in pack, drag back to equip).
 

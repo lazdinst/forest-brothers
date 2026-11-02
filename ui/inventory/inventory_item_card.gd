@@ -3,6 +3,8 @@ extends Button
 ## orientation; the rule owner validates every drop.
 ## Left click selects (Button.pressed); right click asks for the item's action menu.
 signal menu_requested(at: Vector2)
+## Ctrl-click quick-moves between pockets and pack; alt-click uses the item (insert a magazine).
+signal quick_requested(kind: StringName)
 const Symbol = preload("res://ui/inventory/item_symbol.gd")
 const AmmunitionArt = preload("res://ui/inventory/ammunition_art.gd")
 const JournalTheme = preload("res://ui/themes/field_journal_theme.gd")
@@ -75,6 +77,9 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
 		accept_event()
 		menu_requested.emit(get_screen_transform() * event.position)
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and (event.ctrl_pressed or event.alt_pressed):
+		accept_event()
+		quick_requested.emit(&"move" if event.ctrl_pressed else &"use")
 
 ## The preview root sits at the cursor, so turning it rotates the item about the grab point.
 func drag_preview(grab: Vector2) -> Control:
@@ -91,12 +96,13 @@ func drag_preview(grab: Vector2) -> Control:
 	root.modulate.a = 0.85
 	return root
 
-func drag_payload(grab: Vector2) -> Dictionary:
-	return {"inventory_item_id":str(item_id),"grab":grab,"cells":item.get("size",Vector2i.ONE),"rotated":item.get("rotated",false),"turned":false}
+## split: shift-drag of cartridges asks for an amount and puts the new stack where it lands.
+func drag_payload(grab: Vector2, split := false) -> Dictionary:
+	return {"inventory_item_id":str(item_id),"grab":grab,"cells":item.get("size",Vector2i.ONE),"rotated":item.get("rotated",false),"turned":false,"split":split and item.get("kind","") == "rounds"}
 
 func _get_drag_data(at: Vector2) -> Variant:
 	if item_id == &"": return null
-	var payload := drag_payload(at)
+	var payload := drag_payload(at,Input.is_key_pressed(KEY_SHIFT))
 	payload.preview = drag_preview(at)
 	set_drag_preview(payload.preview)
 	return payload

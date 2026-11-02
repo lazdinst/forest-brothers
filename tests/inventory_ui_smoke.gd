@@ -77,9 +77,9 @@ func _run() -> void:
 	check(preview.item_menu.visible and preview._menu_actions.has(&"reload") and preview._menu_actions.has(&"inspect"),"Right click opens a context menu with magazine actions")
 	check(not preview.context.visible,"Context menu replaces the full-screen action list")
 	preview.item_menu.hide()
-	preview._drop_in_grid(b,5,&"",false,&"pack")
+	preview._drop_in_grid(b,5,&"",false,false,&"pack")
 	check(inv.magazine(b).location.kind == &"pack" and inv.magazine(b).location.slot == 5,"Drag handler moves the same magazine ID to a specific pack slot")
-	preview._drop_in_grid(b,0,&"",false,&"pocket")
+	preview._drop_in_grid(b,0,&"",false,false,&"pocket")
 	var stack_id: StringName
 	for item in inv.items.values():
 		if item is Inventory.AmmoStack: stack_id = item.id
@@ -110,7 +110,7 @@ func _run() -> void:
 	check(inv.footprint(inv.weapon()) == Vector2i(5,2) and inv.footprint(inv.magazine(b)) == Vector2i.ONE,"Rifle covers 5 x 2, magazine 1 x 1")
 	check(not inv.can_move_item(rifle_id,Inventory.Location.new(&"pocket",inv.owner_id,2)),"A rifle never fits a single pocket")
 	check(not inv.can_move_item(rifle_id,Inventory.Location.new(&"pack",inv.owner_id,5)),"A rifle cannot hang off the pack's right edge")
-	check(not inv.can_move_item(rifle_id,Inventory.Location.new(&"pack",inv.owner_id,0,true)),"A turned 2 x 5 rifle cannot fit the 4-row pack")
+	check(inv.can_move_item(rifle_id,Inventory.Location.new(&"pack",inv.owner_id,0,true)) and not inv.can_move_item(rifle_id,Inventory.Location.new(&"pack",inv.owner_id,18,true)),"A turned 2 x 5 rifle fits the 9 x 6 pack but not past its bottom")
 	check(state.move_item(rifle_id,&"pack",9),"Rifle moves into the pack")
 	preview._refresh()
 	var rifle_card: Button
@@ -125,13 +125,14 @@ func _run() -> void:
 	rifle_payload.preview = rifle_card.drag_preview(Vector2(32,32))
 	rifle_card.force_drag(rifle_payload,rifle_payload.preview)
 	check(preview.rotate_drag() and rifle_payload.turned and is_equal_approx(rifle_payload.preview.rotation,PI/2),"R while dragging turns the rifle and its preview")
-	check(not preview.pack_grid._can_drop_data(Vector2(3.5,0.5)*preview.pack_grid.cell,rifle_payload),"Turned rifle previews a rejection in the 4-row pack")
+	check(preview.pack_grid._can_drop_data(Vector2(3.5,0.5)*preview.pack_grid.cell,rifle_payload) and preview.pack_grid._highlight.size.y > 4*preview.pack_grid.cell,"Turned rifle previews a tall 2 x 5 drop")
+	check(not preview.pack_grid._can_drop_data(Vector2(3.5,3.5)*preview.pack_grid.cell,rifle_payload),"Turned rifle past the pack bottom previews a rejection")
 	root.gui_cancel_drag()
 	var stack_card: Button = preview.pocket_grid.cards[0]
 	stack_card.force_drag(stack_card.drag_payload(Vector2(32,32)),null)
 	check(not preview.rotate_drag(),"Square items ignore rotation")
 	root.gui_cancel_drag()
-	preview._drop_in_grid(rifle_id,20,&"",false,&"pack")
+	preview._drop_in_grid(rifle_id,20,&"",false,false,&"pack")
 	check(inv.weapon().location.kind == &"pack" and inv.weapon().location.slot == 20 and state.total_rounds() == 52,"Dropping the rifle moves its footprint without changing ammunition")
 	check(inv.equip_weapon(rifle_id) and inv.equipped(),"Rifle re-equips from the pack")
 	preview._refresh()
@@ -146,6 +147,51 @@ func _run() -> void:
 		if record.id == str(big.initial_magazine_ids[1]): record.location = {"kind":"pack","owner_id":str(big.owner_id),"slot":9,"rotated":false,"position":[0,0,0]}
 	check(not big.restore(saved) and big.weapon().location.rotated,"A save that overlaps a turned rifle is rejected unchanged")
 	check(big.empty_location(&"",Vector2i(5,2)) != null and big.empty_location(&"",Vector2i(5,2)).kind == &"pack","Free space search finds room for a rifle")
+	# Shortcuts: ctrl-click quick-move, alt-click insert, shift-drag split, Delete drop.
+	var ctrl_click := InputEventMouseButton.new()
+	ctrl_click.button_index = MOUSE_BUTTON_LEFT
+	ctrl_click.pressed = true
+	ctrl_click.ctrl_pressed = true
+	var find_card := func(grid, id: StringName) -> Button:
+		for card in grid.cards:
+			if card.item_id == id: return card
+		return null
+	find_card.call(preview.pocket_grid,b)._gui_input(ctrl_click)
+	check(inv.magazine(b).location.kind == &"pack","Ctrl-click moves a pocket item into the pack")
+	find_card.call(preview.pack_grid,b)._gui_input(ctrl_click)
+	check(inv.magazine(b).location.kind == &"pocket","Ctrl-click moves it back to a pocket")
+	var alt_click := InputEventMouseButton.new()
+	alt_click.button_index = MOUSE_BUTTON_LEFT
+	alt_click.pressed = true
+	alt_click.alt_pressed = true
+	find_card.call(preview.pocket_grid,b)._gui_input(alt_click)
+	check(state.busy == &"reload","Alt-click on a magazine starts inserting it")
+	for wait in range(60):
+		if state.busy == &"": break
+		await create_timer(0.05).timeout
+	check(inv.weapon().inserted_magazine_id == b and state.total_rounds() == 52,"Alt-click swaps that magazine into the rifle")
+	var split_source: StringName
+	for item in inv.items.values():
+		if item is Inventory.AmmoStack and inv.carried(item) and item.quantity >= 2: split_source = item.id
+	var shift_payload: Dictionary = find_card.call(preview.pocket_grid,split_source).drag_payload(Vector2(32,32),true)
+	check(shift_payload.split and not find_card.call(preview.pocket_grid,b if inv.magazine(b).location.kind == &"pocket" else inv.initial_magazine_ids[0]).drag_payload(Vector2.ZERO,true).split,"Shift-drag splits only cartridge stacks")
+	var corner: Vector2 = Vector2(8.5,5.5)*preview.pack_grid.cell
+	check(preview.pack_grid._can_drop_data(corner,shift_payload),"Shift-drag previews a split into a free cell")
+	var source_quantity: int = inv.items[split_source].quantity
+	preview.pack_grid._drop_data(corner,shift_payload)
+	check(preview.context.visible and preview.split_amount.visible,"Shift-drop asks for the split amount")
+	preview.split_amount.value = 1
+	preview._inventory_action(&"split")
+	var placed = inv.occupant(Inventory.Location.new(&"pack",inv.owner_id,53))
+	check(placed is Inventory.AmmoStack and placed.quantity == 1 and inv.items[split_source].quantity == source_quantity-1 and state.total_rounds() == 52,"The split stack lands where it was dropped and rounds are conserved")
+	preview._select(placed.id)
+	var delete := InputEventKey.new()
+	delete.keycode = KEY_DELETE
+	delete.pressed = true
+	preview._input(delete)
+	check(placed.location.kind == &"ground" and state.total_rounds() == 52,"Delete drops the selected item to the ground")
+	check(inv.pickup(placed.id),"Dropped stack can be picked back up")
+	preview._refresh()
 	# A fifth item snapshot must reject rather than hiding or displacing inventory.
 	var examples: Array = []
 	for index in range(4): examples.append({"id":str(index),"title":"Item","kind":"cloth","quantity":"1","span":Vector2i(3,2)})

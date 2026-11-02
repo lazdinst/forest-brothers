@@ -44,9 +44,14 @@ magazine to fill it, matching cartridge stacks onto one another to merge, and a
 magazine on the rifle slot to insert/swap. Occupied incompatible destinations reject.
 Items cover footprint cells: rifle 5 × 2, magazine and cartridge stack 1 × 1
 (owner-approved placeholders). Press **R** while dragging to turn a non-square item.
-Pockets are four single cells; the pack is a 9 × 4 grid (configurable training draft
-of 36 cells, not final balance), so a turned 2 × 5 rifle does not fit it yet. Saves
-store each item's top-left cell and rotation and reject overlaps.
+Pockets are four single cells; the pack is a 9 × 6 grid (54 cells, enlarged at the
+owner's request; not final balance). Saves store each item's top-left cell and
+rotation and reject overlaps.
+
+Shortcuts: **Ctrl-click** moves an item between pockets and pack; **Alt-click** a
+magazine to insert/swap it into the rifle; **Shift-drag** a cartridge stack to split
+it, choosing the amount, with the new stack placed where it is dropped; **Delete**
+drops the selected item to the ground, where it stays recoverable with **F**.
 
 Dropped items have world collision and the existing **F** interaction. Recovery
 keeps the same IDs and nested weapon contents. Local carriers can change custody
