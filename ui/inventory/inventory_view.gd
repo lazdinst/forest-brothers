@@ -856,3 +856,9 @@ func _input(event: InputEvent) -> void:
 	if visible and event.is_action_pressed("ui_cancel") and not event.is_echo():
 		get_viewport().set_input_as_handled()
 		closed.emit()
+	# Tab opens and closes the inventory; it never walks focus through the buttons. Holding it
+	# repeats the key, and those repeats (or any focus-move) are swallowed here. A first press
+	# still reaches whatever closes the inventory.
+	if visible and (event.is_action("ui_focus_next") or event.is_action("ui_focus_prev")) and (not event is InputEventKey or event.echo or not event.pressed):
+		get_viewport().set_input_as_handled()
+		return
